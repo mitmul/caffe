@@ -1,4 +1,6 @@
 ## General
+.DS_Store
+sftp-config.json
 
 # Compiled Object files
 *.slo
