@@ -89,6 +89,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     blob_bottom_vec_.push_back(blob_bottom_label_);
     blob_top_vec_.push_back(blob_top_loss_);
   }
+
   virtual ~LabelingLossLayerTest() {
     delete blob_bottom_data_;
     delete blob_bottom_label_;
@@ -105,23 +106,21 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     label_param->set_label_width(4);
     LabelingLossLayer<Dtype> layer_weight_1(layer_param);
     layer_weight_1.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+    const Dtype kErrorMargin = 1e-5;
     const Dtype loss_weight_1 =
       layer_weight_1.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    EXPECT_NEAR(loss_weight_1, 1.6636151596351503, kErrorMargin);
 
-    LOG(INFO) << loss_weight_1;
-    // Get the loss again with a different objective weight; check that it is
-    // scaled appropriately.
-    // const Dtype kLossWeight = 3.7;
-    // layer_param.add_loss_weight(kLossWeight);
-    // LabelingLossLayer<Dtype> layer_weight_2(layer_param);
-    // layer_weight_2.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-    // const Dtype loss_weight_2 =
-    //   layer_weight_2.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-    // const Dtype kErrorMargin = 1e-5;
-    // EXPECT_NEAR(loss_weight_1 * kLossWeight, loss_weight_2, kErrorMargin);
-    // // Make sure the loss is non-trivial.
-    // const Dtype kNonTrivialAbsThresh = 1e-1;
-    // EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
+    const Dtype kLossWeight = 3.7;
+    layer_param.add_loss_weight(kLossWeight);
+    LabelingLossLayer<Dtype> layer_weight_2(layer_param);
+    layer_weight_2.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+    const Dtype loss_weight_2 =
+      layer_weight_2.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    EXPECT_NEAR(loss_weight_1 * kLossWeight, loss_weight_2, kErrorMargin);
+
+    const Dtype kNonTrivialAbsThresh = 1e-1;
+    EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
   }
 
   Blob<Dtype> *const blob_bottom_data_;
@@ -137,16 +136,21 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   this->TestForward();
 }
 
-// TYPED_TEST(LabelingLossLayerTest, TestGradient) {
-//   typedef typename TypeParam::Dtype Dtype;
-//   LayerParameter layer_param;
-//   const Dtype kLossWeight = 3.7;
-//   layer_param.add_loss_weight(kLossWeight);
-//   LabelingLossLayer<Dtype> layer(layer_param);
-//   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-//   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
-//   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-//                                   this->blob_top_vec_);
-// }
+TYPED_TEST(LabelingLossLayerTest, TestGradient) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  LabelingLossParameter *label_param = layer_param.mutable_labeling_loss_param();
+  label_param->set_label_num(3);
+  label_param->set_label_height(4);
+  label_param->set_label_width(4);
+  const Dtype kLossWeight = 3.7;
+  layer_param.add_loss_weight(kLossWeight);
+  LabelingLossLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+
+  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+                                  this->blob_top_vec_, 0);
+}
 
 }  // namespace caffe
