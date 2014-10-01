@@ -21,9 +21,9 @@ class EuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   EuclideanLossLayerTest()
-      : blob_bottom_data_(new Blob<Dtype>(10, 5, 1, 1)),
-        blob_bottom_label_(new Blob<Dtype>(10, 5, 1, 1)),
-        blob_top_loss_(new Blob<Dtype>()) {
+    : blob_bottom_data_(new Blob<Dtype>(10, 5, 1, 1)),
+      blob_bottom_label_(new Blob<Dtype>(10, 5, 1, 1)),
+      blob_top_loss_(new Blob<Dtype>()) {
     // fill the values
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
@@ -46,7 +46,7 @@ class EuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     EuclideanLossLayer<Dtype> layer_weight_1(layer_param);
     layer_weight_1.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     const Dtype loss_weight_1 =
-        layer_weight_1.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+      layer_weight_1.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
     // Get the loss again with a different objective weight; check that it is
     // scaled appropriately.
@@ -55,7 +55,7 @@ class EuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     EuclideanLossLayer<Dtype> layer_weight_2(layer_param);
     layer_weight_2.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
     const Dtype loss_weight_2 =
-        layer_weight_2.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+      layer_weight_2.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     const Dtype kErrorMargin = 1e-5;
     EXPECT_NEAR(loss_weight_1 * kLossWeight, loss_weight_2, kErrorMargin);
     // Make sure the loss is non-trivial.
@@ -63,9 +63,9 @@ class EuclideanLossLayerTest : public MultiDeviceTest<TypeParam> {
     EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
   }
 
-  Blob<Dtype>* const blob_bottom_data_;
-  Blob<Dtype>* const blob_bottom_label_;
-  Blob<Dtype>* const blob_top_loss_;
+  Blob<Dtype> *const blob_bottom_data_;
+  Blob<Dtype> *const blob_bottom_label_;
+  Blob<Dtype> *const blob_top_loss_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -85,7 +85,7 @@ TYPED_TEST(EuclideanLossLayerTest, TestGradient) {
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 }  // namespace caffe

@@ -24,7 +24,7 @@
 
 using namespace caffe;  // NOLINT(build/namespaces)
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   Caffe::set_mode(Caffe::GPU);
   Caffe::set_phase(Caffe::TEST);
 
@@ -58,19 +58,19 @@ int main(int argc, char** argv) {
     NetParameter output_net_param;
     caffe_net->ToProto(&output_net_param, true);
     WriteProtoToBinaryFile(output_net_param,
-        output_prefix + output_net_param.name());
+                           output_prefix + output_net_param.name());
   }
   // Now, let's dump all the layers
 
-  const vector<string>& blob_names = caffe_net->blob_names();
-  const vector<shared_ptr<Blob<float> > >& blobs = caffe_net->blobs();
+  const vector<string> &blob_names = caffe_net->blob_names();
+  const vector<shared_ptr<Blob<float> > > &blobs = caffe_net->blobs();
   for (int blobid = 0; blobid < caffe_net->blobs().size(); ++blobid) {
     // Serialize blob
     LOG(ERROR) << "Dumping " << blob_names[blobid];
     BlobProto output_blob_proto;
     blobs[blobid]->ToProto(&output_blob_proto);
     WriteProtoToBinaryFile(output_blob_proto,
-        output_prefix + blob_names[blobid]);
+                           output_prefix + blob_names[blobid]);
   }
 
   return 0;

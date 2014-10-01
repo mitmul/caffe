@@ -19,9 +19,9 @@ template <typename Dtype>
 class DummyDataLayerTest : public ::testing::Test {
  protected:
   DummyDataLayerTest()
-      : blob_top_a_(new Blob<Dtype>()),
-        blob_top_b_(new Blob<Dtype>()),
-        blob_top_c_(new Blob<Dtype>()) {}
+    : blob_top_a_(new Blob<Dtype>()),
+      blob_top_b_(new Blob<Dtype>()),
+      blob_top_c_(new Blob<Dtype>()) {}
 
   virtual void SetUp() {
     blob_bottom_vec_.clear();
@@ -37,9 +37,9 @@ class DummyDataLayerTest : public ::testing::Test {
     delete blob_top_c_;
   }
 
-  Blob<Dtype>* const blob_top_a_;
-  Blob<Dtype>* const blob_top_b_;
-  Blob<Dtype>* const blob_top_c_;
+  Blob<Dtype> *const blob_top_a_;
+  Blob<Dtype> *const blob_top_b_;
+  Blob<Dtype> *const blob_top_c_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -49,7 +49,7 @@ TYPED_TEST_CASE(DummyDataLayerTest, TestDtypes);
 TYPED_TEST(DummyDataLayerTest, TestOneTopConstant) {
   Caffe::set_mode(Caffe::CPU);
   LayerParameter param;
-  DummyDataParameter* dummy_data_param = param.mutable_dummy_data_param();
+  DummyDataParameter *dummy_data_param = param.mutable_dummy_data_param();
   dummy_data_param->add_num(5);
   dummy_data_param->add_channels(3);
   dummy_data_param->add_height(2);
@@ -79,7 +79,7 @@ TYPED_TEST(DummyDataLayerTest, TestOneTopConstant) {
 TYPED_TEST(DummyDataLayerTest, TestTwoTopConstant) {
   Caffe::set_mode(Caffe::CPU);
   LayerParameter param;
-  DummyDataParameter* dummy_data_param = param.mutable_dummy_data_param();
+  DummyDataParameter *dummy_data_param = param.mutable_dummy_data_param();
   dummy_data_param->add_num(5);
   dummy_data_param->add_channels(3);
   dummy_data_param->add_height(2);
@@ -88,7 +88,7 @@ TYPED_TEST(DummyDataLayerTest, TestTwoTopConstant) {
   // Don't explicitly set number of channels or height for 2nd top blob; should
   // default to first channels and height (as we check later).
   dummy_data_param->add_height(1);
-  FillerParameter* data_filler_param = dummy_data_param->add_data_filler();
+  FillerParameter *data_filler_param = dummy_data_param->add_data_filler();
   data_filler_param->set_value(7);
   this->blob_top_vec_.resize(2);
   DummyDataLayer<TypeParam> layer(param);
@@ -118,20 +118,20 @@ TYPED_TEST(DummyDataLayerTest, TestTwoTopConstant) {
 TYPED_TEST(DummyDataLayerTest, TestThreeTopConstantGaussianConstant) {
   Caffe::set_mode(Caffe::CPU);
   LayerParameter param;
-  DummyDataParameter* dummy_data_param = param.mutable_dummy_data_param();
+  DummyDataParameter *dummy_data_param = param.mutable_dummy_data_param();
   dummy_data_param->add_num(5);
   dummy_data_param->add_channels(3);
   dummy_data_param->add_height(2);
   dummy_data_param->add_width(4);
-  FillerParameter* data_filler_param_a = dummy_data_param->add_data_filler();
+  FillerParameter *data_filler_param_a = dummy_data_param->add_data_filler();
   data_filler_param_a->set_value(7);
-  FillerParameter* data_filler_param_b = dummy_data_param->add_data_filler();
+  FillerParameter *data_filler_param_b = dummy_data_param->add_data_filler();
   data_filler_param_b->set_type("gaussian");
   TypeParam gaussian_mean = 3.0;
   TypeParam gaussian_std = 0.01;
   data_filler_param_b->set_mean(gaussian_mean);
   data_filler_param_b->set_std(gaussian_std);
-  FillerParameter* data_filler_param_c = dummy_data_param->add_data_filler();
+  FillerParameter *data_filler_param_c = dummy_data_param->add_data_filler();
   data_filler_param_c->set_value(9);
   DummyDataLayer<TypeParam> layer(param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
@@ -173,7 +173,7 @@ TYPED_TEST(DummyDataLayerTest, TestThreeTopConstantGaussianConstant) {
   }
   const TypeParam first_gaussian_sample = this->blob_top_b_->cpu_data()[0];
   const TypeParam last_gaussian_sample =
-      this->blob_top_b_->cpu_data()[this->blob_top_b_->count() - 1];
+    this->blob_top_b_->cpu_data()[this->blob_top_b_->count() - 1];
   for (int i = 0; i < this->blob_top_c_->count(); ++i) {
     EXPECT_EQ(9, this->blob_top_c_->cpu_data()[i]);
   }
@@ -190,7 +190,7 @@ TYPED_TEST(DummyDataLayerTest, TestThreeTopConstantGaussianConstant) {
   }
   EXPECT_NE(first_gaussian_sample, this->blob_top_b_->cpu_data()[0]);
   EXPECT_NE(last_gaussian_sample,
-      this->blob_top_b_->cpu_data()[this->blob_top_b_->count() - 1]);
+            this->blob_top_b_->cpu_data()[this->blob_top_b_->count() - 1]);
   for (int i = 0; i < this->blob_top_c_->count(); ++i) {
     EXPECT_EQ(9, this->blob_top_c_->cpu_data()[i]);
   }

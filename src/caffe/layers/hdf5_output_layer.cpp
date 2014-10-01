@@ -12,9 +12,9 @@
 namespace caffe {
 
 template <typename Dtype>
-HDF5OutputLayer<Dtype>::HDF5OutputLayer(const LayerParameter& param)
-    : Layer<Dtype>(param),
-      file_name_(param.hdf5_output_param().file_name()) {
+HDF5OutputLayer<Dtype>::HDF5OutputLayer(const LayerParameter &param)
+  : Layer<Dtype>(param),
+    file_name_(param.hdf5_output_param().file_name()) {
   /* create a HDF5 file */
   file_id_ = H5Fcreate(file_name_.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
                        H5P_DEFAULT);
@@ -39,29 +39,29 @@ void HDF5OutputLayer<Dtype>::SaveBlobs() {
 }
 
 template <typename Dtype>
-void HDF5OutputLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void HDF5OutputLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
+    const vector<Blob<Dtype>*> &top) {
   CHECK_GE(bottom.size(), 2);
   CHECK_EQ(bottom[0]->num(), bottom[1]->num());
   data_blob_.Reshape(bottom[0]->num(), bottom[0]->channels(),
                      bottom[0]->height(), bottom[0]->width());
   label_blob_.Reshape(bottom[1]->num(), bottom[1]->channels(),
-                     bottom[1]->height(), bottom[1]->width());
+                      bottom[1]->height(), bottom[1]->width());
   const int data_datum_dim = bottom[0]->count() / bottom[0]->num();
   const int label_datum_dim = bottom[1]->count() / bottom[1]->num();
 
   for (int i = 0; i < bottom[0]->num(); ++i) {
     caffe_copy(data_datum_dim, &bottom[0]->cpu_data()[i * data_datum_dim],
-        &data_blob_.mutable_cpu_data()[i * data_datum_dim]);
+               &data_blob_.mutable_cpu_data()[i * data_datum_dim]);
     caffe_copy(label_datum_dim, &bottom[1]->cpu_data()[i * label_datum_dim],
-        &label_blob_.mutable_cpu_data()[i * label_datum_dim]);
+               &label_blob_.mutable_cpu_data()[i * label_datum_dim]);
   }
   SaveBlobs();
 }
 
 template <typename Dtype>
-void HDF5OutputLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
-      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
+void HDF5OutputLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {
   return;
 }
 

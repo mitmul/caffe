@@ -7,15 +7,15 @@
 namespace caffe {
 
 template <typename Dtype>
-BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter& param)
-    : Layer<Dtype>(param),
-      transform_param_(param.transform_param()),
-      data_transformer_(transform_param_) {
+BaseDataLayer<Dtype>::BaseDataLayer(const LayerParameter &param)
+  : Layer<Dtype>(param),
+    transform_param_(param.transform_param()),
+    data_transformer_(transform_param_) {
 }
 
 template <typename Dtype>
-void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                                      const vector<Blob<Dtype>*> &top) {
   if (top.size() == 1) {
     output_labels_ = false;
   } else {
@@ -32,7 +32,7 @@ void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   }
   // check if we want to have mean
   if (transform_param_.has_mean_file()) {
-    const string& mean_file = transform_param_.mean_file();
+    const string &mean_file = transform_param_.mean_file();
     LOG(INFO) << "Loading mean file from" << mean_file;
     BlobProto blob_proto;
     ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
@@ -51,7 +51,7 @@ void BaseDataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void BasePrefetchingDataLayer<Dtype>::LayerSetUp(
-    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+  const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
   BaseDataLayer<Dtype>::LayerSetUp(bottom, top);
   // Now, start the prefetch thread. Before calling prefetch, we make two
   // cpu_data calls so that the prefetch thread does not accidentally make
@@ -80,7 +80,7 @@ void BasePrefetchingDataLayer<Dtype>::JoinPrefetchThread() {
 
 template <typename Dtype>
 void BasePrefetchingDataLayer<Dtype>::Forward_cpu(
-    const vector<Blob<Dtype>*>& bottom, const vector<Blob<Dtype>*>& top) {
+  const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
   // First, join the thread
   JoinPrefetchThread();
   // Copy the data

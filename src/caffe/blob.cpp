@@ -7,7 +7,7 @@ namespace caffe {
 
 template <typename Dtype>
 void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
-    const int width) {
+                          const int width) {
   CHECK_GE(num, 0);
   CHECK_GE(channels, 0);
   CHECK_GE(height, 0);
@@ -25,80 +25,80 @@ void Blob<Dtype>::Reshape(const int num, const int channels, const int height,
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
+void Blob<Dtype>::ReshapeLike(const Blob<Dtype> &other) {
   Reshape(other.num(), other.channels(), other.height(), other.width());
 }
 
 template <typename Dtype>
 Blob<Dtype>::Blob(const int num, const int channels, const int height,
-    const int width)
-  // capacity_ must be initialized before calling Reshape
+                  const int width)
+// capacity_ must be initialized before calling Reshape
   : capacity_(0) {
   Reshape(num, channels, height, width);
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_data() const {
+const Dtype *Blob<Dtype>::cpu_data() const {
   CHECK(data_);
-  return (const Dtype*)data_->cpu_data();
+  return (const Dtype *)data_->cpu_data();
 }
 
 template <typename Dtype>
-void Blob<Dtype>::set_cpu_data(Dtype* data) {
+void Blob<Dtype>::set_cpu_data(Dtype *data) {
   CHECK(data);
   data_->set_cpu_data(data);
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_data() const {
+const Dtype *Blob<Dtype>::gpu_data() const {
   CHECK(data_);
-  return (const Dtype*)data_->gpu_data();
+  return (const Dtype *)data_->gpu_data();
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::cpu_diff() const {
+const Dtype *Blob<Dtype>::cpu_diff() const {
   CHECK(diff_);
-  return (const Dtype*)diff_->cpu_data();
+  return (const Dtype *)diff_->cpu_data();
 }
 
 template <typename Dtype>
-const Dtype* Blob<Dtype>::gpu_diff() const {
+const Dtype *Blob<Dtype>::gpu_diff() const {
   CHECK(diff_);
-  return (const Dtype*)diff_->gpu_data();
+  return (const Dtype *)diff_->gpu_data();
 }
 
 template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_cpu_data() {
+Dtype *Blob<Dtype>::mutable_cpu_data() {
   CHECK(data_);
-  return static_cast<Dtype*>(data_->mutable_cpu_data());
+  return static_cast<Dtype *>(data_->mutable_cpu_data());
 }
 
 template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_gpu_data() {
+Dtype *Blob<Dtype>::mutable_gpu_data() {
   CHECK(data_);
-  return static_cast<Dtype*>(data_->mutable_gpu_data());
+  return static_cast<Dtype *>(data_->mutable_gpu_data());
 }
 
 template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_cpu_diff() {
+Dtype *Blob<Dtype>::mutable_cpu_diff() {
   CHECK(diff_);
-  return static_cast<Dtype*>(diff_->mutable_cpu_data());
+  return static_cast<Dtype *>(diff_->mutable_cpu_data());
 }
 
 template <typename Dtype>
-Dtype* Blob<Dtype>::mutable_gpu_diff() {
+Dtype *Blob<Dtype>::mutable_gpu_diff() {
   CHECK(diff_);
-  return static_cast<Dtype*>(diff_->mutable_gpu_data());
+  return static_cast<Dtype *>(diff_->mutable_gpu_data());
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ShareData(const Blob& other) {
+void Blob<Dtype>::ShareData(const Blob &other) {
   CHECK_EQ(count_, other.count());
   data_ = other.data();
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ShareDiff(const Blob& other) {
+void Blob<Dtype>::ShareDiff(const Blob &other) {
   CHECK_EQ(count_, other.count());
   diff_ = other.diff();
 }
@@ -116,16 +116,16 @@ void Blob<Dtype>::Update() {
   case SyncedMemory::HEAD_AT_CPU:
     // perform computation on CPU
     caffe_axpy<Dtype>(count_, Dtype(-1),
-        static_cast<const Dtype*>(diff_->cpu_data()),
-        static_cast<Dtype*>(data_->mutable_cpu_data()));
+                      static_cast<const Dtype *>(diff_->cpu_data()),
+                      static_cast<Dtype *>(data_->mutable_cpu_data()));
     break;
   case SyncedMemory::HEAD_AT_GPU:
   case SyncedMemory::SYNCED:
 #ifndef CPU_ONLY
     // perform computation on GPU
     caffe_gpu_axpy<Dtype>(count_, Dtype(-1),
-        static_cast<const Dtype*>(diff_->gpu_data()),
-        static_cast<Dtype*>(data_->mutable_gpu_data()));
+                          static_cast<const Dtype *>(diff_->gpu_data()),
+                          static_cast<Dtype *>(data_->mutable_gpu_data()));
 #else
     NO_GPU;
 #endif
@@ -160,7 +160,7 @@ Dtype Blob<Dtype>::asum_data() const {
     return asum;
   }
 #else
-    NO_GPU;
+  NO_GPU;
 #endif
   case SyncedMemory::UNINITIALIZED:
     return 0;
@@ -195,7 +195,7 @@ Dtype Blob<Dtype>::asum_diff() const {
     return asum;
   }
 #else
-    NO_GPU;
+  NO_GPU;
 #endif
   case SyncedMemory::UNINITIALIZED:
     return 0;
@@ -206,7 +206,7 @@ Dtype Blob<Dtype>::asum_diff() const {
 }
 
 template <typename Dtype>
-void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
+void Blob<Dtype>::CopyFrom(const Blob &source, bool copy_diff, bool reshape) {
   if (num_ != source.num() || channels_ != source.channels() ||
       height_ != source.height() || width_ != source.width()) {
     if (reshape) {
@@ -219,19 +219,19 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   case Caffe::GPU:
     if (copy_diff) {
       caffe_copy(count_, source.gpu_diff(),
-          static_cast<Dtype*>(diff_->mutable_gpu_data()));
+                 static_cast<Dtype *>(diff_->mutable_gpu_data()));
     } else {
       caffe_copy(count_, source.gpu_data(),
-          static_cast<Dtype*>(data_->mutable_gpu_data()));
+                 static_cast<Dtype *>(data_->mutable_gpu_data()));
     }
     break;
   case Caffe::CPU:
     if (copy_diff) {
       caffe_copy(count_, source.cpu_diff(),
-          static_cast<Dtype*>(diff_->mutable_cpu_data()));
+                 static_cast<Dtype *>(diff_->mutable_cpu_data()));
     } else {
       caffe_copy(count_, source.cpu_data(),
-          static_cast<Dtype*>(data_->mutable_cpu_data()));
+                 static_cast<Dtype *>(data_->mutable_cpu_data()));
     }
     break;
   default:
@@ -240,15 +240,15 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
 }
 
 template <typename Dtype>
-void Blob<Dtype>::FromProto(const BlobProto& proto) {
+void Blob<Dtype>::FromProto(const BlobProto &proto) {
   Reshape(proto.num(), proto.channels(), proto.height(), proto.width());
   // copy data
-  Dtype* data_vec = mutable_cpu_data();
+  Dtype *data_vec = mutable_cpu_data();
   for (int i = 0; i < count_; ++i) {
     data_vec[i] = proto.data(i);
   }
   if (proto.diff_size() > 0) {
-    Dtype* diff_vec = mutable_cpu_diff();
+    Dtype *diff_vec = mutable_cpu_diff();
     for (int i = 0; i < count_; ++i) {
       diff_vec[i] = proto.diff(i);
     }
@@ -256,19 +256,19 @@ void Blob<Dtype>::FromProto(const BlobProto& proto) {
 }
 
 template <typename Dtype>
-void Blob<Dtype>::ToProto(BlobProto* proto, bool write_diff) const {
+void Blob<Dtype>::ToProto(BlobProto *proto, bool write_diff) const {
   proto->set_num(num_);
   proto->set_channels(channels_);
   proto->set_height(height_);
   proto->set_width(width_);
   proto->clear_data();
   proto->clear_diff();
-  const Dtype* data_vec = cpu_data();
+  const Dtype *data_vec = cpu_data();
   for (int i = 0; i < count_; ++i) {
     proto->add_data(data_vec[i]);
   }
   if (write_diff) {
-    const Dtype* diff_vec = cpu_diff();
+    const Dtype *diff_vec = cpu_diff();
     for (int i = 0; i < count_; ++i) {
       proto->add_diff(diff_vec[i]);
     }

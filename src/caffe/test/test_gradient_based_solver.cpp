@@ -23,7 +23,7 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   GradientBasedSolverTest() :
-      seed_(1701), num_(5), channels_(3), height_(10), width_(10) {}
+    seed_(1701), num_(5), channels_(3), height_(10), width_(10) {}
 
   shared_ptr<SGDSolver<Dtype> > solver_;
   int seed_;
@@ -31,9 +31,9 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   Dtype delta_;  // Stability constant for AdaGrad.
 
   virtual SolverParameter_SolverType solver_type() = 0;
-  virtual void InitSolver(const SolverParameter& param) = 0;
+  virtual void InitSolver(const SolverParameter &param) = 0;
 
-  virtual void InitSolverFromProtoString(const string& proto) {
+  virtual void InitSolverFromProtoString(const string &proto) {
     SolverParameter param;
     CHECK(google::protobuf::TextFormat::ParseFromString(proto, &param));
     // Disable saving a final snapshot so the tests don't pollute the user's
@@ -41,72 +41,72 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
     param.set_snapshot_after_train(false);
     // Set the solver_mode according to current Caffe::mode.
     switch (Caffe::mode()) {
-      case Caffe::CPU:
-        param.set_solver_mode(SolverParameter_SolverMode_CPU);
-        break;
-      case Caffe::GPU:
-        param.set_solver_mode(SolverParameter_SolverMode_GPU);
-        break;
-      default:
-        LOG(FATAL) << "Unknown Caffe mode: " << Caffe::mode();
+    case Caffe::CPU:
+      param.set_solver_mode(SolverParameter_SolverMode_CPU);
+      break;
+    case Caffe::GPU:
+      param.set_solver_mode(SolverParameter_SolverMode_GPU);
+      break;
+    default:
+      LOG(FATAL) << "Unknown Caffe mode: " << Caffe::mode();
     }
     InitSolver(param);
     delta_ = (solver_type() == SolverParameter_SolverType_ADAGRAD) ?
-         param.delta() : 0;
+             param.delta() : 0;
   }
 
   void RunLeastSquaresSolver(const Dtype learning_rate,
-      const Dtype weight_decay, const Dtype momentum, const int num_iters) {
+                             const Dtype weight_decay, const Dtype momentum, const int num_iters) {
     ostringstream proto;
     proto <<
-       "max_iter: " << num_iters << " "
-       "base_lr: " << learning_rate << " "
-       "lr_policy: 'fixed' "
-       "net_param { "
-       "  name: 'TestNetwork' "
-       "  layers: { "
-       "    name: 'data' "
-       "    type: DUMMY_DATA "
-       "    dummy_data_param { "
-       "      num: " << num_ << " "
-       "      channels: " << channels_ << " "
-       "      height: " << height_ << " "
-       "      width: " << width_ << " "
-       "      channels: 1 "
-       "      height: 1 "
-       "      width: 1 "
-       "      data_filler { "
-       "        type: 'gaussian' "
-       "        std: 1.0 "
-       "      } "
-       "    } "
-       "    top: 'data' "
-       "    top: 'targets' "
-       "  } "
-       "  layers: { "
-       "    name: 'innerprod' "
-       "    type: INNER_PRODUCT "
-       "    inner_product_param { "
-       "      num_output: 1 "
-       "      weight_filler { "
-       "        type: 'gaussian' "
-       "        std: 1.0 "
-       "      } "
-       "      bias_filler { "
-       "        type: 'gaussian' "
-       "        std: 1.0 "
-       "      } "
-       "    } "
-       "    bottom: 'data' "
-       "    top: 'innerprod' "
-       "  } "
-       "  layers: { "
-       "    name: 'loss' "
-       "    type: EUCLIDEAN_LOSS "
-       "    bottom: 'innerprod' "
-       "    bottom: 'targets' "
-       "  } "
-       "} ";
+          "max_iter: " << num_iters << " "
+          "base_lr: " << learning_rate << " "
+          "lr_policy: 'fixed' "
+          "net_param { "
+          "  name: 'TestNetwork' "
+          "  layers: { "
+          "    name: 'data' "
+          "    type: DUMMY_DATA "
+          "    dummy_data_param { "
+          "      num: " << num_ << " "
+          "      channels: " << channels_ << " "
+          "      height: " << height_ << " "
+          "      width: " << width_ << " "
+          "      channels: 1 "
+          "      height: 1 "
+          "      width: 1 "
+          "      data_filler { "
+          "        type: 'gaussian' "
+          "        std: 1.0 "
+          "      } "
+          "    } "
+          "    top: 'data' "
+          "    top: 'targets' "
+          "  } "
+          "  layers: { "
+          "    name: 'innerprod' "
+          "    type: INNER_PRODUCT "
+          "    inner_product_param { "
+          "      num_output: 1 "
+          "      weight_filler { "
+          "        type: 'gaussian' "
+          "        std: 1.0 "
+          "      } "
+          "      bias_filler { "
+          "        type: 'gaussian' "
+          "        std: 1.0 "
+          "      } "
+          "    } "
+          "    bottom: 'data' "
+          "    top: 'innerprod' "
+          "  } "
+          "  layers: { "
+          "    name: 'loss' "
+          "    type: EUCLIDEAN_LOSS "
+          "    bottom: 'innerprod' "
+          "    bottom: 'targets' "
+          "  } "
+          "} ";
     if (weight_decay != 0) {
       proto << "weight_decay: " << weight_decay << " ";
     }
@@ -123,27 +123,27 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   // updated_params will store the updated weight and bias results,
   // using the blobs' diffs to hold the update values themselves.
   void ComputeLeastSquaresUpdate(const Dtype learning_rate,
-      const Dtype weight_decay, const Dtype momentum,
-      vector<shared_ptr<Blob<Dtype> > >* updated_params) {
+                                 const Dtype weight_decay, const Dtype momentum,
+                                 vector<shared_ptr<Blob<Dtype> > > *updated_params) {
     const int N = num_;
     const int D = channels_ * height_ * width_;
 
     // Run a forward pass, and manually compute the update values from the
     // result.
-    Net<Dtype>& net = *this->solver_->net();
+    Net<Dtype> &net = *this->solver_->net();
     vector<Blob<Dtype>*> empty_bottom_vec;
     net.Forward(empty_bottom_vec);
     ASSERT_TRUE(net.has_blob("data"));
-    const Blob<Dtype>& data = *net.blob_by_name("data");
+    const Blob<Dtype> &data = *net.blob_by_name("data");
     ASSERT_TRUE(net.has_blob("targets"));
-    const Blob<Dtype>& targets = *net.blob_by_name("targets");
+    const Blob<Dtype> &targets = *net.blob_by_name("targets");
     ASSERT_TRUE(net.has_layer("innerprod"));
-    const vector<shared_ptr<Blob<Dtype> > >& param_blobs =
-        net.layer_by_name("innerprod")->blobs();
+    const vector<shared_ptr<Blob<Dtype> > > &param_blobs =
+      net.layer_by_name("innerprod")->blobs();
     const int num_param_blobs = 2;
     ASSERT_EQ(num_param_blobs, param_blobs.size());
-    const Blob<Dtype>& weights = *param_blobs[0];
-    const Blob<Dtype>& bias = *param_blobs[1];
+    const Blob<Dtype> &weights = *param_blobs[0];
+    const Blob<Dtype> &bias = *param_blobs[1];
     ASSERT_EQ(D * N, data.count());
     ASSERT_EQ(N, targets.count());
     ASSERT_EQ(D, weights.count());
@@ -154,9 +154,9 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
     for (int i = 0; i < num_param_blobs; ++i) {
       (*updated_params)[i].reset(new Blob<Dtype>());
     }
-    Blob<Dtype>& updated_weights = *(*updated_params)[0];
+    Blob<Dtype> &updated_weights = *(*updated_params)[0];
     updated_weights.ReshapeLike(weights);
-    Blob<Dtype>& updated_bias = *(*updated_params)[1];
+    Blob<Dtype> &updated_bias = *(*updated_params)[1];
     updated_bias.ReshapeLike(bias);
 
     for (int i = 0; i <= D; ++i) {
@@ -186,13 +186,13 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
       grad /= N;
       // Add the weight decay to the gradient.
       grad += weight_decay *
-          ((i == D) ? bias.cpu_data()[0] : weights.cpu_data()[i]);
+              ((i == D) ? bias.cpu_data()[0] : weights.cpu_data()[i]);
       // Finally, compute update.
-      const vector<shared_ptr<Blob<Dtype> > >& history = solver_->history();
+      const vector<shared_ptr<Blob<Dtype> > > &history = solver_->history();
       ASSERT_EQ(2, history.size());  // 1 blob for weights, 1 for bias
       Dtype update_value = learning_rate * grad;
       const Dtype history_value = (i == D) ?
-            history[1]->cpu_data()[0] : history[0]->cpu_data()[i];
+                                  history[1]->cpu_data()[0] : history[0]->cpu_data()[i];
       const Dtype temp = momentum * history_value;
       switch (solver_type()) {
       case SolverParameter_SolverType_SGD:
@@ -215,24 +215,24 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
       } else {
         updated_weights.mutable_cpu_diff()[i] = update_value;
         updated_weights.mutable_cpu_data()[i] =
-            weights.cpu_data()[i] - update_value;
+          weights.cpu_data()[i] - update_value;
       }
     }
   }
 
   void CheckLeastSquaresUpdate(
-      const vector<shared_ptr<Blob<Dtype> > >& updated_params) {
+    const vector<shared_ptr<Blob<Dtype> > > &updated_params) {
     const int D = channels_ * height_ * width_;
 
-    const Blob<Dtype>& updated_weights = *updated_params[0];
-    const Blob<Dtype>& updated_bias = *updated_params[1];
+    const Blob<Dtype> &updated_weights = *updated_params[0];
+    const Blob<Dtype> &updated_bias = *updated_params[1];
 
-    Net<Dtype>& net = *this->solver_->net();
+    Net<Dtype> &net = *this->solver_->net();
     ASSERT_TRUE(net.has_layer("innerprod"));
-    const vector<shared_ptr<Blob<Dtype> > >& param_blobs =
-        net.layer_by_name("innerprod")->blobs();
+    const vector<shared_ptr<Blob<Dtype> > > &param_blobs =
+      net.layer_by_name("innerprod")->blobs();
     ASSERT_EQ(2, param_blobs.size());
-    const Blob<Dtype>& solver_updated_weights = *param_blobs[0];
+    const Blob<Dtype> &solver_updated_weights = *param_blobs[0];
     ASSERT_EQ(D, solver_updated_weights.count());
     const double kPrecision = 1e-2;
     const double kMinPrecision = 1e-7;
@@ -240,32 +240,32 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
       const Dtype expected_updated_weight = updated_weights.cpu_data()[i];
       const Dtype solver_updated_weight = solver_updated_weights.cpu_data()[i];
       const Dtype error_margin = std::max(kMinPrecision, kPrecision *
-          std::min(fabs(expected_updated_weight), fabs(solver_updated_weight)));
+                                          std::min(fabs(expected_updated_weight), fabs(solver_updated_weight)));
       EXPECT_NEAR(expected_updated_weight, solver_updated_weight, error_margin);
     }
-    const Blob<Dtype>& solver_updated_bias_blob = *param_blobs[1];
+    const Blob<Dtype> &solver_updated_bias_blob = *param_blobs[1];
     ASSERT_EQ(1, solver_updated_bias_blob.count());
     const Dtype expected_updated_bias = updated_bias.cpu_data()[0];
     const Dtype solver_updated_bias = solver_updated_bias_blob.cpu_data()[0];
     const Dtype error_margin = std::max(kMinPrecision, kPrecision *
-          std::min(fabs(expected_updated_bias), fabs(solver_updated_bias)));
+                                        std::min(fabs(expected_updated_bias), fabs(solver_updated_bias)));
     EXPECT_NEAR(expected_updated_bias, solver_updated_bias, error_margin);
 
     // Check the solver's history -- should contain the previous update value.
     if (solver_type() == SolverParameter_SolverType_SGD) {
-      const vector<shared_ptr<Blob<Dtype> > >& history = solver_->history();
+      const vector<shared_ptr<Blob<Dtype> > > &history = solver_->history();
       ASSERT_EQ(2, history.size());
       for (int i = 0; i < D; ++i) {
         const Dtype expected_history = updated_weights.cpu_diff()[i];
         const Dtype solver_history = history[0]->cpu_data()[i];
         const Dtype error_margin_hist = std::max(kMinPrecision, kPrecision *
-            std::min(fabs(expected_history), fabs(solver_history)));
+                                        std::min(fabs(expected_history), fabs(solver_history)));
         EXPECT_NEAR(expected_history, solver_history, error_margin_hist);
       }
       const Dtype expected_history = updated_bias.cpu_diff()[0];
       const Dtype solver_history = history[1]->cpu_data()[0];
       const Dtype error_margin_hist = std::max(kMinPrecision, kPrecision *
-          std::min(fabs(expected_history), fabs(solver_history)));
+                                      std::min(fabs(expected_history), fabs(solver_history)));
       EXPECT_NEAR(expected_history, solver_history, error_margin_hist);
     }
   }
@@ -286,8 +286,8 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   // from the Kth update, we compute the (K+1)th update and check that it
   // matches the solver's (K+1)th update.
   void TestLeastSquaresUpdate(const Dtype learning_rate = 1.0,
-      const Dtype weight_decay = 0.0, const Dtype momentum = 0.0,
-      const int iter_to_check = 0) {
+                              const Dtype weight_decay = 0.0, const Dtype momentum = 0.0,
+                              const int iter_to_check = 0) {
     // Initialize the solver and run K (= iter_to_check) solver iterations.
     RunLeastSquaresSolver(learning_rate, weight_decay, momentum, iter_to_check);
 
@@ -311,7 +311,7 @@ class SGDSolverTest : public GradientBasedSolverTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  virtual void InitSolver(const SolverParameter& param) {
+  virtual void InitSolver(const SolverParameter &param) {
     this->solver_.reset(new SGDSolver<Dtype>(param));
   }
 
@@ -379,7 +379,7 @@ class AdaGradSolverTest : public GradientBasedSolverTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  virtual void InitSolver(const SolverParameter& param) {
+  virtual void InitSolver(const SolverParameter &param) {
     this->solver_.reset(new AdaGradSolver<Dtype>(param));
   }
   virtual SolverParameter_SolverType solver_type() {
@@ -424,7 +424,7 @@ class NesterovSolverTest : public GradientBasedSolverTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
 
  protected:
-  virtual void InitSolver(const SolverParameter& param) {
+  virtual void InitSolver(const SolverParameter &param) {
     this->solver_.reset(new NesterovSolver<Dtype>(param));
   }
   virtual SolverParameter_SolverType solver_type() {

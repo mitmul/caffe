@@ -8,8 +8,8 @@
 namespace caffe {
 
 template <typename Dtype>
-void CuDNNReLULayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void CuDNNReLULayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                                       const vector<Blob<Dtype>*> &top) {
   ReLULayer<Dtype>::LayerSetUp(bottom, top);
   // initialize cuDNN
   CUDNN_CHECK(cudnnCreate(&handle_));
@@ -18,8 +18,8 @@ void CuDNNReLULayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
 }
 
 template <typename Dtype>
-void CuDNNReLULayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void CuDNNReLULayer<Dtype>::Reshape(const vector<Blob<Dtype>*> &bottom,
+                                    const vector<Blob<Dtype>*> &top) {
   ReLULayer<Dtype>::Reshape(bottom, top);
   const int N = bottom[0]->num();
   const int K = bottom[0]->channels();

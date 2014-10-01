@@ -30,14 +30,14 @@ using std::pair;
 using std::string;
 
 DEFINE_bool(gray, false,
-    "When this option is on, treat images as grayscale ones");
+            "When this option is on, treat images as grayscale ones");
 DEFINE_bool(shuffle, false,
-    "Randomly shuffle the order of images and their labels");
+            "Randomly shuffle the order of images and their labels");
 DEFINE_string(backend, "lmdb", "The backend for storing the result");
 DEFINE_int32(resize_width, 0, "Width images are resized to");
 DEFINE_int32(resize_height, 0, "Height images are resized to");
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ::google::InitGoogleLogging(argv[0]);
 
 #ifndef GFLAGS_GFLAGS_H_
@@ -45,11 +45,11 @@ int main(int argc, char** argv) {
 #endif
 
   gflags::SetUsageMessage("Convert a set of images to the leveldb/lmdb\n"
-        "format used as input for Caffe.\n"
-        "Usage:\n"
-        "    convert_imageset [FLAGS] ROOTFOLDER/ LISTFILE DB_NAME\n"
-        "The ImageNet dataset for the training demo is at\n"
-        "    http://www.image-net.org/download-images\n");
+                          "format used as input for Caffe.\n"
+                          "Usage:\n"
+                          "    convert_imageset [FLAGS] ROOTFOLDER/ LISTFILE DB_NAME\n"
+                          "The ImageNet dataset for the training demo is at\n"
+                          "    http://www.image-net.org/download-images\n");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   if (argc != 4) {
@@ -72,8 +72,8 @@ int main(int argc, char** argv) {
   }
   LOG(INFO) << "A total of " << lines.size() << " images.";
 
-  const string& db_backend = FLAGS_backend;
-  const char* db_path = argv[3];
+  const string &db_backend = FLAGS_backend;
+  const char *db_path = argv[3];
 
   int resize_height = std::max<int>(0, FLAGS_resize_height);
   int resize_width = std::max<int>(0, FLAGS_resize_width);
@@ -85,20 +85,20 @@ int main(int argc, char** argv) {
   MDB_val mdb_key, mdb_data;
   MDB_txn *mdb_txn;
   // leveldb
-  leveldb::DB* db;
+  leveldb::DB *db;
   leveldb::Options options;
   options.error_if_exists = true;
   options.create_if_missing = true;
   options.write_buffer_size = 268435456;
-  leveldb::WriteBatch* batch = NULL;
+  leveldb::WriteBatch *batch = NULL;
 
   // Open db
   if (db_backend == "leveldb") {  // leveldb
     LOG(INFO) << "Opening leveldb " << db_path;
     leveldb::Status status = leveldb::DB::Open(
-        options, db_path, &db);
+                               options, db_path, &db);
     CHECK(status.ok()) << "Failed to open leveldb " << db_path
-        << ". Is it already existing?";
+                       << ". Is it already existing?";
     batch = new leveldb::WriteBatch();
   } else if (db_backend == "lmdb") {  // lmdb
     LOG(INFO) << "Opening lmdb " << db_path;
@@ -128,20 +128,20 @@ int main(int argc, char** argv) {
 
   for (int line_id = 0; line_id < lines.size(); ++line_id) {
     if (!ReadImageToDatum(root_folder + lines[line_id].first,
-        lines[line_id].second, resize_height, resize_width, is_color, &datum)) {
+                          lines[line_id].second, resize_height, resize_width, is_color, &datum)) {
       continue;
     }
     if (!data_size_initialized) {
       data_size = datum.channels() * datum.height() * datum.width();
       data_size_initialized = true;
     } else {
-      const string& data = datum.data();
+      const string &data = datum.data();
       CHECK_EQ(data.size(), data_size) << "Incorrect data field size "
-          << data.size();
+                                       << data.size();
     }
     // sequential
     snprintf(key_cstr, kMaxKeyLength, "%08d_%s", line_id,
-        lines[line_id].first.c_str());
+             lines[line_id].first.c_str());
     string value;
     datum.SerializeToString(&value);
     string keystr(key_cstr);
@@ -151,9 +151,9 @@ int main(int argc, char** argv) {
       batch->Put(keystr, value);
     } else if (db_backend == "lmdb") {  // lmdb
       mdb_data.mv_size = value.size();
-      mdb_data.mv_data = reinterpret_cast<void*>(&value[0]);
+      mdb_data.mv_data = reinterpret_cast<void *>(&value[0]);
       mdb_key.mv_size = keystr.size();
-      mdb_key.mv_data = reinterpret_cast<void*>(&keystr[0]);
+      mdb_key.mv_data = reinterpret_cast<void *>(&keystr[0]);
       CHECK_EQ(mdb_put(mdb_txn, mdb_dbi, &mdb_key, &mdb_data, 0), MDB_SUCCESS)
           << "mdb_put failed";
     } else {

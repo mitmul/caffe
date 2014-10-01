@@ -38,9 +38,9 @@ template ConvolutionLayer<double> *GetConvolutionLayer(const string &name,
 
 // Get pooling layer according to engine.
 template <typename Dtype>
-PoolingLayer<Dtype>* GetPoolingLayer(const string& name,
-    const LayerParameter& param) {
-  const PoolingParameter& p_param = param.pooling_param();
+PoolingLayer<Dtype> *GetPoolingLayer(const string &name,
+                                     const LayerParameter &param) {
+  const PoolingParameter &p_param = param.pooling_param();
   PoolingParameter_Engine engine = p_param.engine();
   if (engine == PoolingParameter_Engine_DEFAULT) {
     engine = PoolingParameter_Engine_CAFFE;
@@ -225,6 +225,8 @@ Layer<Dtype> *GetLayer(const LayerParameter &param) {
     return new InfogainLossLayer<Dtype>(param);
   case LayerParameter_LayerType_INNER_PRODUCT:
     return new InnerProductLayer<Dtype>(param);
+  case LayerParameter_LayerType_LABELING_DATA:
+    return new LabelingDataLayer<Dtype>(param);
   case LayerParameter_LayerType_LABELING_LOSS:
     return new LabelingLossLayer<Dtype>(param);
   case LayerParameter_LayerType_LRN:

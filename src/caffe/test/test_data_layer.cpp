@@ -21,10 +21,10 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   DataLayerTest()
-      : backend_(DataParameter_DB_LEVELDB),
-        blob_top_data_(new Blob<Dtype>()),
-        blob_top_label_(new Blob<Dtype>()),
-        seed_(1701) {}
+    : backend_(DataParameter_DB_LEVELDB),
+      blob_top_data_(new Blob<Dtype>()),
+      blob_top_label_(new Blob<Dtype>()),
+      seed_(1701) {}
   virtual void SetUp() {
     filename_.reset(new string());
     MakeTempDir(filename_.get());
@@ -39,12 +39,12 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
   void FillLevelDB(const bool unique_pixels) {
     backend_ = DataParameter_DB_LEVELDB;
     LOG(INFO) << "Using temporary leveldb " << *filename_;
-    leveldb::DB* db;
+    leveldb::DB *db;
     leveldb::Options options;
     options.error_if_exists = true;
     options.create_if_missing = true;
     leveldb::Status status =
-        leveldb::DB::Open(options, filename_->c_str(), &db);
+      leveldb::DB::Open(options, filename_->c_str(), &db);
     CHECK(status.ok());
     for (int i = 0; i < 5; ++i) {
       Datum datum;
@@ -52,7 +52,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
       datum.set_channels(2);
       datum.set_height(3);
       datum.set_width(4);
-      std::string* data = datum.mutable_data();
+      std::string *data = datum.mutable_data();
       for (int j = 0; j < 24; ++j) {
         int datum = unique_pixels ? j : i;
         data->push_back(static_cast<uint8_t>(datum));
@@ -69,7 +69,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
     backend_ = DataParameter_DB_LMDB;
     LOG(INFO) << "Using temporary lmdb " << *filename_;
     CHECK_EQ(mkdir(filename_->c_str(), 0744), 0) << "mkdir " << filename_
-                                                 << "failed";
+        << "failed";
     MDB_env *env;
     MDB_dbi dbi;
     MDB_val mdbkey, mdbdata;
@@ -89,7 +89,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
       datum.set_channels(2);
       datum.set_height(3);
       datum.set_width(4);
-      std::string* data = datum.mutable_data();
+      std::string *data = datum.mutable_data();
       for (int j = 0; j < 24; ++j) {
         int datum = unique_pixels ? j : i;
         data->push_back(static_cast<uint8_t>(datum));
@@ -100,10 +100,10 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
       string value;
       datum.SerializeToString(&value);
       mdbdata.mv_size = value.size();
-      mdbdata.mv_data = reinterpret_cast<void*>(&value[0]);
+      mdbdata.mv_data = reinterpret_cast<void *>(&value[0]);
       string keystr = ss.str();
       mdbkey.mv_size = keystr.size();
-      mdbkey.mv_data = reinterpret_cast<void*>(&keystr[0]);
+      mdbkey.mv_data = reinterpret_cast<void *>(&keystr[0]);
       CHECK_EQ(mdb_put(txn, dbi, &mdbkey, &mdbdata, 0), MDB_SUCCESS)
           << "mdb_put failed";
     }
@@ -115,13 +115,13 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
   void TestRead() {
     const Dtype scale = 3;
     LayerParameter param;
-    DataParameter* data_param = param.mutable_data_param();
+    DataParameter *data_param = param.mutable_data_param();
     data_param->set_batch_size(5);
     data_param->set_source(filename_->c_str());
     data_param->set_backend(backend_);
 
-    TransformationParameter* transform_param =
-        param.mutable_transform_param();
+    TransformationParameter *transform_param =
+      param.mutable_transform_param();
     transform_param->set_scale(scale);
 
     DataLayer<Dtype> layer(param);
@@ -154,13 +154,13 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
     LayerParameter param;
     Caffe::set_random_seed(1701);
 
-    DataParameter* data_param = param.mutable_data_param();
+    DataParameter *data_param = param.mutable_data_param();
     data_param->set_batch_size(5);
     data_param->set_source(filename_->c_str());
     data_param->set_backend(backend_);
 
-    TransformationParameter* transform_param =
-        param.mutable_transform_param();
+    TransformationParameter *transform_param =
+      param.mutable_transform_param();
     transform_param->set_scale(scale);
     transform_param->set_crop_size(1);
 
@@ -185,7 +185,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
         for (int j = 0; j < 2; ++j) {
           const Dtype center_value = scale * (j ? 17 : 5);
           num_with_center_value +=
-              (center_value == blob_top_data_->cpu_data()[i * 2 + j]);
+            (center_value == blob_top_data_->cpu_data()[i * 2 + j]);
           // At TEST time, check that we always get center value.
           if (Caffe::phase() == Caffe::TEST) {
             EXPECT_EQ(center_value, this->blob_top_data_->cpu_data()[i * 2 + j])
@@ -204,13 +204,13 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
 
   void TestReadCropTrainSequenceSeeded() {
     LayerParameter param;
-    DataParameter* data_param = param.mutable_data_param();
+    DataParameter *data_param = param.mutable_data_param();
     data_param->set_batch_size(5);
     data_param->set_source(filename_->c_str());
     data_param->set_backend(backend_);
 
-    TransformationParameter* transform_param =
-        param.mutable_transform_param();
+    TransformationParameter *transform_param =
+      param.mutable_transform_param();
     transform_param->set_crop_size(1);
     transform_param->set_mirror(true);
 
@@ -229,7 +229,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
         for (int i = 0; i < 5; ++i) {
           for (int j = 0; j < 2; ++j) {
             iter_crop_sequence.push_back(
-                blob_top_data_->cpu_data()[i * 2 + j]);
+              blob_top_data_->cpu_data()[i * 2 + j]);
           }
         }
         crop_sequence.push_back(iter_crop_sequence);
@@ -258,13 +258,13 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
 
   void TestReadCropTrainSequenceUnseeded() {
     LayerParameter param;
-    DataParameter* data_param = param.mutable_data_param();
+    DataParameter *data_param = param.mutable_data_param();
     data_param->set_batch_size(5);
     data_param->set_source(filename_->c_str());
     data_param->set_backend(backend_);
 
-    TransformationParameter* transform_param =
-        param.mutable_transform_param();
+    TransformationParameter *transform_param =
+      param.mutable_transform_param();
     transform_param->set_crop_size(1);
     transform_param->set_mirror(true);
 
@@ -284,7 +284,7 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
         for (int i = 0; i < 5; ++i) {
           for (int j = 0; j < 2; ++j) {
             iter_crop_sequence.push_back(
-                blob_top_data_->cpu_data()[i * 2 + j]);
+              blob_top_data_->cpu_data()[i * 2 + j]);
           }
         }
         crop_sequence.push_back(iter_crop_sequence);
@@ -316,8 +316,8 @@ class DataLayerTest : public MultiDeviceTest<TypeParam> {
 
   DataParameter_DB backend_;
   shared_ptr<string> filename_;
-  Blob<Dtype>* const blob_top_data_;
-  Blob<Dtype>* const blob_top_label_;
+  Blob<Dtype> *const blob_top_data_;
+  Blob<Dtype> *const blob_top_label_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
   int seed_;

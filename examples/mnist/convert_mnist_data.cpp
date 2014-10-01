@@ -26,12 +26,12 @@ using std::string;
 DEFINE_string(backend, "lmdb", "The backend for storing the result");
 
 uint32_t swap_endian(uint32_t val) {
-    val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
-    return (val << 16) | (val >> 16);
+  val = ((val << 8) & 0xFF00FF00) | ((val >> 8) & 0xFF00FF);
+  return (val << 16) | (val >> 16);
 }
 
-void convert_dataset(const char* image_filename, const char* label_filename,
-        const char* db_path, const string& db_backend) {
+void convert_dataset(const char *image_filename, const char *label_filename,
+                     const char *db_path, const string &db_backend) {
   // Open files
   std::ifstream image_file(image_filename, std::ios::in | std::ios::binary);
   std::ifstream label_file(label_filename, std::ios::in | std::ios::binary);
@@ -44,20 +44,20 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   uint32_t rows;
   uint32_t cols;
 
-  image_file.read(reinterpret_cast<char*>(&magic), 4);
+  image_file.read(reinterpret_cast<char *>(&magic), 4);
   magic = swap_endian(magic);
   CHECK_EQ(magic, 2051) << "Incorrect image file magic.";
-  label_file.read(reinterpret_cast<char*>(&magic), 4);
+  label_file.read(reinterpret_cast<char *>(&magic), 4);
   magic = swap_endian(magic);
   CHECK_EQ(magic, 2049) << "Incorrect label file magic.";
-  image_file.read(reinterpret_cast<char*>(&num_items), 4);
+  image_file.read(reinterpret_cast<char *>(&num_items), 4);
   num_items = swap_endian(num_items);
-  label_file.read(reinterpret_cast<char*>(&num_labels), 4);
+  label_file.read(reinterpret_cast<char *>(&num_labels), 4);
   num_labels = swap_endian(num_labels);
   CHECK_EQ(num_items, num_labels);
-  image_file.read(reinterpret_cast<char*>(&rows), 4);
+  image_file.read(reinterpret_cast<char *>(&rows), 4);
   rows = swap_endian(rows);
-  image_file.read(reinterpret_cast<char*>(&cols), 4);
+  image_file.read(reinterpret_cast<char *>(&cols), 4);
   cols = swap_endian(cols);
 
   // lmdb
@@ -66,20 +66,20 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   MDB_val mdb_key, mdb_data;
   MDB_txn *mdb_txn;
   // leveldb
-  leveldb::DB* db;
+  leveldb::DB *db;
   leveldb::Options options;
   options.error_if_exists = true;
   options.create_if_missing = true;
   options.write_buffer_size = 268435456;
-  leveldb::WriteBatch* batch = NULL;
+  leveldb::WriteBatch *batch = NULL;
 
   // Open db
   if (db_backend == "leveldb") {  // leveldb
     LOG(INFO) << "Opening leveldb " << db_path;
     leveldb::Status status = leveldb::DB::Open(
-        options, db_path, &db);
+                               options, db_path, &db);
     CHECK(status.ok()) << "Failed to open leveldb " << db_path
-        << ". Is it already existing?";
+                       << ". Is it already existing?";
     batch = new leveldb::WriteBatch();
   } else if (db_backend == "lmdb") {  // lmdb
     LOG(INFO) << "Opening lmdb " << db_path;
@@ -100,7 +100,7 @@ void convert_dataset(const char* image_filename, const char* label_filename,
 
   // Storing to db
   char label;
-  char* pixels = new char[rows * cols];
+  char *pixels = new char[rows * cols];
   int count = 0;
   const int kMaxKeyLength = 10;
   char key_cstr[kMaxKeyLength];
@@ -115,7 +115,7 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   for (int item_id = 0; item_id < num_items; ++item_id) {
     image_file.read(pixels, rows * cols);
     label_file.read(&label, 1);
-    datum.set_data(pixels, rows*cols);
+    datum.set_data(pixels, rows * cols);
     datum.set_label(label);
     snprintf(key_cstr, kMaxKeyLength, "%08d", item_id);
     datum.SerializeToString(&value);
@@ -126,9 +126,9 @@ void convert_dataset(const char* image_filename, const char* label_filename,
       batch->Put(keystr, value);
     } else if (db_backend == "lmdb") {  // lmdb
       mdb_data.mv_size = value.size();
-      mdb_data.mv_data = reinterpret_cast<void*>(&value[0]);
+      mdb_data.mv_data = reinterpret_cast<void *>(&value[0]);
       mdb_key.mv_size = keystr.size();
-      mdb_key.mv_data = reinterpret_cast<void*>(&keystr[0]);
+      mdb_key.mv_data = reinterpret_cast<void *>(&keystr[0]);
       CHECK_EQ(mdb_put(mdb_txn, mdb_dbi, &mdb_key, &mdb_data, 0), MDB_SUCCESS)
           << "mdb_put failed";
     } else {
@@ -169,27 +169,27 @@ void convert_dataset(const char* image_filename, const char* label_filename,
   delete pixels;
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
 #ifndef GFLAGS_GFLAGS_H_
   namespace gflags = google;
 #endif
 
   gflags::SetUsageMessage("This script converts the MNIST dataset to\n"
-        "the lmdb/leveldb format used by Caffe to load data.\n"
-        "Usage:\n"
-        "    convert_mnist_data [FLAGS] input_image_file input_label_file "
-        "output_db_file\n"
-        "The MNIST dataset could be downloaded at\n"
-        "    http://yann.lecun.com/exdb/mnist/\n"
-        "You should gunzip them after downloading,"
-        "or directly use data/mnist/get_mnist.sh\n");
+                          "the lmdb/leveldb format used by Caffe to load data.\n"
+                          "Usage:\n"
+                          "    convert_mnist_data [FLAGS] input_image_file input_label_file "
+                          "output_db_file\n"
+                          "The MNIST dataset could be downloaded at\n"
+                          "    http://yann.lecun.com/exdb/mnist/\n"
+                          "You should gunzip them after downloading,"
+                          "or directly use data/mnist/get_mnist.sh\n");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  const string& db_backend = FLAGS_backend;
+  const string &db_backend = FLAGS_backend;
 
   if (argc != 4) {
     gflags::ShowUsageWithFlagsRestrict(argv[0],
-        "examples/mnist/convert_mnist_data");
+                                       "examples/mnist/convert_mnist_data");
   } else {
     google::InitGoogleLogging(argv[0]);
     convert_dataset(argv[1], argv[2], argv[3], db_backend);

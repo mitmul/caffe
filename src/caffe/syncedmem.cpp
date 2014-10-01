@@ -68,12 +68,12 @@ inline void SyncedMemory::to_gpu() {
 #endif
 }
 
-const void* SyncedMemory::cpu_data() {
+const void *SyncedMemory::cpu_data() {
   to_cpu();
-  return (const void*)cpu_ptr_;
+  return (const void *)cpu_ptr_;
 }
 
-void SyncedMemory::set_cpu_data(void* data) {
+void SyncedMemory::set_cpu_data(void *data) {
   CHECK(data);
   if (own_cpu_data_) {
     CaffeFreeHost(cpu_ptr_);
@@ -83,22 +83,22 @@ void SyncedMemory::set_cpu_data(void* data) {
   own_cpu_data_ = false;
 }
 
-const void* SyncedMemory::gpu_data() {
+const void *SyncedMemory::gpu_data() {
 #ifndef CPU_ONLY
   to_gpu();
-  return (const void*)gpu_ptr_;
+  return (const void *)gpu_ptr_;
 #else
   NO_GPU;
 #endif
 }
 
-void* SyncedMemory::mutable_cpu_data() {
+void *SyncedMemory::mutable_cpu_data() {
   to_cpu();
   head_ = HEAD_AT_CPU;
   return cpu_ptr_;
 }
 
-void* SyncedMemory::mutable_gpu_data() {
+void *SyncedMemory::mutable_gpu_data() {
 #ifndef CPU_ONLY
   to_gpu();
   head_ = HEAD_AT_GPU;

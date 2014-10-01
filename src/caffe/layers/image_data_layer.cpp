@@ -18,15 +18,15 @@ ImageDataLayer<Dtype>::~ImageDataLayer<Dtype>() {
 }
 
 template <typename Dtype>
-void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
+    const vector<Blob<Dtype>*> &top) {
   const int new_height = this->layer_param_.image_data_param().new_height();
   const int new_width  = this->layer_param_.image_data_param().new_width();
   CHECK((new_height == 0 && new_width == 0) ||
-      (new_height > 0 && new_width > 0)) << "Current implementation requires "
-      "new_height and new_width to be set at the same time.";
+        (new_height > 0 && new_width > 0)) << "Current implementation requires "
+            "new_height and new_width to be set at the same time.";
   // Read the file with filenames and labels
-  const string& source = this->layer_param_.image_data_param().source();
+  const string &source = this->layer_param_.image_data_param().source();
   LOG(INFO) << "Opening file " << source;
   std::ifstream infile(source.c_str());
   string filename;
@@ -48,7 +48,7 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
   // Check if we would need to randomly skip a few data points
   if (this->layer_param_.image_data_param().rand_skip()) {
     unsigned int skip = caffe_rng_rand() %
-        this->layer_param_.image_data_param().rand_skip();
+                        this->layer_param_.image_data_param().rand_skip();
     LOG(INFO) << "Skipping first " << skip << " data points.";
     CHECK_GT(lines_.size(), skip) << "Not enough points to skip";
     lines_id_ = skip;
@@ -66,13 +66,13 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
                                  crop_size);
   } else {
     top[0]->Reshape(batch_size, datum.channels(), datum.height(),
-                       datum.width());
+                    datum.width());
     this->prefetch_data_.Reshape(batch_size, datum.channels(), datum.height(),
-        datum.width());
+                                 datum.width());
   }
   LOG(INFO) << "output data size: " << top[0]->num() << ","
-      << top[0]->channels() << "," << top[0]->height() << ","
-      << top[0]->width();
+            << top[0]->channels() << "," << top[0]->height() << ","
+            << top[0]->width();
   // label
   top[1]->Reshape(batch_size, 1, 1, 1);
   this->prefetch_label_.Reshape(batch_size, 1, 1, 1);
@@ -85,8 +85,8 @@ void ImageDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
 
 template <typename Dtype>
 void ImageDataLayer<Dtype>::ShuffleImages() {
-  caffe::rng_t* prefetch_rng =
-      static_cast<caffe::rng_t*>(prefetch_rng_->generator());
+  caffe::rng_t *prefetch_rng =
+    static_cast<caffe::rng_t *>(prefetch_rng_->generator());
   shuffle(lines_.begin(), lines_.end(), prefetch_rng);
 }
 
@@ -95,8 +95,8 @@ template <typename Dtype>
 void ImageDataLayer<Dtype>::InternalThreadEntry() {
   Datum datum;
   CHECK(this->prefetch_data_.count());
-  Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
-  Dtype* top_label = this->prefetch_label_.mutable_cpu_data();
+  Dtype *top_data = this->prefetch_data_.mutable_cpu_data();
+  Dtype *top_label = this->prefetch_label_.mutable_cpu_data();
   ImageDataParameter image_data_param = this->layer_param_.image_data_param();
   const int batch_size = image_data_param.batch_size();
   const int new_height = image_data_param.new_height();
@@ -108,8 +108,8 @@ void ImageDataLayer<Dtype>::InternalThreadEntry() {
     // get a blob
     CHECK_GT(lines_size, lines_id_);
     if (!ReadImageToDatum(lines_[lines_id_].first,
-          lines_[lines_id_].second,
-          new_height, new_width, &datum)) {
+                          lines_[lines_id_].second,
+                          new_height, new_width, &datum)) {
       continue;
     }
 

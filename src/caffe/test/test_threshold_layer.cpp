@@ -16,8 +16,8 @@ class ThresholdLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   ThresholdLayerTest()
-      : blob_bottom_(new Blob<Dtype>(2, 3, 6, 5)),
-        blob_top_(new Blob<Dtype>()) {
+    : blob_bottom_(new Blob<Dtype>(2, 3, 6, 5)),
+      blob_top_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
     // fill the values
     FillerParameter filler_param;
@@ -27,8 +27,8 @@ class ThresholdLayerTest : public MultiDeviceTest<TypeParam> {
     blob_top_vec_.push_back(blob_top_);
   }
   virtual ~ThresholdLayerTest() { delete blob_bottom_; delete blob_top_; }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -54,8 +54,8 @@ TYPED_TEST(ThresholdLayerTest, Test) {
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   // Now, check values
-  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
-  const Dtype* top_data = this->blob_top_->cpu_data();
+  const Dtype *bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype *top_data = this->blob_top_->cpu_data();
   const Dtype threshold_ = layer_param.threshold_param().threshold();
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {
     EXPECT_GE(top_data[i], 0.);
@@ -72,15 +72,15 @@ TYPED_TEST(ThresholdLayerTest, Test) {
 TYPED_TEST(ThresholdLayerTest, Test2) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  ThresholdParameter* threshold_param =
+  ThresholdParameter *threshold_param =
     layer_param.mutable_threshold_param();
   threshold_param->set_threshold(0.5);
   ThresholdLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   // Now, check values
-  const Dtype* bottom_data = this->blob_bottom_->cpu_data();
-  const Dtype* top_data = this->blob_top_->cpu_data();
+  const Dtype *bottom_data = this->blob_bottom_->cpu_data();
+  const Dtype *top_data = this->blob_top_->cpu_data();
   const Dtype threshold_ = layer_param.threshold_param().threshold();
   EXPECT_FLOAT_EQ(threshold_, 0.5);
   for (int i = 0; i < this->blob_bottom_->count(); ++i) {

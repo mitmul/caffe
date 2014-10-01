@@ -6,9 +6,9 @@
 namespace caffe {
 
 Timer::Timer()
-    : initted_(false),
-      running_(false),
-      has_run_at_least_once_(false) {
+  : initted_(false),
+    running_(false),
+    has_run_at_least_once_(false) {
   Init();
 }
 
@@ -68,7 +68,7 @@ float Timer::MilliSeconds() {
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
 #else
-      NO_GPU;
+    NO_GPU;
 #endif
   } else {
     elapsed_milliseconds_ = (stop_cpu_ - start_cpu_).total_milliseconds();

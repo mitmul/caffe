@@ -48,11 +48,11 @@ class MemoryDataLayerTest : public MultiDeviceTest<TypeParam> {
   int width_;
   // we don't really need blobs for the input data, but it makes it
   //  easier to call Filler
-  Blob<Dtype>* const data_;
-  Blob<Dtype>* const labels_;
+  Blob<Dtype> *const data_;
+  Blob<Dtype> *const labels_;
   // blobs for the top of MemoryDataLayer
-  Blob<Dtype>* const data_blob_;
-  Blob<Dtype>* const label_blob_;
+  Blob<Dtype> *const data_blob_;
+  Blob<Dtype> *const label_blob_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -63,13 +63,13 @@ TYPED_TEST(MemoryDataLayerTest, TestSetup) {
   typedef typename TypeParam::Dtype Dtype;
 
   LayerParameter layer_param;
-  MemoryDataParameter* md_param = layer_param.mutable_memory_data_param();
+  MemoryDataParameter *md_param = layer_param.mutable_memory_data_param();
   md_param->set_batch_size(this->batch_size_);
   md_param->set_channels(this->channels_);
   md_param->set_height(this->height_);
   md_param->set_width(this->width_);
   shared_ptr<Layer<Dtype> > layer(
-      new MemoryDataLayer<Dtype>(layer_param));
+    new MemoryDataLayer<Dtype>(layer_param));
   layer->SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   EXPECT_EQ(this->data_blob_->num(), this->batch_size_);
   EXPECT_EQ(this->data_blob_->channels(), this->channels_);
@@ -86,27 +86,27 @@ TYPED_TEST(MemoryDataLayerTest, TestForward) {
   typedef typename TypeParam::Dtype Dtype;
 
   LayerParameter layer_param;
-  MemoryDataParameter* md_param = layer_param.mutable_memory_data_param();
+  MemoryDataParameter *md_param = layer_param.mutable_memory_data_param();
   md_param->set_batch_size(this->batch_size_);
   md_param->set_channels(this->channels_);
   md_param->set_height(this->height_);
   md_param->set_width(this->width_);
   shared_ptr<MemoryDataLayer<Dtype> > layer(
-      new MemoryDataLayer<Dtype>(layer_param));
+    new MemoryDataLayer<Dtype>(layer_param));
   layer->DataLayerSetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   layer->Reset(this->data_->mutable_cpu_data(),
-      this->labels_->mutable_cpu_data(), this->data_->num());
+               this->labels_->mutable_cpu_data(), this->data_->num());
   for (int i = 0; i < this->batches_ * 6; ++i) {
     int batch_num = i % this->batches_;
     layer->Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     for (int j = 0; j < this->data_blob_->count(); ++j) {
       EXPECT_EQ(this->data_blob_->cpu_data()[j],
-          this->data_->cpu_data()[
-              this->data_->offset(1) * this->batch_size_ * batch_num + j]);
+                this->data_->cpu_data()[
+                  this->data_->offset(1) * this->batch_size_ * batch_num + j]);
     }
     for (int j = 0; j < this->label_blob_->count(); ++j) {
       EXPECT_EQ(this->label_blob_->cpu_data()[j],
-          this->labels_->cpu_data()[this->batch_size_ * batch_num + j]);
+                this->labels_->cpu_data()[this->batch_size_ * batch_num + j]);
     }
   }
 }
@@ -115,7 +115,7 @@ TYPED_TEST(MemoryDataLayerTest, AddDatumVectorDefaultTransform) {
   typedef typename TypeParam::Dtype Dtype;
 
   LayerParameter param;
-  MemoryDataParameter* memory_data_param = param.mutable_memory_data_param();
+  MemoryDataParameter *memory_data_param = param.mutable_memory_data_param();
   memory_data_param->set_batch_size(this->batch_size_);
   memory_data_param->set_channels(this->channels_);
   memory_data_param->set_height(this->height_);
@@ -145,17 +145,17 @@ TYPED_TEST(MemoryDataLayerTest, AddDatumVectorDefaultTransform) {
   // Go through the data 5 times
   for (int iter = 0; iter < 5; ++iter) {
     layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-    const Dtype* data = this->data_blob_->cpu_data();
+    const Dtype *data = this->data_blob_->cpu_data();
     size_t index = 0;
     for (int i = 0; i < this->batch_size_; ++i) {
-      const string& data_string = datum_vector[i].data();
+      const string &data_string = datum_vector[i].data();
       EXPECT_EQ(i, this->label_blob_->cpu_data()[i]);
       for (int c = 0; c < this->channels_; ++c) {
         for (int h = 0; h < this->height_; ++h) {
           for (int w = 0; w < this->width_; ++w) {
             data_index = (c * this->height_ + h) * this->width_ + w;
             EXPECT_EQ(static_cast<Dtype>(
-                static_cast<uint8_t>(data_string[data_index])),
+                        static_cast<uint8_t>(data_string[data_index])),
                       data[index++]);
           }
         }

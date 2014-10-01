@@ -19,10 +19,10 @@ class ConcatLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   ConcatLayerTest()
-      : blob_bottom_0(new Blob<Dtype>(2, 3, 6, 5)),
-        blob_bottom_1(new Blob<Dtype>(2, 5, 6, 5)),
-        blob_bottom_2(new Blob<Dtype>(5, 3, 6, 5)),
-        blob_top_(new Blob<Dtype>()) {}
+    : blob_bottom_0(new Blob<Dtype>(2, 3, 6, 5)),
+      blob_bottom_1(new Blob<Dtype>(2, 5, 6, 5)),
+      blob_bottom_2(new Blob<Dtype>(5, 3, 6, 5)),
+      blob_top_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     // fill the values
     shared_ptr<ConstantFiller<Dtype> > filler;
@@ -48,10 +48,10 @@ class ConcatLayerTest : public MultiDeviceTest<TypeParam> {
     delete blob_bottom_2; delete blob_top_;
   }
 
-  Blob<Dtype>* const blob_bottom_0;
-  Blob<Dtype>* const blob_bottom_1;
-  Blob<Dtype>* const blob_bottom_2;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_0;
+  Blob<Dtype> *const blob_bottom_1;
+  Blob<Dtype> *const blob_bottom_2;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_0, blob_bottom_vec_1;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -65,7 +65,7 @@ TYPED_TEST(ConcatLayerTest, TestSetupNum) {
   ConcatLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_1, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_->num(),
-    this->blob_bottom_0->num() + this->blob_bottom_2->num());
+            this->blob_bottom_0->num() + this->blob_bottom_2->num());
   EXPECT_EQ(this->blob_top_->channels(), this->blob_bottom_0->channels());
   EXPECT_EQ(this->blob_top_->height(), this->blob_bottom_0->height());
   EXPECT_EQ(this->blob_top_->width(), this->blob_bottom_0->width());
@@ -78,7 +78,7 @@ TYPED_TEST(ConcatLayerTest, TestSetupChannels) {
   layer.SetUp(this->blob_bottom_vec_0, this->blob_top_vec_);
   EXPECT_EQ(this->blob_top_->num(), this->blob_bottom_0->num());
   EXPECT_EQ(this->blob_top_->channels(),
-    this->blob_bottom_0->channels()+this->blob_bottom_1->channels());
+            this->blob_bottom_0->channels() + this->blob_bottom_1->channels());
   EXPECT_EQ(this->blob_top_->height(), this->blob_bottom_0->height());
   EXPECT_EQ(this->blob_top_->width(), this->blob_bottom_0->width());
 }
@@ -95,15 +95,15 @@ TYPED_TEST(ConcatLayerTest, TestNum) {
       for (int h = 0; h < this->blob_top_->height(); ++h) {
         for (int w = 0; w < this->blob_top_->width(); ++w) {
           EXPECT_EQ(this->blob_top_->data_at(n, c, h, w),
-            this->blob_bottom_vec_0[0]->data_at(n, c, h, w));
+                    this->blob_bottom_vec_0[0]->data_at(n, c, h, w));
         }
       }
     }
     for (int c = 0; c < this->blob_bottom_1->channels(); ++c) {
       for (int h = 0; h < this->blob_top_->height(); ++h) {
         for (int w = 0; w < this->blob_top_->width(); ++w) {
-          EXPECT_EQ(this->blob_top_->data_at(n, c+3, h, w),
-            this->blob_bottom_vec_0[1]->data_at(n, c, h, w));
+          EXPECT_EQ(this->blob_top_->data_at(n, c + 3, h, w),
+                    this->blob_bottom_vec_0[1]->data_at(n, c, h, w));
         }
       }
     }
@@ -116,7 +116,7 @@ TYPED_TEST(ConcatLayerTest, TestGradient) {
   ConcatLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-2);
   checker.CheckGradient(&layer, this->blob_bottom_vec_0,
-    this->blob_top_vec_);
+                        this->blob_top_vec_);
 }
 
 }  // namespace caffe

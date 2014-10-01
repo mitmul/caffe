@@ -25,7 +25,7 @@ HDF5DataLayer<Dtype>::~HDF5DataLayer<Dtype>() { }
 
 // Load data and label from HDF5 filename into the class property blobs.
 template <typename Dtype>
-void HDF5DataLayer<Dtype>::LoadHDF5FileData(const char* filename) {
+void HDF5DataLayer<Dtype>::LoadHDF5FileData(const char *filename) {
   LOG(INFO) << "Loading HDF5 file" << filename;
   hid_t file_id = H5Fopen(filename, H5F_ACC_RDONLY, H5P_DEFAULT);
   if (file_id < 0) {
@@ -50,10 +50,10 @@ void HDF5DataLayer<Dtype>::LoadHDF5FileData(const char* filename) {
 }
 
 template <typename Dtype>
-void HDF5DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void HDF5DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                                      const vector<Blob<Dtype>*> &top) {
   // Read the source to parse the filenames.
-  const string& source = this->layer_param_.hdf5_data_param().source();
+  const string &source = this->layer_param_.hdf5_data_param().source();
   LOG(INFO) << "Loading filename from " << source;
   hdf_filenames_.clear();
   std::ifstream source_file(source.c_str());
@@ -79,13 +79,13 @@ void HDF5DataLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
   top[1]->Reshape(batch_size, label_blob_.channels(),
                   label_blob_.height(), label_blob_.width());
   LOG(INFO) << "output data size: " << top[0]->num() << ","
-      << top[0]->channels() << "," << top[0]->height() << ","
-      << top[0]->width();
+            << top[0]->channels() << "," << top[0]->height() << ","
+            << top[0]->width();
 }
 
 template <typename Dtype>
-void HDF5DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top) {
+void HDF5DataLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
+                                       const vector<Blob<Dtype>*> &top) {
   const int batch_size = this->layer_param_.hdf5_data_param().batch_size();
   const int data_count = top[0]->count() / top[0]->num();
   const int label_data_count = top[1]->count() / top[1]->num();

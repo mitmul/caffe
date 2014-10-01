@@ -12,14 +12,14 @@ shared_ptr<Caffe> Caffe::singleton_;
 // random seeding
 int64_t cluster_seedgen(void) {
   int64_t s, seed, pid;
-  FILE* f = fopen("/dev/urandom", "rb");
+  FILE *f = fopen("/dev/urandom", "rb");
   if (f && fread(&seed, 1, sizeof(seed), f) == sizeof(seed)) {
     fclose(f);
     return seed;
   }
 
   LOG(INFO) << "System entropy source not available, "
-              "using fallback algorithm to generate seed instead.";
+            "using fallback algorithm to generate seed instead.";
   if (f)
     fclose(f);
 
@@ -30,7 +30,7 @@ int64_t cluster_seedgen(void) {
 }
 
 
-void GlobalInit(int* pargc, char*** pargv) {
+void GlobalInit(int *pargc, char *** pargv) {
   // Google flags.
   ::gflags::ParseCommandLineFlags(pargc, pargv, true);
   // Google logging.
@@ -40,7 +40,7 @@ void GlobalInit(int* pargc, char*** pargv) {
 #ifdef CPU_ONLY  // CPU-only Caffe.
 
 Caffe::Caffe()
-    : random_generator_(), mode_(Caffe::CPU), phase_(Caffe::TRAIN) { }
+  : random_generator_(), mode_(Caffe::CPU), phase_(Caffe::TRAIN) { }
 
 Caffe::~Caffe() { }
 
@@ -62,7 +62,7 @@ class Caffe::RNG::Generator {
  public:
   Generator() : rng_(new caffe::rng_t(cluster_seedgen())) {}
   explicit Generator(unsigned int seed) : rng_(new caffe::rng_t(seed)) {}
-  caffe::rng_t* rng() { return rng_.get(); }
+  caffe::rng_t *rng() { return rng_.get(); }
  private:
   shared_ptr<caffe::rng_t> rng_;
 };
@@ -71,19 +71,19 @@ Caffe::RNG::RNG() : generator_(new Generator()) { }
 
 Caffe::RNG::RNG(unsigned int seed) : generator_(new Generator(seed)) { }
 
-Caffe::RNG& Caffe::RNG::operator=(const RNG& other) {
+Caffe::RNG &Caffe::RNG::operator=(const RNG &other) {
   generator_ = other.generator_;
   return *this;
 }
 
-void* Caffe::RNG::generator() {
-  return static_cast<void*>(generator_->rng());
+void *Caffe::RNG::generator() {
+  return static_cast<void *>(generator_->rng());
 }
 
 #else  // Normal GPU + CPU Caffe.
 
 Caffe::Caffe()
-    : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
+  : cublas_handle_(NULL), curand_generator_(NULL), random_generator_(),
     mode_(Caffe::CPU), phase_(Caffe::TRAIN) {
   // Try to create a cublas handler, and report an error if failed (but we will
   // keep the program running as one might just want to run CPU code).
@@ -111,13 +111,13 @@ void Caffe::set_random_seed(const unsigned int seed) {
   static bool g_curand_availability_logged = false;
   if (Get().curand_generator_) {
     CURAND_CHECK(curandSetPseudoRandomGeneratorSeed(curand_generator(),
-        seed));
+                 seed));
     CURAND_CHECK(curandSetGeneratorOffset(curand_generator(), 0));
   } else {
     if (!g_curand_availability_logged) {
-        LOG(ERROR) <<
-            "Curand not available. Skipping setting the curand seed.";
-        g_curand_availability_logged = true;
+      LOG(ERROR) <<
+                 "Curand not available. Skipping setting the curand seed.";
+      g_curand_availability_logged = true;
     }
   }
   // RNG seed
@@ -139,9 +139,9 @@ void Caffe::SetDevice(const int device_id) {
   }
   CUBLAS_CHECK(cublasCreate(&Get().cublas_handle_));
   CURAND_CHECK(curandCreateGenerator(&Get().curand_generator_,
-      CURAND_RNG_PSEUDO_DEFAULT));
+                                     CURAND_RNG_PSEUDO_DEFAULT));
   CURAND_CHECK(curandSetPseudoRandomGeneratorSeed(Get().curand_generator_,
-      cluster_seedgen()));
+               cluster_seedgen()));
 }
 
 void Caffe::DeviceQuery() {
@@ -163,19 +163,19 @@ void Caffe::DeviceQuery() {
   LOG(INFO) << "Maximum memory pitch:          " << prop.memPitch;
   LOG(INFO) << "Maximum threads per block:     " << prop.maxThreadsPerBlock;
   LOG(INFO) << "Maximum dimension of block:    "
-      << prop.maxThreadsDim[0] << ", " << prop.maxThreadsDim[1] << ", "
-      << prop.maxThreadsDim[2];
+            << prop.maxThreadsDim[0] << ", " << prop.maxThreadsDim[1] << ", "
+            << prop.maxThreadsDim[2];
   LOG(INFO) << "Maximum dimension of grid:     "
-      << prop.maxGridSize[0] << ", " << prop.maxGridSize[1] << ", "
-      << prop.maxGridSize[2];
+            << prop.maxGridSize[0] << ", " << prop.maxGridSize[1] << ", "
+            << prop.maxGridSize[2];
   LOG(INFO) << "Clock rate:                    " << prop.clockRate;
   LOG(INFO) << "Total constant memory:         " << prop.totalConstMem;
   LOG(INFO) << "Texture alignment:             " << prop.textureAlignment;
   LOG(INFO) << "Concurrent copy and execution: "
-      << (prop.deviceOverlap ? "Yes" : "No");
+            << (prop.deviceOverlap ? "Yes" : "No");
   LOG(INFO) << "Number of multiprocessors:     " << prop.multiProcessorCount;
   LOG(INFO) << "Kernel execution timeout:      "
-      << (prop.kernelExecTimeoutEnabled ? "Yes" : "No");
+            << (prop.kernelExecTimeoutEnabled ? "Yes" : "No");
   return;
 }
 
@@ -184,7 +184,7 @@ class Caffe::RNG::Generator {
  public:
   Generator() : rng_(new caffe::rng_t(cluster_seedgen())) {}
   explicit Generator(unsigned int seed) : rng_(new caffe::rng_t(seed)) {}
-  caffe::rng_t* rng() { return rng_.get(); }
+  caffe::rng_t *rng() { return rng_.get(); }
  private:
   shared_ptr<caffe::rng_t> rng_;
 };
@@ -193,16 +193,16 @@ Caffe::RNG::RNG() : generator_(new Generator()) { }
 
 Caffe::RNG::RNG(unsigned int seed) : generator_(new Generator(seed)) { }
 
-Caffe::RNG& Caffe::RNG::operator=(const RNG& other) {
+Caffe::RNG &Caffe::RNG::operator=(const RNG &other) {
   generator_.reset(other.generator_.get());
   return *this;
 }
 
-void* Caffe::RNG::generator() {
-  return static_cast<void*>(generator_->rng());
+void *Caffe::RNG::generator() {
+  return static_cast<void *>(generator_->rng());
 }
 
-const char* cublasGetErrorString(cublasStatus_t error) {
+const char *cublasGetErrorString(cublasStatus_t error) {
   switch (error) {
   case CUBLAS_STATUS_SUCCESS:
     return "CUBLAS_STATUS_SUCCESS";
@@ -232,7 +232,7 @@ const char* cublasGetErrorString(cublasStatus_t error) {
   return "Unknown cublas status";
 }
 
-const char* curandGetErrorString(curandStatus_t error) {
+const char *curandGetErrorString(curandStatus_t error) {
   switch (error) {
   case CURAND_STATUS_SUCCESS:
     return "CURAND_STATUS_SUCCESS";

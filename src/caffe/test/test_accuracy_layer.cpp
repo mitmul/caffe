@@ -19,10 +19,10 @@ template <typename Dtype>
 class AccuracyLayerTest : public ::testing::Test {
  protected:
   AccuracyLayerTest()
-      : blob_bottom_data_(new Blob<Dtype>(100, 10, 1, 1)),
-        blob_bottom_label_(new Blob<Dtype>(100, 1, 1, 1)),
-        blob_top_(new Blob<Dtype>()),
-        top_k_(3) {
+    : blob_bottom_data_(new Blob<Dtype>(100, 10, 1, 1)),
+      blob_bottom_label_(new Blob<Dtype>(100, 1, 1, 1)),
+      blob_top_(new Blob<Dtype>()),
+      top_k_(3) {
     // fill the probability values
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
@@ -30,9 +30,9 @@ class AccuracyLayerTest : public ::testing::Test {
 
     const unsigned int prefetch_rng_seed = caffe_rng_rand();
     shared_ptr<Caffe::RNG> rng(new Caffe::RNG(prefetch_rng_seed));
-    caffe::rng_t* prefetch_rng =
-          static_cast<caffe::rng_t*>(rng->generator());
-    Dtype* label_data = blob_bottom_label_->mutable_cpu_data();
+    caffe::rng_t *prefetch_rng =
+      static_cast<caffe::rng_t *>(rng->generator());
+    Dtype *label_data = blob_bottom_label_->mutable_cpu_data();
     for (int i = 0; i < 100; ++i) {
       label_data[i] = (*prefetch_rng)() % 10;
     }
@@ -46,9 +46,9 @@ class AccuracyLayerTest : public ::testing::Test {
     delete blob_bottom_label_;
     delete blob_top_;
   }
-  Blob<Dtype>* const blob_bottom_data_;
-  Blob<Dtype>* const blob_bottom_label_;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_data_;
+  Blob<Dtype> *const blob_bottom_label_;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
   int top_k_;
@@ -68,8 +68,8 @@ TYPED_TEST(AccuracyLayerTest, TestSetup) {
 
 TYPED_TEST(AccuracyLayerTest, TestSetupTopK) {
   LayerParameter layer_param;
-  AccuracyParameter* accuracy_param =
-      layer_param.mutable_accuracy_param();
+  AccuracyParameter *accuracy_param =
+    layer_param.mutable_accuracy_param();
   accuracy_param->set_top_k(5);
   AccuracyLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
@@ -108,7 +108,7 @@ TYPED_TEST(AccuracyLayerTest, TestForwardCPU) {
 
 TYPED_TEST(AccuracyLayerTest, TestForwardCPUTopK) {
   LayerParameter layer_param;
-  AccuracyParameter* accuracy_param = layer_param.mutable_accuracy_param();
+  AccuracyParameter *accuracy_param = layer_param.mutable_accuracy_param();
   accuracy_param->set_top_k(this->top_k_);
   AccuracyLayer<TypeParam> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);

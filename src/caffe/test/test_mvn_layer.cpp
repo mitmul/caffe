@@ -18,8 +18,8 @@ class MVNLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   MVNLayerTest()
-      : blob_bottom_(new Blob<Dtype>(2, 3, 4, 5)),
-        blob_top_(new Blob<Dtype>()) {
+    : blob_bottom_(new Blob<Dtype>(2, 3, 4, 5)),
+      blob_top_(new Blob<Dtype>()) {
     // fill the values
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
@@ -28,8 +28,8 @@ class MVNLayerTest : public MultiDeviceTest<TypeParam> {
     blob_top_vec_.push_back(blob_top_);
   }
   virtual ~MVNLayerTest() { delete blob_bottom_; delete blob_top_; }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -143,7 +143,7 @@ TYPED_TEST(MVNLayerTest, TestGradient) {
   MVNLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 TYPED_TEST(MVNLayerTest, TestGradientMeanOnly) {
@@ -153,7 +153,7 @@ TYPED_TEST(MVNLayerTest, TestGradientMeanOnly) {
   MVNLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 TYPED_TEST(MVNLayerTest, TestGradientAcrossChannels) {
@@ -163,7 +163,7 @@ TYPED_TEST(MVNLayerTest, TestGradientAcrossChannels) {
   MVNLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 }  // namespace caffe

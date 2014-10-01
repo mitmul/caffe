@@ -14,7 +14,7 @@ using caffe::BlobProto;
 using std::string;
 using std::max;
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   ::google::InitGoogleLogging(argv[0]);
   if (argc < 3 || argc > 4) {
     LOG(ERROR) << "Usage: compute_image_mean input_db output_file"
@@ -28,22 +28,22 @@ int main(int argc, char** argv) {
   }
 
   // leveldb
-  leveldb::DB* db;
+  leveldb::DB *db;
   leveldb::Options options;
   options.create_if_missing = false;
-  leveldb::Iterator* it = NULL;
+  leveldb::Iterator *it = NULL;
   // lmdb
-  MDB_env* mdb_env;
+  MDB_env *mdb_env;
   MDB_dbi mdb_dbi;
   MDB_val mdb_key, mdb_value;
-  MDB_txn* mdb_txn;
-  MDB_cursor* mdb_cursor;
+  MDB_txn *mdb_txn;
+  MDB_cursor *mdb_cursor;
 
   // Open db
   if (db_backend == "leveldb") {  // leveldb
     LOG(INFO) << "Opening leveldb " << argv[1];
     leveldb::Status status = leveldb::DB::Open(
-        options, argv[1], &db);
+                               options, argv[1], &db);
     CHECK(status.ok()) << "Failed to open leveldb " << argv[1];
     leveldb::ReadOptions read_options;
     read_options.fill_cache = false;
@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
     CHECK_EQ(mdb_env_create(&mdb_env), MDB_SUCCESS) << "mdb_env_create failed";
     CHECK_EQ(mdb_env_set_mapsize(mdb_env, 1099511627776), MDB_SUCCESS);  // 1TB
     CHECK_EQ(mdb_env_open(mdb_env, argv[1], MDB_RDONLY, 0664),
-        MDB_SUCCESS) << "mdb_env_open failed";
+             MDB_SUCCESS) << "mdb_env_open failed";
     CHECK_EQ(mdb_txn_begin(mdb_env, NULL, MDB_RDONLY, &mdb_txn), MDB_SUCCESS)
         << "mdb_txn_begin failed";
     CHECK_EQ(mdb_open(mdb_txn, NULL, 0, &mdb_dbi), MDB_SUCCESS)
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
     CHECK_EQ(mdb_cursor_open(mdb_txn, mdb_dbi, &mdb_cursor), MDB_SUCCESS)
         << "mdb_cursor_open failed";
     CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_FIRST),
-        MDB_SUCCESS);
+             MDB_SUCCESS);
   } else {
     LOG(FATAL) << "Unknown db backend " << db_backend;
   }
@@ -94,11 +94,11 @@ int main(int argc, char** argv) {
     for (it->SeekToFirst(); it->Valid(); it->Next()) {
       // just a dummy operation
       datum.ParseFromString(it->value().ToString());
-      const string& data = datum.data();
+      const string &data = datum.data();
       size_in_datum = std::max<int>(datum.data().size(),
-          datum.float_data_size());
+                                    datum.float_data_size());
       CHECK_EQ(size_in_datum, data_size) << "Incorrect data field size " <<
-          size_in_datum;
+                                         size_in_datum;
       if (data.size() != 0) {
         for (int i = 0; i < size_in_datum; ++i) {
           sum_blob.set_data(i, sum_blob.data(i) + (uint8_t)data[i]);
@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
       } else {
         for (int i = 0; i < size_in_datum; ++i) {
           sum_blob.set_data(i, sum_blob.data(i) +
-              static_cast<float>(datum.float_data(i)));
+                            static_cast<float>(datum.float_data(i)));
         }
       }
       ++count;
@@ -116,15 +116,15 @@ int main(int argc, char** argv) {
     }
   } else if (db_backend == "lmdb") {  // lmdb
     CHECK_EQ(mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_FIRST),
-        MDB_SUCCESS);
+             MDB_SUCCESS);
     do {
       // just a dummy operation
       datum.ParseFromArray(mdb_value.mv_data, mdb_value.mv_size);
-      const string& data = datum.data();
+      const string &data = datum.data();
       size_in_datum = std::max<int>(datum.data().size(),
-          datum.float_data_size());
+                                    datum.float_data_size());
       CHECK_EQ(size_in_datum, data_size) << "Incorrect data field size " <<
-          size_in_datum;
+                                         size_in_datum;
       if (data.size() != 0) {
         for (int i = 0; i < size_in_datum; ++i) {
           sum_blob.set_data(i, sum_blob.data(i) + (uint8_t)data[i]);
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
       } else {
         for (int i = 0; i < size_in_datum; ++i) {
           sum_blob.set_data(i, sum_blob.data(i) +
-              static_cast<float>(datum.float_data(i)));
+                            static_cast<float>(datum.float_data(i)));
         }
       }
       ++count;
@@ -140,7 +140,7 @@ int main(int argc, char** argv) {
         LOG(ERROR) << "Processed " << count << " files.";
       }
     } while (mdb_cursor_get(mdb_cursor, &mdb_key, &mdb_value, MDB_NEXT)
-        == MDB_SUCCESS);
+             == MDB_SUCCESS);
   } else {
     LOG(FATAL) << "Unknown db backend " << db_backend;
   }

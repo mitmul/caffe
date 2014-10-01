@@ -17,7 +17,7 @@ bool InternalThread::StartInternalThread() {
   }
   try {
     thread_ = new caffe::Thread
-        (&InternalThread::InternalThreadEntry, this);
+    (&InternalThread::InternalThreadEntry, this);
   } catch (...) {
     return false;
   }
