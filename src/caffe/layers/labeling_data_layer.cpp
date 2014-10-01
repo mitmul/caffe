@@ -14,6 +14,7 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
     const vector<Blob<Dtype>*> &top) {
 
   // Initialize DB
+  LOG(INFO) << "Dataset: " << this->layer_param_.labeling_data_param().source();
   CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS) << "mdb_env_create failed";
   CHECK_EQ(mdb_env_set_mapsize(mdb_env_, 1099511627776), MDB_SUCCESS);  // 1TB
   CHECK_EQ(mdb_env_open(mdb_env_, this->layer_param_.labeling_data_param().source().c_str(), MDB_RDONLY | MDB_NOTLS, 0664), MDB_SUCCESS) << "mdb_env_open failed";
@@ -26,14 +27,12 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
   // Read a data point, and use it to initialize the top blob.
   Datum datum;
   datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
-  google::protobuf::RepeatedField<float> label = datum.float_data();
-  label_channels_ = label.Get(0);
-  label_height_ = label.Get(1);
-  label_width_ = label.Get(2);
-  label_data_offset_ = 3;
 
   LabelingDataParameter labeling_data_param = this->layer_param_.labeling_data_param();
   batch_size_ = labeling_data_param.batch_size();
+  label_num_ = labeling_data_param.label_num();
+  label_height_ = labeling_data_param.label_height();
+  label_width_ = labeling_data_param.label_width();
 
   // data
   top[0]->Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
@@ -73,7 +72,7 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     const google::protobuf::RepeatedField<float> label = datum.float_data();
     for (int pos = 0; pos < label_height_ * label_width_; ++pos) {
       int index =  item_id * label_height_ * label_width_ + pos;
-      top_label[index] = label.Get(label_data_offset_ + pos);
+      top_label[index] = label.Get(pos);
     }
 
     // do some data augmentation

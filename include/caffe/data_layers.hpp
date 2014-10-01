@@ -299,10 +299,9 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_val mdb_key_, mdb_value_;
 
   int batch_size_;
-  int label_channels_;
+  int label_num_;
   int label_height_;
   int label_width_;
-  int label_data_offset_;
 };
 
 /**

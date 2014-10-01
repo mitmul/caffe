@@ -52,9 +52,6 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
       for (int j = 0; j < 18; ++j) {
         data->push_back(static_cast<uint8_t>(j));
       }
-      label->Add(1); // label_channels
-      label->Add(2); // label_height
-      label->Add(3); // label_width
       for (int j = 0; j < 6; ++j) {
         label->Add(static_cast<float>(j));
       }
@@ -80,6 +77,9 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
     LabelingDataParameter *labeling_data_param = param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(5);
     labeling_data_param->set_source(filename_->c_str());
+    labeling_data_param->set_label_num(6);
+    labeling_data_param->set_label_height(2);
+    labeling_data_param->set_label_width(3);
 
     LabelingDataLayer<Dtype> layer(param);
     layer.SetUp(blob_bottom_vec_, blob_top_vec_);
