@@ -32,7 +32,6 @@ void LabelingLossLayer<Dtype>::Reshape(
   label_num_ = this->layer_param_.labeling_loss_param().label_num();
   label_height_ = this->layer_param_.labeling_loss_param().label_height();
   label_width_ = this->layer_param_.labeling_loss_param().label_width();
-  spatial_dim_ = label_height_ * label_width_;
   bottom[0]->Reshape(bottom[0]->num(), label_num_, label_height_, label_width_);
   bottom[1]->Reshape(bottom[1]->num(), 1, label_height_, label_width_);
 

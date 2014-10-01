@@ -521,7 +521,6 @@ class LabelingLossLayer : public LossLayer<Dtype> {
   int label_num_;
   int label_height_;
   int label_width_;
-  int spatial_dim_;
 
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
