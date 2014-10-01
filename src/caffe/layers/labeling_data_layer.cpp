@@ -11,7 +11,7 @@ LabelingDataLayer<Dtype>::~LabelingDataLayer<Dtype>() {
 
 template <typename Dtype>
 void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
-    vector<Blob<Dtype>*> *top) {
+    const vector<Blob<Dtype>*> &top) {
 
   // Initialize DB
   CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS) << "mdb_env_create failed";
@@ -36,14 +36,14 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
   batch_size_ = labeling_data_param.batch_size();
 
   // data
-  (*top)[0]->Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
+  top[0]->Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
   this->prefetch_data_.Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
-  LOG(INFO) << "input data size: " << (*top)[0]->num() << "," << (*top)[0]->channels() << "," << (*top)[0]->height() << "," << (*top)[0]->width();
+  LOG(INFO) << "input data size: " << top[0]->num() << "," << top[0]->channels() << "," << top[0]->height() << "," << top[0]->width();
 
   // label
-  (*top)[1]->Reshape(batch_size_, 1, label_height_, label_width_);
+  top[1]->Reshape(batch_size_, 1, label_height_, label_width_);
   this->prefetch_label_.Reshape(batch_size_, 1, label_height_, label_width_);
-  LOG(INFO) << "input label size: " << (*top)[1]->num() << "," << (*top)[1]->channels() << "," << (*top)[1]->height() << "," << (*top)[1]->width();
+  LOG(INFO) << "input label size: " << top[1]->num() << "," << top[1]->channels() << "," << top[1]->height() << "," << top[1]->width();
 
   this->datum_channels_ = datum.channels();
   this->datum_height_ = datum.height();
