@@ -1,4 +1,5 @@
-#include <opencv2/core/core.hpp>
+#include <time.h>
+#include <opencv2/opencv.hpp>
 #include "caffe/data_layers.hpp"
 #include "caffe/layer.hpp"
 
@@ -75,7 +76,33 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
       top_label[index] = label.Get(pos);
     }
 
+    for (int j = 0; j < this->datum_size_; ++j) {
+      Dtype datum_element = static_cast<Dtype>(static_cast<uint8_t>(data[j]));
+      int index = item_id * this->datum_size_ + j;
+      top_data[index] = (datum_element - this->mean_[j]) * this->transform_param_.scale();
+    }
+
     // do some data augmentation
+    // for (int i = 0; i < batch_size_; ++i) {
+    //   cv::Mat sat(this->datum_height_, this->datum_width_, CV_32FC(this->datum_channels_));
+    //   for (int c = 0; c < this->datum_channels_; ++c) {
+    //     for (int h = 0; h < this->datum_height_; ++h) {
+    //       for (int w = 0; w < this->datum_width_; ++w) {
+    //         int index = i * this->datum_channels_ * this->datum_height_ * this->datum_width_ +
+    //                     c * this->datum_height_ * this->datum_width_ +
+    //                     h * this->datum_width_ + w;
+    //         sat.data[c * this->datum_height_ * this->datum_width_ + h * this->datum_width_ + w] = top_data[index];
+    //       }
+    //     }
+    //   }
+    //   cv::Mat map(label_height_, label_width_, CV_32FC1);
+    //   for (int h = 0; h < label_height_; ++h) {
+    //     for (int w = 0; w < label_width_; ++w) {
+    //       int index = i * label_width_ * label_height_ + h * label_width_ + w;
+    //       map.data[h * label_width_ + w] = top_label[index];
+    //     }
+    //   }
+    // }
 
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
       // We have reached the end. Restart from the first.
