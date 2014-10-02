@@ -53,8 +53,9 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
 }
 
 template <typename Dtype>
-void LabelingDataLayer<Dtype>::Transform(Dtype *data, const int &num, const int &ch,
-    const int &height, const int &width, const int &angle, const int &flipCode) {
+void LabelingDataLayer<Dtype>::Transform(const int &item_id,
+    Dtype *data, const int &num, const int &ch, const int &height,
+    const int &width, const int &angle, const int &flipCode) {
   cv::Mat img(height, width, CV_32FC(ch));
   for (int c = 0; c < ch; ++c) {
     for (int h = 0; h < height; ++h) {
@@ -62,7 +63,11 @@ void LabelingDataLayer<Dtype>::Transform(Dtype *data, const int &num, const int 
         int index = num * height * width * ch
                     + c * height * width
                     + h * width + w;
-        img.data[h * width * ch + w * ch + c] = data[index];
+        int pos = h * width * ch + w * ch + c;
+        float val = static_cast<float>(data[index]);
+        if (ch == 1)
+          val *= 255;
+        reinterpret_cast<float *>(img.data)[pos] = val;
       }
     }
   }
@@ -84,7 +89,7 @@ void LabelingDataLayer<Dtype>::Transform(Dtype *data, const int &num, const int 
         int index = num * height * width * ch
                     + c * height * width
                     + h * width + w;
-        data[index] = img.data[h * width * ch + w * ch + c];
+        data[index] = static_cast<Dtype>(reinterpret_cast<float *>(img.data)[h * width * ch + w * ch + c]);
       }
     }
   }
@@ -125,8 +130,8 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     if (transform_) {
       int angle = rand() % 4 * 90;
       int flipCode = rand() % 4 - 1;
-      Transform(top_data, item_id, this->datum_channels_, this->datum_height_, this->datum_width_, angle, flipCode);
-      Transform(top_label, item_id, 1, label_height_, label_width_, angle, flipCode);
+      Transform(item_id, top_data, item_id, this->datum_channels_, this->datum_height_, this->datum_width_, angle, flipCode);
+      Transform(item_id, top_label, item_id, 1, label_height_, label_width_, angle, flipCode);
     }
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
       // We have reached the end. Restart from the first.
