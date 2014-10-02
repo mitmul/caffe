@@ -34,6 +34,7 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
   label_num_ = labeling_data_param.label_num();
   label_height_ = labeling_data_param.label_height();
   label_width_ = labeling_data_param.label_width();
+  transform_ = labeling_data_param.transform();
 
   // data
   top[0]->Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
@@ -49,6 +50,44 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(const vector<Blob<Dtype>*> &bottom
   this->datum_height_ = datum.height();
   this->datum_width_ = datum.width();
   this->datum_size_ = datum.channels() * datum.height() * datum.width();
+}
+
+template <typename Dtype>
+void LabelingDataLayer<Dtype>::Transform(Dtype *data, const int &num, const int &ch,
+    const int &height, const int &width, const int &angle, const int &flipCode) {
+  cv::Mat img(height, width, CV_32FC(ch));
+  for (int c = 0; c < ch; ++c) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        int index = num * height * width * ch
+                    + c * height * width
+                    + h * width + w;
+        img.data[h * width * ch + w * ch + c] = data[index];
+      }
+    }
+  }
+
+  for (int i = 0; i < angle / 90; ++i) {
+    cv::Mat dst;
+    cv::transpose(img, dst);
+    cv::flip(dst, dst, 1);
+    img = dst.clone();
+  }
+
+  if (flipCode > -2 && flipCode < 2) {
+    cv::flip(img, img, flipCode);
+  }
+
+  for (int c = 0; c < ch; ++c) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        int index = num * height * width * ch
+                    + c * height * width
+                    + h * width + w;
+        data[index] = img.data[h * width * ch + w * ch + c];
+      }
+    }
+  }
 }
 
 template <typename Dtype>
@@ -83,27 +122,12 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     }
 
     // do some data augmentation
-    // for (int i = 0; i < batch_size_; ++i) {
-    //   cv::Mat sat(this->datum_height_, this->datum_width_, CV_32FC(this->datum_channels_));
-    //   for (int c = 0; c < this->datum_channels_; ++c) {
-    //     for (int h = 0; h < this->datum_height_; ++h) {
-    //       for (int w = 0; w < this->datum_width_; ++w) {
-    //         int index = i * this->datum_channels_ * this->datum_height_ * this->datum_width_ +
-    //                     c * this->datum_height_ * this->datum_width_ +
-    //                     h * this->datum_width_ + w;
-    //         sat.data[c * this->datum_height_ * this->datum_width_ + h * this->datum_width_ + w] = top_data[index];
-    //       }
-    //     }
-    //   }
-    //   cv::Mat map(label_height_, label_width_, CV_32FC1);
-    //   for (int h = 0; h < label_height_; ++h) {
-    //     for (int w = 0; w < label_width_; ++w) {
-    //       int index = i * label_width_ * label_height_ + h * label_width_ + w;
-    //       map.data[h * label_width_ + w] = top_label[index];
-    //     }
-    //   }
-    // }
-
+    if (transform_) {
+      int angle = rand() % 4 * 90;
+      int flipCode = rand() % 4 - 1;
+      Transform(top_data, item_id, this->datum_channels_, this->datum_height_, this->datum_width_, angle, flipCode);
+      Transform(top_label, item_id, 1, label_height_, label_width_, angle, flipCode);
+    }
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_, &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
       // We have reached the end. Restart from the first.
       DLOG(INFO) << "Restarting data prefetching from start.";

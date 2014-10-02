@@ -44,16 +44,22 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
     for (int i = 0; i < 5; ++i) {
       Datum datum;
       datum.set_label(0);
-      datum.set_channels(3);
+      datum.set_channels(6);
       datum.set_height(2);
       datum.set_width(3);
       std::string *data = datum.mutable_data();
       google::protobuf::RepeatedField<float> *label = datum.mutable_float_data();
-      for (int j = 0; j < 18; ++j) {
-        data->push_back(static_cast<uint8_t>(j));
+      for (int c = 0; c < 6; ++c) {
+        for (int y = 0; y < 2; ++y) {
+          for (int x = 0; x < 3; ++x) {
+            data->push_back(static_cast<uint8_t>(c * 6 + y * 3 + x));
+          }
+        }
       }
-      for (int j = 0; j < 6; ++j) {
-        label->Add(static_cast<float>(j));
+      for (int y = 0; y < 2; ++y) {
+        for (int x = 0; x < 3; ++x) {
+          label->Add(static_cast<float>(y * 3 + x));
+        }
       }
       stringstream ss;
       ss << i;
@@ -80,13 +86,16 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
     labeling_data_param->set_label_num(6);
     labeling_data_param->set_label_height(2);
     labeling_data_param->set_label_width(3);
+    labeling_data_param->set_transform(false);
 
     LabelingDataLayer<Dtype> layer(param);
     layer.SetUp(blob_bottom_vec_, blob_top_vec_);
+
     EXPECT_EQ(blob_top_data_->num(), 5);
-    EXPECT_EQ(blob_top_data_->channels(), 3);
+    EXPECT_EQ(blob_top_data_->channels(), 6);
     EXPECT_EQ(blob_top_data_->height(), 2);
     EXPECT_EQ(blob_top_data_->width(), 3);
+
     EXPECT_EQ(blob_top_label_->num(), 5);
     EXPECT_EQ(blob_top_label_->channels(), 1);
     EXPECT_EQ(blob_top_label_->height(), 2);
@@ -94,13 +103,20 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
 
     layer.Forward(blob_bottom_vec_, blob_top_vec_);
     for (int i = 0; i < 5; ++i) {
-      for (int j = 0; j < 6; ++j) {
-        EXPECT_EQ(j, blob_top_label_->cpu_data()[i * 6 + j]);
+      for (int c = 0; c < 6; ++c) {
+        for (int y = 0; y < 2; ++y) {
+          for (int x = 0; x < 3; ++x) {
+            EXPECT_EQ(c * 6 + y * 3 + x, blob_top_data_->cpu_data()[i * 36 + c * 6 + y * 3 + x]);
+          }
+        }
       }
     }
+
     for (int i = 0; i < 5; ++i) {
-      for (int j = 0; j < 18; ++j) {
-        EXPECT_EQ(j, blob_top_data_->cpu_data()[i * 18 + j]);
+      for (int y = 0; y < 2; ++y) {
+        for (int x = 0; x < 3; ++x) {
+          EXPECT_EQ(y * 3 + x, blob_top_label_->cpu_data()[i * 6 + y * 3 + x]);
+        }
       }
     }
   }
