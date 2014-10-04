@@ -80,8 +80,6 @@ void LabelingDataLayer<Dtype>::Transform(const int &item_id,
                     + h * width + w;
         int pos = h * width * ch + w * ch + c;
         float val = static_cast<float>(data[index]);
-        if (ch == 1)
-          val *= 255;
         reinterpret_cast<float *>(img.data)[pos] = val;
       }
     }
