@@ -29,21 +29,29 @@ void LabelingLossLayer<Dtype>::Reshape(
   LossLayer<Dtype>::Reshape(bottom, top);
 
   // Reshape data
-  LabelingLossParameter labeling_loss_param = this->layer_param_.labeling_loss_param();
+  LabelingLossParameter labeling_loss_param =
+    this->layer_param_.labeling_loss_param();
   label_num_ = labeling_loss_param.label_num();
   label_height_ = labeling_loss_param.label_height();
   label_width_ = labeling_loss_param.label_width();
 
-  bottom[0]->Reshape(bottom[0]->num(), label_num_, label_height_, label_width_);
+  bottom[0]->Reshape(bottom[0]->num(), label_num_,
+                     label_height_, label_width_);
   bottom[1]->Reshape(bottom[1]->num(), 1, label_height_, label_width_);
 
   // Check the shapes of data and label
-  CHECK_EQ(bottom[0]->channels(), label_num_) << "The number of channels of data should be " << label_num_ << ".";
-  CHECK_EQ(bottom[0]->height(), bottom[1]->height()) << "The heights of data and label should be same.";
-  CHECK_EQ(bottom[0]->width(), bottom[1]->width()) << "The width of data and label should be same.";
-  CHECK_EQ(bottom[1]->channels(), 1) << "The number of channels of label should be one.";
-  CHECK_EQ(bottom[1]->height(), label_height_) << "The label height should be " << label_height_ << ".";
-  CHECK_EQ(bottom[1]->width(), label_width_) << "The label width should be " << label_width_ << ".";
+  CHECK_EQ(bottom[0]->channels(), label_num_)
+      << "The number of channels of data should be " << label_num_ << ".";
+  CHECK_EQ(bottom[0]->height(), bottom[1]->height())
+      << "The heights of data and label should be same.";
+  CHECK_EQ(bottom[0]->width(), bottom[1]->width())
+      << "The width of data and label should be same.";
+  CHECK_EQ(bottom[1]->channels(), 1)
+      << "The number of channels of label should be one.";
+  CHECK_EQ(bottom[1]->height(), label_height_)
+      << "The label height should be " << label_height_ << ".";
+  CHECK_EQ(bottom[1]->width(), label_width_)
+      << "The label width should be " << label_width_ << ".";
   softmax_layer_->Reshape(softmax_bottom_vec_, softmax_top_vec_);
 }
 
