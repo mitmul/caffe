@@ -23,6 +23,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     : blob_bottom_data_(new Blob<Dtype>(2, 3, 4, 4)),
       blob_bottom_label_(new Blob<Dtype>(2, 1, 4, 4)),
       blob_top_loss_(new Blob<Dtype>()) {
+    Caffe::set_random_seed(1701);
     FillerParameter filler_param;
     filler_param.set_std(10);
     GaussianFiller<Dtype> filler(filler_param);
@@ -33,9 +34,6 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     blob_bottom_vec_.push_back(blob_bottom_data_);
     blob_bottom_vec_.push_back(blob_bottom_label_);
     blob_top_vec_.push_back(blob_top_loss_);
-
-    LOG(INFO) << "The first cpu_data "
-              << blob_bottom_data_->cpu_data()[0];
   }
 
   virtual ~LabelingLossLayerTest() {
@@ -110,7 +108,7 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   const Dtype kErrorMargin = 1e-5;
   const Dtype loss_weight_1 =
     layer_weight_1.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-  LOG(INFO) << "Forward loss " << loss_weight_1;
+  LOG(INFO) << "Forward loss 1: " << loss_weight_1;
 
   const Dtype kLossWeight = 3.7;
   layer_param.add_loss_weight(kLossWeight);
@@ -118,6 +116,7 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   layer_weight_2.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   const Dtype loss_weight_2 =
     layer_weight_2.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  LOG(INFO) << "Forward loss 2: " << loss_weight_2;
   EXPECT_NEAR(loss_weight_1 * kLossWeight, loss_weight_2, kErrorMargin);
 
   const Dtype kNonTrivialAbsThresh = 1e-1;

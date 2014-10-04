@@ -531,6 +531,8 @@ class LabelingLossLayer : public LossLayer<Dtype> {
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_top_vec_;
+  /// for Forward_gpu
+  Blob<Dtype> loss_;
 };
 
 /**
