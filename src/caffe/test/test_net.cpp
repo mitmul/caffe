@@ -1068,8 +1068,6 @@ TYPED_TEST(NetTest, TestSharedWeightsUpdate) {
   }
 }
 
-<<<<<<< HEAD
-=======
 TYPED_TEST(NetTest, TestSharedWeightsResume) {
   typedef typename TypeParam::Dtype Dtype;
 
@@ -1118,7 +1116,6 @@ TYPED_TEST(NetTest, TestSharedWeightsResume) {
   EXPECT_NE(ip1_weights->cpu_diff(), ip2_weights->cpu_diff());
 }
 
->>>>>>> upstream/dev
 TYPED_TEST(NetTest, TestParamPropagateDown) {
   typedef typename TypeParam::Dtype Dtype;
   vector<Blob<Dtype>*> bottom;
