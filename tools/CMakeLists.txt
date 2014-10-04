@@ -8,7 +8,7 @@ foreach(source ${TOOLS_SOURCES})
     get_filename_component(name ${source} NAME_WE)
     add_executable(${name}.bin ${source})
     set_target_properties(${name}.bin PROPERTIES OUTPUT_NAME ${name})
-    target_link_libraries(${name}.bin caffe)
+    target_link_libraries(${name}.bin ${CAFFE_STATIC_LINK})
 
 ###    Install    #################################################################################
 
