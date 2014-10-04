@@ -38,8 +38,10 @@ void LabelingLossLayer<Dtype>::Reshape(
   bottom[0]->Reshape(bottom[0]->num(), label_num_,
                      label_height_, label_width_);
   bottom[1]->Reshape(bottom[1]->num(), 1, label_height_, label_width_);
+  loss_.Reshape(bottom[0]->num(), 1, label_height_, label_width_);
 
   // Check the shapes of data and label
+  CHECK_EQ(bottom[0]->num(), bottom[1]->num());
   CHECK_EQ(bottom[0]->channels(), label_num_)
       << "The number of channels of data should be " << label_num_ << ".";
   CHECK_EQ(bottom[0]->height(), bottom[1]->height())
