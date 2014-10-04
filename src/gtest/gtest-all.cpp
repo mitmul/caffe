@@ -6854,8 +6854,7 @@ DeathTest::TestRole WindowsDeathTest::AssumeRole() {
   // WindowsDeathTest uses an anonymous pipe to communicate results of
   // a death test.
   SECURITY_ATTRIBUTES handles_are_inheritable = {
-    sizeof(SECURITY_ATTRIBUTES), NULL, TRUE
-  };
+    sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
   HANDLE read_handle, write_handle;
   GTEST_DEATH_TEST_CHECK_(
     ::CreatePipe(&read_handle, &write_handle, &handles_are_inheritable,
