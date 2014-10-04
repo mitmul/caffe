@@ -1,5 +1,7 @@
-#include <time.h>
 #include <opencv2/opencv.hpp>
+#include <boost/type_traits.hpp>
+
+#include "caffe/util/io.hpp"
 #include "caffe/data_layers.hpp"
 #include "caffe/layer.hpp"
 
@@ -61,10 +63,19 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
             << top[1]->channels() << "," << top[1]->height() << ","
             << top[1]->width();
 
-  this->datum_channels_ = datum.channels();
-  this->datum_height_ = datum.height();
-  this->datum_width_ = datum.width();
-  this->datum_size_ = datum.channels() * datum.height() * datum.width();
+  data_channels_ = datum.channels();
+  data_height_ = datum.height();
+  data_width_ = datum.width();
+  data_size_ = datum.channels() * datum.height() * datum.width();
+
+  transform_param_ = this->layer_param_.transform_param();
+  if (transform_param_.has_mean_file()) {
+    const string &mean_file = transform_param_.mean_file();
+    LOG(INFO) << "Loading mean file from" << mean_file;
+    BlobProto blob_proto;
+    ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
+    data_mean_.FromProto(blob_proto);
+  }
 }
 
 template <typename Dtype>
@@ -124,31 +135,35 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
                             MDB_GET_CURRENT), MDB_SUCCESS);
     datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
 
+    int offset = this->prefetch_data_.offset(item_id);
     const string &data = datum.data();
-    for (int pos = 0; pos < this->datum_size_; ++pos) {
-      int index = item_id * this->datum_size_ + pos;
+    for (int pos = 0; pos < data_size_; ++pos) {
+      int index = item_id * data_size_ + pos;
       top_data[index] = static_cast<float>(static_cast<uint8_t>(data[pos]));
     }
 
     const google::protobuf::RepeatedField<float> label = datum.float_data();
+    const float *label_data = label.data();
     for (int pos = 0; pos < label_height_ * label_width_; ++pos) {
-      int index =  item_id * label_height_ * label_width_ + pos;
-      top_label[index] = label.Get(pos);
+      int index = item_id * label_height_ * label_width_ + pos;
+      top_label[index] = static_cast<float>(label_data[pos]);
     }
 
-    for (int j = 0; j < this->datum_size_; ++j) {
-      Dtype datum_element = static_cast<Dtype>(static_cast<uint8_t>(data[j]));
-      int index = item_id * this->datum_size_ + j;
-      top_data[index] = (datum_element - this->mean_[j]) *
-                        this->transform_param_.scale();
+    if (transform_param_.has_mean_file()) {
+      caffe_sub(data_mean_.count(), top_data + offset,
+                data_mean_.cpu_data(), top_data + offset);
+    }
+    if (transform_param_.has_scale()) {
+      caffe_scal(data_mean_.count(), (Dtype)this->transform_param_.scale(),
+                 top_data + offset);
     }
 
     // do some data augmentation
     if (transform_) {
       int angle = rand() % 4 * 90;
       int flipCode = rand() % 4 - 1;
-      Transform(item_id, top_data, item_id, this->datum_channels_,
-                this->datum_height_, this->datum_width_, angle, flipCode);
+      Transform(item_id, top_data, item_id, data_channels_,
+                data_height_, data_width_, angle, flipCode);
       Transform(item_id, top_label, item_id, 1, label_height_, label_width_,
                 angle, flipCode);
     }

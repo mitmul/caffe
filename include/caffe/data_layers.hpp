@@ -284,11 +284,11 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
   MDB_cursor *mdb_cursor_;
   MDB_val mdb_key_, mdb_value_;
 
-  int batch_size_;
-  int label_num_;
-  int label_height_;
-  int label_width_;
+  int batch_size_, label_num_, label_height_, label_width_;
+  int data_channels_, data_height_, data_width_, data_size_;
   bool transform_;
+  Blob<Dtype> data_mean_;
+  TransformationParameter transform_param_;
 
  private:
   void Transform(const int &item_id, Dtype *data, const int &num,
