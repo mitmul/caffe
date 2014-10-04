@@ -6,9 +6,9 @@
 namespace caffe {
 
 Timer::Timer()
-  : initted_(false),
-    running_(false),
-    has_run_at_least_once_(false) {
+    : initted_(false),
+      running_(false),
+      has_run_at_least_once_(false) {
   Init();
 }
 
@@ -55,6 +55,30 @@ void Timer::Stop() {
   }
 }
 
+
+float Timer::MicroSeconds() {
+  if (!has_run_at_least_once()) {
+    LOG(WARNING) << "Timer has never been run before reading time.";
+    return 0;
+  }
+  if (running()) {
+    Stop();
+  }
+  if (Caffe::mode() == Caffe::GPU) {
+#ifndef CPU_ONLY
+    CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
+                                    stop_gpu_));
+    // Cuda only measure milliseconds
+    elapsed_microseconds_ = elapsed_milliseconds_ / 1000;
+#else
+      NO_GPU;
+#endif
+  } else {
+    elapsed_microseconds_ = (stop_cpu_ - start_cpu_).total_microseconds();
+  }
+  return elapsed_microseconds_;
+}
+
 float Timer::MilliSeconds() {
   if (!has_run_at_least_once()) {
     LOG(WARNING) << "Timer has never been run before reading time.";
@@ -68,7 +92,7 @@ float Timer::MilliSeconds() {
     CUDA_CHECK(cudaEventElapsedTime(&elapsed_milliseconds_, start_gpu_,
                                     stop_gpu_));
 #else
-    NO_GPU;
+      NO_GPU;
 #endif
   } else {
     elapsed_milliseconds_ = (stop_cpu_ - start_cpu_).total_milliseconds();
