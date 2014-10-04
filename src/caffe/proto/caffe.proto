@@ -311,8 +311,8 @@ message LayerParameter {
   optional ImageDataParameter image_data_param = 15;
   optional InfogainLossParameter infogain_loss_param = 16;
   optional InnerProductParameter inner_product_param = 17;
-  optional LabelingDataParameter labeling_data_param = 42;
-  optional LabelingLossParameter labeling_loss_param = 41;
+  optional LabelingDataParameter labeling_data_param = 43;
+  optional LabelingLossParameter labeling_loss_param = 42;
   optional LRNParameter lrn_param = 18;
   optional MemoryDataParameter memory_data_param = 22;
   optional MVNParameter mvn_param = 34;

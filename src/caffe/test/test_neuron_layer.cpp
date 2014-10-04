@@ -233,8 +233,6 @@ TYPED_TEST(NeuronLayerTest, TestTanHGradient) {
                                this->blob_top_vec_);
 }
 
-<<<<<<< HEAD
-=======
 TYPED_TEST(NeuronLayerTest, TestExpLayer) {
   typedef typename TypeParam::Dtype Dtype;
   // Test default base of "-1" -- should actually set base := e.
@@ -317,7 +315,6 @@ TYPED_TEST(NeuronLayerTest, TestExpGradientBase2Shift1Scale3) {
   this->TestExpGradient(kBase, kScale, kShift);
 }
 
->>>>>>> upstream/dev
 TYPED_TEST(NeuronLayerTest, TestDropoutHalf) {
   const float kDropoutRatio = 0.5;
   this->TestDropoutForward(kDropoutRatio);
