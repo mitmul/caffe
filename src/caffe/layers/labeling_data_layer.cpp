@@ -82,8 +82,11 @@ template <typename Dtype>
 void LabelingDataLayer<Dtype>::Transform(
   Dtype *data, const int &num, const int &ch, const int &height,
   const int &width, const int &angle, const int &flipCode) {
+  // compute channel-wise mean
+  float mean[ch];
   cv::Mat img(height, width, CV_32FC(ch));
   for (int c = 0; c < ch; ++c) {
+    mean[c] = 0;
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         int index = num * height * width * ch
@@ -92,8 +95,24 @@ void LabelingDataLayer<Dtype>::Transform(
         int pos = h * width * ch + w * ch + c;
         float val = static_cast<float>(data[index]);
         reinterpret_cast<float *>(img.data)[pos] = val;
+        mean[c] += val;
       }
     }
+    mean[c] /= (height * width);
+  }
+
+  // compute channel-wise std
+  float std[ch];
+  for (int c = 0; c < ch; ++c) {
+    std[c] = 0;
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        int pos = h * width * ch + w * ch + c;
+        float val = reinterpret_cast<float *>(img.data)[pos];
+        std[c] += pow(val - mean[c], 2);
+      }
+    }
+    std[c] /= (height * width);
   }
 
   for (int i = 0; i < angle / 90; ++i) {
@@ -113,9 +132,10 @@ void LabelingDataLayer<Dtype>::Transform(
         int index = num * height * width * ch
                     + c * height * width
                     + h * width + w;
-        data[index] =
-          static_cast<Dtype>(
-            reinterpret_cast<float *>(img.data)[h * width * ch + w * ch + c]);
+        float val = reinterpret_cast<float *>(img.data)[
+                      h * width * ch + w * ch + c];
+        val = (val - mean[c]) / std[c];
+        data[index] = static_cast<Dtype>(val);
       }
     }
   }
@@ -149,14 +169,14 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
       top_label[index] = static_cast<float>(label_data[pos]);
     }
 
-    if (transform_param_.has_mean_file()) {
-      caffe_sub(data_mean_.count(), top_data + offset,
-                data_mean_.cpu_data(), top_data + offset);
-    }
-    if (transform_param_.has_scale()) {
-      caffe_scal(data_mean_.count(), (Dtype)this->transform_param_.scale(),
-                 top_data + offset);
-    }
+    // if (transform_param_.has_mean_file()) {
+    //   caffe_sub(data_mean_.count(), top_data + offset,
+    //             data_mean_.cpu_data(), top_data + offset);
+    // }
+    // if (transform_param_.has_scale()) {
+    //   caffe_scal(data_mean_.count(), (Dtype)this->transform_param_.scale(),
+    //              top_data + offset);
+    // }
 
     // do some data augmentation
     if (transform_) {
