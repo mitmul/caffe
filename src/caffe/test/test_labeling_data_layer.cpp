@@ -1,3 +1,5 @@
+#include <opencv2/opencv.hpp>
+
 #include "gtest/gtest.h"
 
 #include "caffe/blob.hpp"
@@ -16,7 +18,9 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
   LabelingDataLayerTest()
     : blob_top_data_(new Blob<Dtype>()),
       blob_top_label_(new Blob<Dtype>()),
-      seed_(1701) {}
+      seed_(25314) {
+    Caffe::set_random_seed(seed_);
+  }
 
   virtual void SetUp() {
     filename_.reset(new string());

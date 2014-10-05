@@ -79,9 +79,9 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
 }
 
 template <typename Dtype>
-void LabelingDataLayer<Dtype>::Transform(const int &item_id,
-    Dtype *data, const int &num, const int &ch, const int &height,
-    const int &width, const int &angle, const int &flipCode) {
+void LabelingDataLayer<Dtype>::Transform(
+  Dtype *data, const int &num, const int &ch, const int &height,
+  const int &width, const int &angle, const int &flipCode) {
   cv::Mat img(height, width, CV_32FC(ch));
   for (int c = 0; c < ch; ++c) {
     for (int h = 0; h < height; ++h) {
@@ -162,9 +162,9 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     if (transform_) {
       int angle = rand() % 4 * 90;
       int flipCode = rand() % 4 - 1;
-      Transform(item_id, top_data, item_id, data_channels_,
+      Transform(top_data, item_id, data_channels_,
                 data_height_, data_width_, angle, flipCode);
-      Transform(item_id, top_label, item_id, 1, label_height_, label_width_,
+      Transform(top_label, item_id, 1, label_height_, label_width_,
                 angle, flipCode);
     }
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_,
