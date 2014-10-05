@@ -291,7 +291,7 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
   TransformationParameter transform_param_;
 
  private:
-  void Transform(const int &item_id, Dtype *data, const int &num,
+  void Transform(Dtype *data, const int &num,
                  const int &ch, const int &height, const int &width,
                  const int &angle, const int &flipCode);
 };
