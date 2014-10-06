@@ -80,12 +80,11 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
 template <typename Dtype>
 void LabelingDataLayer<Dtype>::Transform(
   Dtype *data, const int &num, const int &ch, const int &height,
-  const int &width, const int &angle, const int &flipCode) {
+  const int &width, const int &angle, const int &flipCode,
+  const bool &normalize) {
   // compute channel-wise mean
-  float mean[ch];
   cv::Mat img(height, width, CV_32FC(ch));
   for (int c = 0; c < ch; ++c) {
-    mean[c] = 0;
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         int index = num * height * width * ch
@@ -94,24 +93,8 @@ void LabelingDataLayer<Dtype>::Transform(
         int pos = h * width * ch + w * ch + c;
         float val = static_cast<float>(data[index]);
         reinterpret_cast<float *>(img.data)[pos] = val;
-        mean[c] += val;
       }
     }
-    mean[c] /= (height * width);
-  }
-
-  // compute channel-wise std
-  float std[ch];
-  for (int c = 0; c < ch; ++c) {
-    std[c] = 0;
-    for (int h = 0; h < height; ++h) {
-      for (int w = 0; w < width; ++w) {
-        int pos = h * width * ch + w * ch + c;
-        float val = reinterpret_cast<float *>(img.data)[pos];
-        std[c] += pow(val - mean[c], 2);
-      }
-    }
-    std[c] /= (height * width);
   }
 
   for (int i = 0; i < angle / 90; ++i) {
@@ -125,6 +108,19 @@ void LabelingDataLayer<Dtype>::Transform(
     cv::flip(img, img, flipCode);
   }
 
+  // mean subtraction and stddev division is performred only for data
+  if (normalize) {
+    cv::Mat mean, stddev;
+    cv::meanStdDev(img, mean, stddev);
+    cv::Mat slice[ch];
+    cv::split(img, slice);
+    for (int c = 0; c < ch; ++c) {
+      cv::subtract(slice[c], mean.at<Dtype>(c), slice[c]);
+      slice[c] /= stddev.at<Dtype>(c);
+    }
+    cv::merge(slice, ch, img);
+  }
+
   for (int c = 0; c < ch; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
@@ -133,7 +129,6 @@ void LabelingDataLayer<Dtype>::Transform(
                     + h * width + w;
         float val = reinterpret_cast<float *>(img.data)[
                       h * width * ch + w * ch + c];
-        val = (val - mean[c]) / std[c];
         data[index] = static_cast<Dtype>(val);
       }
     }
@@ -175,7 +170,7 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
       Transform(top_data, item_id, data_channels_,
                 data_height_, data_width_, angle, flipCode);
       Transform(top_label, item_id, 1, label_height_, label_width_,
-                angle, flipCode);
+                angle, flipCode, false);
     }
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_,
                        &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {

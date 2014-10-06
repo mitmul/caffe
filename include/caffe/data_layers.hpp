@@ -293,7 +293,8 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
  private:
   void Transform(Dtype *data, const int &num,
                  const int &ch, const int &height, const int &width,
-                 const int &angle, const int &flipCode);
+                 const int &angle, const int &flipCode,
+                 const bool &normalize = true);
 };
 
 /**
