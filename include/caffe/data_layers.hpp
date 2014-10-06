@@ -287,8 +287,6 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
   int batch_size_, label_num_, label_height_, label_width_;
   int data_channels_, data_height_, data_width_, data_size_;
   bool transform_;
-  Blob<Dtype> data_mean_;
-  TransformationParameter transform_param_;
 
  private:
   void Transform(Dtype *data, const int &num,
