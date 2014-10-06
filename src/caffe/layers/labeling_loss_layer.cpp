@@ -34,7 +34,14 @@ void LabelingLossLayer<Dtype>::Reshape(
   label_num_ = labeling_loss_param.label_num();
   label_height_ = labeling_loss_param.label_height();
   label_width_ = labeling_loss_param.label_width();
-
+  int count = bottom[0]->num() * label_num_ * label_height_ * label_width_;
+  CHECK_EQ(bottom[0]->count(), count)
+      << "LabelingLoss layer needs label_height, label_width params"
+      << " that are the same as LabelinDataLayer";
+  count = bottom[1]->num() * 1 * label_height_ * label_width_;
+  CHECK_EQ(bottom[1]->count(), count)
+      << "LabelingLoss layer needs label_height, label_width params"
+      << " that are the same as LabelinDataLayer";
   bottom[0]->Reshape(bottom[0]->num(), label_num_,
                      label_height_, label_width_);
   bottom[1]->Reshape(bottom[1]->num(), 1, label_height_, label_width_);

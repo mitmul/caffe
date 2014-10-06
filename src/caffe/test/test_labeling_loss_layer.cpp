@@ -20,8 +20,8 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   LabelingLossLayerTest()
-    : blob_bottom_data_(new Blob<Dtype>(63, 3, 10, 10)),
-      blob_bottom_label_(new Blob<Dtype>(63, 1, 3, 3)),
+    : blob_bottom_data_(new Blob<Dtype>(63, 2, 5, 5)),
+      blob_bottom_label_(new Blob<Dtype>(63, 1, 5, 5)),
       blob_top_loss_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
     FillerParameter filler_param;
@@ -57,8 +57,8 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
   label_param->set_label_num(2);
-  label_param->set_label_height(3);
-  label_param->set_label_width(3);
+  label_param->set_label_height(5);
+  label_param->set_label_width(5);
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   LOG(INFO) << "Softmax loss "
@@ -66,8 +66,8 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
 
   EXPECT_EQ(layer.prob_.num(), 63);
   EXPECT_EQ(layer.prob_.channels(), 2);
-  EXPECT_EQ(layer.prob_.height(), 3);
-  EXPECT_EQ(layer.prob_.width(), 3);
+  EXPECT_EQ(layer.prob_.height(), 5);
+  EXPECT_EQ(layer.prob_.width(), 5);
 
   int num = layer.prob_.num();
   int channels = layer.prob_.channels();
@@ -100,8 +100,8 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
   label_param->set_label_num(2);
-  label_param->set_label_height(3);
-  label_param->set_label_width(3);
+  label_param->set_label_height(5);
+  label_param->set_label_width(5);
 
   LabelingLossLayer<Dtype> layer_weight_1(layer_param);
   layer_weight_1.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
@@ -129,8 +129,8 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
   label_param->set_label_num(2);
-  label_param->set_label_height(3);
-  label_param->set_label_width(3);
+  label_param->set_label_height(5);
+  label_param->set_label_width(5);
   const Dtype kLossWeight = 3.7;
   layer_param.add_loss_weight(kLossWeight);
   LabelingLossLayer<Dtype> layer(layer_param);
