@@ -50,8 +50,8 @@ void LabelingLossLayer<Dtype>::Forward_gpu(
   kernel_loss<Dtype> <<< CAFFE_GET_BLOCKS(num *spatial_dim),
               CAFFE_CUDA_NUM_THREADS>>>(num, spatial_dim, dim,
                                         bottom_label, prob_data, loss_vec);
-  Dtype loss = 0;
-  caffe_gpu_asum(num * spatial_dim, loss_vec, &loss);
+  Dtype loss;
+  caffe_gpu_asum<Dtype>(num * spatial_dim, loss_vec, &loss);
   top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
 }
 
@@ -79,7 +79,7 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
                                           bottom_label, bottom_diff);
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_gpu_scal(prob_.count(), loss_weight / num / spatial_dim, bottom_diff);
+    caffe_gpu_scal<Dtype>(prob_.count(), loss_weight / num / spatial_dim, bottom_diff);
   }
 }
 
