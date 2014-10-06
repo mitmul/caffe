@@ -110,13 +110,13 @@ void LabelingDataLayer<Dtype>::Transform(
 
   // mean subtraction and stddev division is performred only for data
   if (normalize) {
-    cv::Mat mean, stddev;
+    cv::Scalar mean, stddev;
     cv::meanStdDev(img, mean, stddev);
     cv::Mat slice[ch];
     cv::split(img, slice);
     for (int c = 0; c < ch; ++c) {
-      cv::subtract(slice[c], mean.at<Dtype>(c), slice[c]);
-      slice[c] /= stddev.at<Dtype>(c);
+      cv::subtract(slice[c], mean[c], slice[c]);
+      slice[c] /= stddev[c];
     }
     cv::merge(slice, ch, img);
   }
@@ -149,7 +149,6 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
                             MDB_GET_CURRENT), MDB_SUCCESS);
     datum.ParseFromArray(mdb_value_.mv_data, mdb_value_.mv_size);
 
-    int offset = this->prefetch_data_.offset(item_id);
     const string &data = datum.data();
     for (int pos = 0; pos < data_size_; ++pos) {
       int index = item_id * data_size_ + pos;
