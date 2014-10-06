@@ -17,7 +17,7 @@ __global__ void kernel_loss(
   CUDA_KERNEL_LOOP(index, num * spatial_dim) {
     int i = index / spatial_dim;
     int j = index % spatial_dim;
-    int pos = label[i * spatial_dim + j];
+    int pos = (int)label[i * spatial_dim + j];
     out[index] = -log(max(prob[i * dim + pos * spatial_dim + j],
                           Dtype(FLT_MIN)));
   }
