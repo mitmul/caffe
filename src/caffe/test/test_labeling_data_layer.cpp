@@ -158,8 +158,8 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
     labeling_data_param->set_batch_size(15);
     labeling_data_param->set_source(db_file.c_str());
     labeling_data_param->set_label_num(2);
-    labeling_data_param->set_label_height(32);
-    labeling_data_param->set_label_width(32);
+    labeling_data_param->set_label_height(16);
+    labeling_data_param->set_label_width(16);
     labeling_data_param->set_transform(true);
 
     LabelingDataLayer<Dtype> layer(param);
@@ -167,13 +167,13 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
 
     EXPECT_EQ(this->blob_top_data_->num(), 15);
     EXPECT_EQ(this->blob_top_data_->channels(), 3);
-    EXPECT_EQ(this->blob_top_data_->height(), 128);
-    EXPECT_EQ(this->blob_top_data_->width(), 128);
+    EXPECT_EQ(this->blob_top_data_->height(), 64);
+    EXPECT_EQ(this->blob_top_data_->width(), 64);
 
     EXPECT_EQ(this->blob_top_label_->num(), 15);
     EXPECT_EQ(this->blob_top_label_->channels(), 1);
-    EXPECT_EQ(this->blob_top_label_->height(), 32);
-    EXPECT_EQ(this->blob_top_label_->width(), 32);
+    EXPECT_EQ(this->blob_top_label_->height(), 16);
+    EXPECT_EQ(this->blob_top_label_->width(), 16);
 
     layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
     const int num = this->blob_top_data_->num();
