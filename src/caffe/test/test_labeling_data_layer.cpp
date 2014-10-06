@@ -150,6 +150,9 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
 
   string db_file = "/mnt/mapgen/data/asahi_train.lmdb";
   if (fopen(db_file.c_str(), "r") != NULL) {
+    const unsigned int seed = (unsigned) time(NULL);
+    Caffe::set_random_seed(seed);
+        
     LayerParameter param;
     LabelingDataParameter *labeling_data_param = param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(15);
