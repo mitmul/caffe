@@ -16,7 +16,6 @@ template <typename Dtype>
 void LabelingDataLayer<Dtype>::DataLayerSetUp(
   const vector<Blob<Dtype>*> &bottom,
   const vector<Blob<Dtype>*> &top) {
-
   // Initialize DB
   LOG(INFO) << "Dataset: " << this->layer_param_.labeling_data_param().source();
   CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS) << "mdb_env_create failed";
@@ -169,19 +168,10 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
       top_label[index] = static_cast<float>(label_data[pos]);
     }
 
-    // if (transform_param_.has_mean_file()) {
-    //   caffe_sub(data_mean_.count(), top_data + offset,
-    //             data_mean_.cpu_data(), top_data + offset);
-    // }
-    // if (transform_param_.has_scale()) {
-    //   caffe_scal(data_mean_.count(), (Dtype)this->transform_param_.scale(),
-    //              top_data + offset);
-    // }
-
     // do some data augmentation
     if (transform_) {
-      int angle = rand() % 4 * 90;
-      int flipCode = rand() % 4 - 1;
+      int angle = caffe_rng_rand() % 4 * 90;
+      int flipCode = caffe_rng_rand() % 4 - 1;
       Transform(top_data, item_id, data_channels_,
                 data_height_, data_width_, angle, flipCode);
       Transform(top_label, item_id, 1, label_height_, label_width_,

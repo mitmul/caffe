@@ -20,8 +20,8 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   LabelingLossLayerTest()
-    : blob_bottom_data_(new Blob<Dtype>(2, 3, 4, 4)),
-      blob_bottom_label_(new Blob<Dtype>(2, 1, 4, 4)),
+    : blob_bottom_data_(new Blob<Dtype>(63, 3, 10, 10)),
+      blob_bottom_label_(new Blob<Dtype>(63, 1, 3, 3)),
       blob_top_loss_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
     FillerParameter filler_param;
@@ -29,7 +29,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     GaussianFiller<Dtype> filler(filler_param);
     filler.Fill(blob_bottom_data_);
     for (int i = 0; i < blob_bottom_label_->count(); ++i) {
-      blob_bottom_label_->mutable_cpu_data()[i] = caffe_rng_rand() % 3;
+      blob_bottom_label_->mutable_cpu_data()[i] = caffe_rng_rand() % 2;
     }
     blob_bottom_vec_.push_back(blob_bottom_data_);
     blob_bottom_vec_.push_back(blob_bottom_label_);
@@ -56,18 +56,18 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(3);
-  label_param->set_label_height(4);
-  label_param->set_label_width(4);
+  label_param->set_label_num(2);
+  label_param->set_label_height(3);
+  label_param->set_label_width(3);
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   LOG(INFO) << "Softmax loss "
             << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
-  EXPECT_EQ(layer.prob_.num(), 2);
-  EXPECT_EQ(layer.prob_.channels(), 3);
-  EXPECT_EQ(layer.prob_.height(), 4);
-  EXPECT_EQ(layer.prob_.width(), 4);
+  EXPECT_EQ(layer.prob_.num(), 63);
+  EXPECT_EQ(layer.prob_.channels(), 2);
+  EXPECT_EQ(layer.prob_.height(), 3);
+  EXPECT_EQ(layer.prob_.width(), 3);
 
   int num = layer.prob_.num();
   int channels = layer.prob_.channels();
@@ -99,9 +99,9 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(3);
-  label_param->set_label_height(4);
-  label_param->set_label_width(4);
+  label_param->set_label_num(2);
+  label_param->set_label_height(3);
+  label_param->set_label_width(3);
 
   LabelingLossLayer<Dtype> layer_weight_1(layer_param);
   layer_weight_1.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
@@ -128,13 +128,15 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(3);
-  label_param->set_label_height(4);
-  label_param->set_label_width(4);
+  label_param->set_label_num(2);
+  label_param->set_label_height(3);
+  label_param->set_label_width(3);
   const Dtype kLossWeight = 3.7;
   layer_param.add_loss_weight(kLossWeight);
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  const Dtype loss = layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  LOG(INFO) << "Backward loss: " << loss;
 
   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,

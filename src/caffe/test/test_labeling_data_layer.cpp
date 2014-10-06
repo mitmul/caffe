@@ -145,4 +145,79 @@ TYPED_TEST(LabelingDataLayerTest, TestRead) {
   this->TestRead();
 }
 
+TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
+  typedef typename TypeParam::Dtype Dtype;
+
+  string db_file = "/mnt/mapgen/data/asahi_train.lmdb";
+  if (fopen(db_file.c_str(), "r") != NULL) {
+    LayerParameter param;
+    LabelingDataParameter *labeling_data_param = param.mutable_labeling_data_param();
+    labeling_data_param->set_batch_size(15);
+    labeling_data_param->set_source(db_file.c_str());
+    labeling_data_param->set_label_num(2);
+    labeling_data_param->set_label_height(32);
+    labeling_data_param->set_label_width(32);
+    labeling_data_param->set_transform(true);
+
+    LabelingDataLayer<Dtype> layer(param);
+    layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+
+    EXPECT_EQ(this->blob_top_data_->num(), 15);
+    EXPECT_EQ(this->blob_top_data_->channels(), 3);
+    EXPECT_EQ(this->blob_top_data_->height(), 128);
+    EXPECT_EQ(this->blob_top_data_->width(), 128);
+
+    EXPECT_EQ(this->blob_top_label_->num(), 15);
+    EXPECT_EQ(this->blob_top_label_->channels(), 1);
+    EXPECT_EQ(this->blob_top_label_->height(), 32);
+    EXPECT_EQ(this->blob_top_label_->width(), 32);
+
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    const int num = this->blob_top_data_->num();
+    const int channels = this->blob_top_data_->channels();
+    const int height = this->blob_top_data_->height();
+    const int width = this->blob_top_data_->width();
+    const int dim = channels * height * width;
+    const int spatial_dim = width * height;
+    for (int i = 0; i < num; ++i) {
+      cv::Mat img(height, width, CV_32FC(channels));
+      for (int c = 0; c < channels; ++c) {
+        for (int y = 0; y < height; ++y) {
+          for (int x = 0; x < width; ++x) {
+            float pix = this->blob_top_data_->cpu_data()[
+                          i * dim + c * spatial_dim + y * width + x];
+            ((float *)img.data)[y * width * channels + x * channels + c] = pix;
+          }
+        }
+      }
+      cv::Mat dst;
+      cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
+      dst.convertTo(dst, CV_8U);
+      stringstream ss;
+      ss << "/mnt/mapgen/data/test_data_" << i << ".png";
+      cv::imwrite(ss.str(), dst);
+    }
+
+    const int lnum = this->blob_top_label_->num();
+    const int lchannels = this->blob_top_label_->channels();
+    const int lheight = this->blob_top_label_->height();
+    const int lwidth = this->blob_top_label_->width();
+    const int ldim = lchannels * lheight * lwidth;
+    for (int i = 0; i < lnum; ++i) {
+      cv::Mat label(lheight, lwidth, CV_32FC(lchannels));
+      for (int y = 0; y < lheight; ++y) {
+        for (int x = 0; x < lwidth; ++x) {
+          float pix = this->blob_top_label_->cpu_data()[
+                        i * ldim + y * lwidth + x];
+          ((float *)label.data)[y * lwidth + x] = pix;
+        }
+      }
+      label.convertTo(label, CV_8U, 255);
+      stringstream ss;
+      ss << "/mnt/mapgen/data/test_label_" << i << ".png";
+      cv::imwrite(ss.str(), label);
+    }
+  }
+}
+
 }  // namespace caffe
