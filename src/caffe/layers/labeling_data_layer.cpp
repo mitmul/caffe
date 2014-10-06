@@ -66,15 +66,6 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
   data_height_ = datum.height();
   data_width_ = datum.width();
   data_size_ = datum.channels() * datum.height() * datum.width();
-
-  transform_param_ = this->layer_param_.transform_param();
-  if (transform_param_.has_mean_file()) {
-    const string &mean_file = transform_param_.mean_file();
-    LOG(INFO) << "Loading mean file from" << mean_file;
-    BlobProto blob_proto;
-    ReadProtoFromBinaryFileOrDie(mean_file.c_str(), &blob_proto);
-    data_mean_.FromProto(blob_proto);
-  }
 }
 
 template <typename Dtype>
