@@ -8,21 +8,21 @@
 namespace caffe {
 
 template <typename Dtype>
-void SliceLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                                   const vector<Blob<Dtype>*> &top) {
-  const SliceParameter &slice_param = this->layer_param_.slice_param();
+void SliceLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+  const SliceParameter& slice_param = this->layer_param_.slice_param();
   slice_dim_ = slice_param.slice_dim();
   CHECK_GE(slice_dim_, 0);
   CHECK_LE(slice_dim_, 1) << "Can only slice num and channels";
   slice_point_.clear();
   std::copy(slice_param.slice_point().begin(),
-            slice_param.slice_point().end(),
-            std::back_inserter(slice_point_));
+      slice_param.slice_point().end(),
+      std::back_inserter(slice_point_));
 }
 
 template <typename Dtype>
-void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*> &bottom,
-                                const vector<Blob<Dtype>*> &top) {
+void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
   count_ = 0;
   num_ = bottom[0]->num();
   channels_ = bottom[0]->channels();
@@ -76,14 +76,14 @@ void SliceLayer<Dtype>::Reshape(const vector<Blob<Dtype>*> &bottom,
 }
 
 template <typename Dtype>
-void SliceLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
-                                    const vector<Blob<Dtype>*> &top) {
-  const Dtype *bottom_data = bottom[0]->mutable_cpu_data();
+void SliceLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top) {
+  const Dtype* bottom_data = bottom[0]->mutable_cpu_data();
   if (slice_dim_ == 0) {
     int offset_num = 0;
     for (int i = 0; i < top.size(); ++i) {
-      Blob<Dtype> *blob = top[i];
-      Dtype *top_data = blob->mutable_cpu_data();
+      Blob<Dtype>* blob = top[i];
+      Dtype* top_data = blob->mutable_cpu_data();
       caffe_copy(blob->count(), bottom_data + bottom[0]->offset(offset_num),
                  top_data);
       offset_num += blob->num();
@@ -91,8 +91,8 @@ void SliceLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
   } else if (slice_dim_ == 1) {
     int offset_channel = 0;
     for (int i = 0; i < top.size(); ++i) {
-      Blob<Dtype> *blob = top[i];
-      Dtype *top_data = blob->mutable_cpu_data();
+      Blob<Dtype>* blob = top[i];
+      Dtype* top_data = blob->mutable_cpu_data();
       const int num_elem = blob->channels() * blob->height() * blob->width();
       for (int n = 0; n < num_; ++n) {
         caffe_copy(num_elem, bottom_data + bottom[0]->offset(n, offset_channel),
@@ -104,15 +104,15 @@ void SliceLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
 }
 
 template <typename Dtype>
-void SliceLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*> &top,
-                                     const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {
+void SliceLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom) {
   if (!propagate_down[0]) { return; }
-  Dtype *bottom_diff = bottom[0]->mutable_cpu_diff();
+  Dtype* bottom_diff = bottom[0]->mutable_cpu_diff();
   if (slice_dim_ == 0) {
     int offset_num = 0;
     for (int i = 0; i < top.size(); ++i) {
-      Blob<Dtype> *blob = top[i];
-      const Dtype *top_diff = blob->cpu_diff();
+      Blob<Dtype>* blob = top[i];
+      const Dtype* top_diff = blob->cpu_diff();
       caffe_copy(blob->count(), top_diff,
                  bottom_diff + bottom[0]->offset(offset_num));
       offset_num += blob->num();
@@ -120,8 +120,8 @@ void SliceLayer<Dtype>::Backward_cpu(const vector<Blob<Dtype>*> &top,
   } else if (slice_dim_ == 1) {
     int offset_channel = 0;
     for (int i = 0; i < top.size(); ++i) {
-      Blob<Dtype> *blob = top[i];
-      const Dtype *top_diff = blob->cpu_diff();
+      Blob<Dtype>* blob = top[i];
+      const Dtype* top_diff = blob->cpu_diff();
       const int num_elem = blob->channels() * blob->height() * blob->width();
       for (int n = 0; n < num_; ++n) {
         caffe_copy(num_elem, top_diff + blob->offset(n),
