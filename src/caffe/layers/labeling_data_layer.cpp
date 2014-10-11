@@ -47,6 +47,7 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
   label_height_ = labeling_data_param.label_height();
   label_width_ = labeling_data_param.label_width();
   transform_ = labeling_data_param.transform();
+  normalize_ = labeling_data_param.normalize();
 
   // data
   top[0]->Reshape(batch_size_, datum.channels(), datum.height(), datum.width());
@@ -73,7 +74,6 @@ void LabelingDataLayer<Dtype>::Transform(
   Dtype *data, const int &num, const int &ch, const int &height,
   const int &width, const int &angle, const int &flipCode,
   const bool &normalize) {
-  // compute channel-wise mean
   cv::Mat img(height, width, CV_32FC(ch));
   for (int c = 0; c < ch; ++c) {
     for (int h = 0; h < height; ++h) {
@@ -88,18 +88,19 @@ void LabelingDataLayer<Dtype>::Transform(
     }
   }
 
-  for (int i = 0; i < angle / 90; ++i) {
-    cv::Mat dst;
-    cv::transpose(img, dst);
-    cv::flip(dst, dst, 1);
-    img = dst.clone();
+  if (transform_) {
+    for (int i = 0; i < angle / 90; ++i) {
+      cv::Mat dst;
+      cv::transpose(img, dst);
+      cv::flip(dst, dst, 1);
+      img = dst.clone();
+    }
+
+    if (flipCode > -2 && flipCode < 2) {
+      cv::flip(img, img, flipCode);
+    }
   }
 
-  if (flipCode > -2 && flipCode < 2) {
-    cv::flip(img, img, flipCode);
-  }
-
-  // mean subtraction and stddev division is performred only for data
   if (normalize) {
     cv::Scalar mean, stddev;
     cv::meanStdDev(img, mean, stddev);
@@ -155,14 +156,15 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     }
 
     // do some data augmentation
-    if (transform_) {
-      int angle = caffe_rng_rand() % 4 * 90;
-      int flipCode = caffe_rng_rand() % 4 - 1;
-      Transform(top_data, item_id, data_channels_,
-                data_height_, data_width_, angle, flipCode);
-      Transform(top_label, item_id, 1, label_height_, label_width_,
-                angle, flipCode, false);
-    }
+    int angle = caffe_rng_rand() % 4 * 90;
+    int flipCode = caffe_rng_rand() % 4 - 1;
+    // normalization(mean subtraction and stddev division)
+    // should be performred only for data
+    Transform(top_data, item_id, data_channels_,
+              data_height_, data_width_, angle, flipCode, normalize_);
+    Transform(top_label, item_id, 1, label_height_, label_width_,
+              angle, flipCode, false);
+
     if (mdb_cursor_get(mdb_cursor_, &mdb_key_,
                        &mdb_value_, MDB_NEXT) != MDB_SUCCESS) {
       // We have reached the end. Restart from the first.

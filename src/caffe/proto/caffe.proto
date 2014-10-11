@@ -565,6 +565,7 @@ message LabelingDataParameter {
   required uint32 label_height = 4;
   required uint32 label_width = 5;
   optional bool transform = 6 [default = true];
+  optional bool normalize = 7 [default = true];
 }
 
 message LabelingLossParameter {
