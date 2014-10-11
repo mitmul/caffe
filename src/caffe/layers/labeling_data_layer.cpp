@@ -103,13 +103,14 @@ void LabelingDataLayer<Dtype>::Transform(
   if (normalize) {
     cv::Scalar mean, stddev;
     cv::meanStdDev(img, mean, stddev);
-    cv::Mat slice[ch];
+    cv::Mat *slice = new cv::Mat[ch];
     cv::split(img, slice);
     for (int c = 0; c < ch; ++c) {
       cv::subtract(slice[c], mean[c], slice[c]);
       slice[c] /= stddev[c];
     }
     cv::merge(slice, ch, img);
+    delete [] slice;
   }
 
   for (int c = 0; c < ch; ++c) {

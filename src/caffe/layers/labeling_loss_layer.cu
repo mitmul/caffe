@@ -84,6 +84,6 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
   }
 }
 
-INSTANTIATE_CLASS(LabelingLossLayer);
+INSTANTIATE_LAYER_GPU_FUNCS(LabelingLossLayer);
 
 }  // namespace caffe
