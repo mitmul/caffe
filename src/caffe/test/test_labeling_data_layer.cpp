@@ -33,17 +33,23 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
   // Fill the LMDB with data
   void FillLMDB() {
     LOG(INFO) << "Using temporary lmdb " << *filename_;
-    CHECK_EQ(mkdir(filename_->c_str(), 0744), 0) << "mkdir " << filename_ << "failed";
+    CHECK_EQ(mkdir(filename_->c_str(), 0744), 0)
+        << "mkdir " << filename_ << "failed";
 
     MDB_env *env;
     MDB_dbi dbi;
     MDB_val mdbkey, mdbdata;
     MDB_txn *txn;
-    CHECK_EQ(mdb_env_create(&env), MDB_SUCCESS) << "mdb_env_create failed";
-    CHECK_EQ(mdb_env_set_mapsize(env, 1099511627776), MDB_SUCCESS) << "mdb_env_set_mapsize failed";
-    CHECK_EQ(mdb_env_open(env, filename_->c_str(), 0, 0664), MDB_SUCCESS) << "mdb_env_open failed";
-    CHECK_EQ(mdb_txn_begin(env, NULL, 0, &txn), MDB_SUCCESS) << "mdb_txn_begin failed";
-    CHECK_EQ(mdb_open(txn, NULL, 0, &dbi), MDB_SUCCESS) << "mdb_open failed";
+    CHECK_EQ(mdb_env_create(&env), MDB_SUCCESS)
+        << "mdb_env_create failed";
+    CHECK_EQ(mdb_env_set_mapsize(env, 1099511627776), MDB_SUCCESS)
+        << "mdb_env_set_mapsize failed";
+    CHECK_EQ(mdb_env_open(env, filename_->c_str(), 0, 0664), MDB_SUCCESS)
+        << "mdb_env_open failed";
+    CHECK_EQ(mdb_txn_begin(env, NULL, 0, &txn), MDB_SUCCESS)
+        << "mdb_txn_begin failed";
+    CHECK_EQ(mdb_open(txn, NULL, 0, &dbi), MDB_SUCCESS)
+        << "mdb_open failed";
 
     for (int i = 0; i < 5; ++i) {
       Datum datum;
@@ -52,7 +58,8 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
       datum.set_height(2);
       datum.set_width(3);
       std::string *data = datum.mutable_data();
-      google::protobuf::RepeatedField<float> *label = datum.mutable_float_data();
+      google::protobuf::RepeatedField<float> *label =
+        datum.mutable_float_data();
       for (int c = 0; c < 6; ++c) {
         for (int y = 0; y < 2; ++y) {
           for (int x = 0; x < 3; ++x) {
@@ -75,16 +82,19 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
       string keystr = ss.str();
       mdbkey.mv_size = keystr.size();
       mdbkey.mv_data = reinterpret_cast<void *>(&keystr[0]);
-      CHECK_EQ(mdb_put(txn, dbi, &mdbkey, &mdbdata, 0), MDB_SUCCESS) << "mdb_put failed";
+      CHECK_EQ(mdb_put(txn, dbi, &mdbkey, &mdbdata, 0), MDB_SUCCESS)
+          << "mdb_put failed";
     }
-    CHECK_EQ(mdb_txn_commit(txn), MDB_SUCCESS) << "mdb_txn_commit failed";
+    CHECK_EQ(mdb_txn_commit(txn), MDB_SUCCESS)
+        << "mdb_txn_commit failed";
     mdb_close(env, dbi);
     mdb_env_close(env);
   }
 
   void TestRead() {
     LayerParameter param;
-    LabelingDataParameter *labeling_data_param = param.mutable_labeling_data_param();
+    LabelingDataParameter *labeling_data_param =
+      param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(5);
     labeling_data_param->set_source(filename_->c_str());
     labeling_data_param->set_label_num(6);
@@ -110,7 +120,8 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
       for (int c = 0; c < 6; ++c) {
         for (int y = 0; y < 2; ++y) {
           for (int x = 0; x < 3; ++x) {
-            EXPECT_EQ(c * 6 + y * 3 + x, blob_top_data_->cpu_data()[i * 36 + c * 6 + y * 3 + x]);
+            EXPECT_EQ(c * 6 + y * 3 + x,
+                      blob_top_data_->cpu_data()[i * 36 + c * 6 + y * 3 + x]);
           }
         }
       }
@@ -148,13 +159,16 @@ TYPED_TEST(LabelingDataLayerTest, TestRead) {
 TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
   typedef typename TypeParam::Dtype Dtype;
 
-  string db_file = "/mnt/mapgen/data/asahi_train.lmdb";
+  string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
+  string db_file =
+    CMAKE_SOURCE_DIR "caffe/test/test_data/sample_labeling_data.lmdb" CMAKE_EXT;
   if (fopen(db_file.c_str(), "r") != NULL) {
     const unsigned int seed = (unsigned) time(NULL);
     Caffe::set_random_seed(seed);
-        
+
     LayerParameter param;
-    LabelingDataParameter *labeling_data_param = param.mutable_labeling_data_param();
+    LabelingDataParameter *labeling_data_param =
+      param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(15);
     labeling_data_param->set_source(db_file.c_str());
     labeling_data_param->set_label_num(2);
@@ -197,7 +211,7 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
       cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
       dst.convertTo(dst, CV_8U);
       stringstream ss;
-      ss << "/mnt/mapgen/data/test_data_" << i << ".png";
+      ss << out_dir << "/test_data_" << i << ".png";
       cv::imwrite(ss.str(), dst);
     }
 
@@ -217,7 +231,7 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
       }
       label.convertTo(label, CV_8U, 255);
       stringstream ss;
-      ss << "/mnt/mapgen/data/test_label_" << i << ".png";
+      ss << out_dir << "/test_label_" << i << ".png";
       cv::imwrite(ss.str(), label);
     }
   }
