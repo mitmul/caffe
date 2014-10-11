@@ -166,10 +166,11 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
     const unsigned int seed = (unsigned) time(NULL);
     Caffe::set_random_seed(seed);
 
+    const int batch_size = 15;
     LayerParameter param;
     LabelingDataParameter *labeling_data_param =
       param.mutable_labeling_data_param();
-    labeling_data_param->set_batch_size(15);
+    labeling_data_param->set_batch_size(batch_size);
     labeling_data_param->set_source(db_file.c_str());
     labeling_data_param->set_label_num(2);
     labeling_data_param->set_label_height(16);
@@ -179,12 +180,12 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
     LabelingDataLayer<Dtype> layer(param);
     layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
-    EXPECT_EQ(this->blob_top_data_->num(), 15);
+    EXPECT_EQ(this->blob_top_data_->num(), batch_size);
     EXPECT_EQ(this->blob_top_data_->channels(), 3);
     EXPECT_EQ(this->blob_top_data_->height(), 64);
     EXPECT_EQ(this->blob_top_data_->width(), 64);
 
-    EXPECT_EQ(this->blob_top_label_->num(), 15);
+    EXPECT_EQ(this->blob_top_label_->num(), batch_size);
     EXPECT_EQ(this->blob_top_label_->channels(), 1);
     EXPECT_EQ(this->blob_top_label_->height(), 16);
     EXPECT_EQ(this->blob_top_label_->width(), 16);
@@ -229,10 +230,12 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
           ((float *)label.data)[y * lwidth + x] = pix;
         }
       }
-      label.convertTo(label, CV_8U, 255);
+      cv::Mat dst;
+      cv::normalize(label, dst, 0, 255, cv::NORM_MINMAX);
+      dst.convertTo(dst, CV_8U);
       stringstream ss;
       ss << out_dir << "/test_label_" << i << ".png";
-      cv::imwrite(ss.str(), label);
+      cv::imwrite(ss.str(), dst);
     }
   }
 }
