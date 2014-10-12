@@ -57,6 +57,7 @@ models/*
 *.binaryproto
 *leveldb
 *lmdb
+*png
 
 # LevelDB files
 *.sst

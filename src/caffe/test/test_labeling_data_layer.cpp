@@ -216,7 +216,6 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
         EXPECT_NEAR(mean[c], 0, 1e-5);
         EXPECT_NEAR(stddev[c], 1, 1e-5);
       }
-
       cv::Mat dst;
       cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
       dst.convertTo(dst, CV_8U);

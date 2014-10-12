@@ -20,7 +20,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   LabelingLossLayerTest()
-    : blob_bottom_data_(new Blob<Dtype>(63, 2, 5, 5)),
+    : blob_bottom_data_(new Blob<Dtype>(63, 3, 5, 5)),
       blob_bottom_label_(new Blob<Dtype>(63, 1, 5, 5)),
       blob_top_loss_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
@@ -56,7 +56,7 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(2);
+  label_param->set_label_num(3);
   label_param->set_label_height(5);
   label_param->set_label_width(5);
   LabelingLossLayer<Dtype> layer(layer_param);
@@ -65,7 +65,7 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
             << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
   EXPECT_EQ(layer.prob_.num(), 63);
-  EXPECT_EQ(layer.prob_.channels(), 2);
+  EXPECT_EQ(layer.prob_.channels(), 3);
   EXPECT_EQ(layer.prob_.height(), 5);
   EXPECT_EQ(layer.prob_.width(), 5);
 
@@ -99,7 +99,7 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(2);
+  label_param->set_label_num(3);
   label_param->set_label_height(5);
   label_param->set_label_width(5);
 
@@ -128,7 +128,7 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   LayerParameter layer_param;
   LabelingLossParameter *label_param =
     layer_param.mutable_labeling_loss_param();
-  label_param->set_label_num(2);
+  label_param->set_label_num(3);
   label_param->set_label_height(5);
   label_param->set_label_width(5);
   const Dtype kLossWeight = 3.7;
