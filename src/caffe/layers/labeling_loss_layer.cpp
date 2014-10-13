@@ -71,16 +71,18 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype *prob_data = prob_.cpu_data();
-  const Dtype *bottom_label = bottom[1]->cpu_data();
+  const Dtype *label = bottom[1]->cpu_data();
   const int num = prob_.num();
   const int dim = prob_.count() / num;
   const int spatial_dim = prob_.height() * prob_.width();
   Dtype loss = 0;
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
-      const int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
-      const int index = i * dim + label * spatial_dim + j;
-      loss -= log(std::max(prob_data[index], Dtype(FLT_MIN)));
+      const int label_value = static_cast<int>(label[i * spatial_dim + j]);
+      CHECK_GT(dim, label_value * spatial_dim);
+      loss -= log(std::max(
+                    prob_data[i * dim + label_value * spatial_dim + j],
+                    Dtype(FLT_MIN)));
     }
   }
   top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
