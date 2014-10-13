@@ -17,8 +17,8 @@ __global__ void kernel_loss(
   CUDA_KERNEL_LOOP(index, num * spatial_dim) {
     const int i = index / spatial_dim;
     const int j = index % spatial_dim;
-    const int pos = (int)label[i * spatial_dim + j];
-    out[index] = -log(max(prob[i * dim + pos * spatial_dim + j],
+    const int l = (int)label[i * spatial_dim + j];
+    out[index] = -log(max(prob[i * dim + l * spatial_dim + j],
                           Dtype(FLT_MIN)));
   }
 }
@@ -30,7 +30,7 @@ __global__ void kernel_diff(
   CUDA_KERNEL_LOOP(index, num * spatial_dim) {
     const int i = index / spatial_dim;
     const int j = index % spatial_dim;
-    const int l = label[i * spatial_dim + j];
+    const int l = (int)label[i * spatial_dim + j];
     out[i * dim + l * spatial_dim + j] -= 1;
   }
 }
