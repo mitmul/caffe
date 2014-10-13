@@ -20,8 +20,8 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   LabelingLossLayerTest()
-    : blob_bottom_data_(new Blob<Dtype>(63, 3, 5, 5)),
-      blob_bottom_label_(new Blob<Dtype>(63, 1, 5, 5)),
+    : blob_bottom_data_(new Blob<Dtype>(13, 3, 5, 5)),
+      blob_bottom_label_(new Blob<Dtype>(13, 1, 5, 5)),
       blob_top_loss_(new Blob<Dtype>()) {
     Caffe::set_random_seed(1701);
     FillerParameter filler_param;
@@ -29,7 +29,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
     GaussianFiller<Dtype> filler(filler_param);
     filler.Fill(blob_bottom_data_);
     for (int i = 0; i < blob_bottom_label_->count(); ++i) {
-      blob_bottom_label_->mutable_cpu_data()[i] = caffe_rng_rand() % 2;
+      blob_bottom_label_->mutable_cpu_data()[i] = caffe_rng_rand() % 3;
     }
     blob_bottom_vec_.push_back(blob_bottom_data_);
     blob_bottom_vec_.push_back(blob_bottom_label_);
@@ -64,7 +64,7 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   LOG(INFO) << "Softmax loss "
             << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
-  EXPECT_EQ(layer.prob_.num(), 63);
+  EXPECT_EQ(layer.prob_.num(), 13);
   EXPECT_EQ(layer.prob_.channels(), 3);
   EXPECT_EQ(layer.prob_.height(), 5);
   EXPECT_EQ(layer.prob_.width(), 5);
@@ -123,6 +123,63 @@ TYPED_TEST(LabelingLossLayerTest, TestForward) {
   EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
 }
 
+TYPED_TEST(LabelingLossLayerTest, TestBackward) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  LabelingLossParameter *label_param =
+    layer_param.mutable_labeling_loss_param();
+  label_param->set_label_num(3);
+  label_param->set_label_height(5);
+  label_param->set_label_width(5);
+  LabelingLossLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  LOG(INFO) << "Forward loss: "
+            << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+  propagate_down.push_back(false);
+  layer.Backward(this->blob_top_vec_,
+                 propagate_down, this->blob_bottom_vec_);
+  const Dtype *diff = this->blob_bottom_vec_[0]->cpu_diff();
+  const Dtype *label = this->blob_bottom_vec_[1]->cpu_data();
+  const Dtype loss_weight = this->blob_top_vec_[0]->cpu_diff()[0];
+  LOG(INFO) << "Loss weight: " << loss_weight;
+
+  const int num = layer.prob_.num();
+  const int channels = layer.prob_.channels();
+  const int height = layer.prob_.height();
+  const int width = layer.prob_.width();
+  const int dim = layer.prob_.count() / num;
+  const int spatial_dim = height * width;
+  const int label_dim = this->blob_bottom_vec_[1]->count() / num;
+
+  const Dtype kErrorMargin = 1e-5;
+  const Dtype *prob_data = layer.prob_.cpu_data();
+  for (int i = 0; i < num; ++i) {
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        Dtype value = 0;
+        Dtype diff_value = 0;
+        for (int c = 0; c < channels; ++c) {
+          const int idx = i * dim + c * spatial_dim + y * width + x;
+          value += prob_data[idx];
+          diff_value += diff[idx];
+        }
+        EXPECT_NEAR(value, 1.0, kErrorMargin);
+        EXPECT_NEAR(diff_value, 0.0, kErrorMargin);
+
+        const int label_idx = i * label_dim + y * width + x;
+        const int label_ans = label[label_idx];
+        const int prob_idx = i * dim + label_ans * spatial_dim + y * width + x;
+
+        EXPECT_NEAR((prob_data[prob_idx] - 1)
+                    * (loss_weight / num / spatial_dim),
+                    diff[prob_idx], kErrorMargin);
+      }
+    }
+  }
+}
+
 TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
@@ -136,7 +193,7 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   const Dtype loss = layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-  LOG(INFO) << "Backward loss: " << loss;
+  LOG(INFO) << "Forward loss: " << loss;
 
   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,

@@ -72,14 +72,14 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype *prob_data = prob_.cpu_data();
   const Dtype *bottom_label = bottom[1]->cpu_data();
-  int num = prob_.num();
-  int dim = prob_.count() / num;
-  int spatial_dim = prob_.height() * prob_.width();
+  const int num = prob_.num();
+  const int dim = prob_.count() / num;
+  const int spatial_dim = prob_.height() * prob_.width();
   Dtype loss = 0;
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
-      int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
-      int index = i * dim + label * spatial_dim + j;
+      const int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
+      const int index = i * dim + label * spatial_dim + j;
       loss -= log(std::max(prob_data[index], Dtype(FLT_MIN)));
     }
   }
@@ -100,12 +100,12 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
     const Dtype *prob_data = prob_.cpu_data();
     caffe_copy(prob_.count(), prob_data, bottom_diff);
     const Dtype *bottom_label = bottom[1]->cpu_data();
-    int num = prob_.num();
-    int dim = prob_.count() / num;
-    int spatial_dim = prob_.height() * prob_.width();
+    const int num = prob_.num();
+    const int dim = prob_.count() / num;
+    const int spatial_dim = prob_.height() * prob_.width();
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
-        int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
+        const int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
         bottom_diff[i * dim + label * spatial_dim + j] -= 1;
       }
     }

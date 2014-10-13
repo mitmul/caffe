@@ -15,9 +15,9 @@ __global__ void kernel_loss(
   const int num, const int spatial_dim, const int dim,
   const Dtype *label, const Dtype *prob, Dtype *out) {
   CUDA_KERNEL_LOOP(index, num * spatial_dim) {
-    int i = index / spatial_dim;
-    int j = index % spatial_dim;
-    int pos = (int)label[i * spatial_dim + j];
+    const int i = index / spatial_dim;
+    const int j = index % spatial_dim;
+    const int pos = (int)label[i * spatial_dim + j];
     out[index] = -log(max(prob[i * dim + pos * spatial_dim + j],
                           Dtype(FLT_MIN)));
   }
@@ -28,9 +28,9 @@ __global__ void kernel_diff(
   const int num, const int spatial_dim, const int dim,
   const Dtype *label, Dtype *out) {
   CUDA_KERNEL_LOOP(index, num * spatial_dim) {
-    int i = index / spatial_dim;
-    int j = index % spatial_dim;
-    int pos = label[i * spatial_dim + j];
+    const int i = index / spatial_dim;
+    const int j = index % spatial_dim;
+    const int pos = label[i * spatial_dim + j];
     out[i * dim + pos * spatial_dim + j] -= 1;
   }
 }
@@ -69,9 +69,9 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
     Dtype *bottom_diff = bottom[0]->mutable_gpu_diff();
     caffe_copy(prob_.count(), prob_.gpu_data(), bottom_diff);
     const Dtype *bottom_label = bottom[1]->gpu_data();
-    int num = prob_.num();
-    int dim = prob_.count() / num;
-    int spatial_dim = prob_.height() * prob_.width();
+    const int num = prob_.num();
+    const int dim = prob_.count() / num;
+    const int spatial_dim = prob_.height() * prob_.width();
 
     // NOLINT_NEXT_LINE(whitespace/operators)
     kernel_diff<Dtype>
