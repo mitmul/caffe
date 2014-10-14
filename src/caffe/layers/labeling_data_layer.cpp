@@ -176,5 +176,6 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
 }
 
 INSTANTIATE_CLASS(LabelingDataLayer);
+REGISTER_LAYER_CLASS(LABELING_DATA, LabelingDataLayer);
 
 }  // namespace caffe

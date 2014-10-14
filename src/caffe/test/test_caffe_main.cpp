@@ -1,11 +1,12 @@
 // The main caffe test code. Your test cpp code should include this hpp
 // to allow a main function to be compiled into the binary.
 
+#include "caffe/caffe.hpp"
 #include "caffe/test/test_caffe_main.hpp"
 
 namespace caffe {
 #ifndef CPU_ONLY
-cudaDeviceProp CAFFE_TEST_CUDA_PROP;
+  cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 #endif
 }
 
@@ -13,9 +14,9 @@ cudaDeviceProp CAFFE_TEST_CUDA_PROP;
 using caffe::CAFFE_TEST_CUDA_PROP;
 #endif
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  ::google::InitGoogleLogging(argv[0]);
+  caffe::GlobalInit(&argc, &argv);
 #ifndef CPU_ONLY
   // Before starting testing, let's first print out a few cuda defice info.
   int device;

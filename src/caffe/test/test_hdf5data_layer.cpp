@@ -13,8 +13,6 @@
 
 #include "caffe/test/test_caffe_main.hpp"
 
-using std::string;
-
 namespace caffe {
 
 template <typename TypeParam>
@@ -23,10 +21,10 @@ class HDF5DataLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   HDF5DataLayerTest()
-    : filename(NULL),
-      blob_top_data_(new Blob<Dtype>()),
-      blob_top_label_(new Blob<Dtype>()),
-      blob_top_label2_(new Blob<Dtype>()) {}
+      : filename(NULL),
+        blob_top_data_(new Blob<Dtype>()),
+        blob_top_label_(new Blob<Dtype>()),
+        blob_top_label2_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     blob_top_vec_.push_back(blob_top_data_);
     blob_top_vec_.push_back(blob_top_label_);
@@ -34,8 +32,8 @@ class HDF5DataLayerTest : public MultiDeviceTest<TypeParam> {
 
     // Check out generate_sample_data.py in the same directory.
     filename = new string(
-      CMAKE_SOURCE_DIR "caffe/test/test_data/sample_data_list.txt" CMAKE_EXT);
-    LOG(INFO) << "Using sample HDF5 data file " << filename;
+    CMAKE_SOURCE_DIR "caffe/test/test_data/sample_data_list.txt" CMAKE_EXT);
+    LOG(INFO)<< "Using sample HDF5 data file " << filename;
   }
 
   virtual ~HDF5DataLayerTest() {
@@ -45,10 +43,10 @@ class HDF5DataLayerTest : public MultiDeviceTest<TypeParam> {
     delete filename;
   }
 
-  string *filename;
-  Blob<Dtype> *const blob_top_data_;
-  Blob<Dtype> *const blob_top_label_;
-  Blob<Dtype> *const blob_top_label2_;
+  string* filename;
+  Blob<Dtype>* const blob_top_data_;
+  Blob<Dtype>* const blob_top_label_;
+  Blob<Dtype>* const blob_top_label2_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -65,7 +63,7 @@ TYPED_TEST(HDF5DataLayerTest, TestRead) {
   param.add_top("label");
   param.add_top("label2");
 
-  HDF5DataParameter *hdf5_data_param = param.mutable_hdf5_data_param();
+  HDF5DataParameter* hdf5_data_param = param.mutable_hdf5_data_param();
   int batch_size = 5;
   hdf5_data_param->set_batch_size(batch_size);
   hdf5_data_param->set_source(*(this->filename));
@@ -123,14 +121,14 @@ TYPED_TEST(HDF5DataLayerTest, TestRead) {
         for (int h = 0; h < height; ++h) {
           for (int w = 0; w < width; ++w) {
             int idx = (
-                        i * num_cols * height * width +
-                        j * height * width +
-                        h * width + w);
+              i * num_cols * height * width +
+              j * height * width +
+              h * width + w);
             EXPECT_EQ(
               file_offset + data_offset + idx,
               this->blob_top_data_->cpu_data()[idx])
-                << "debug: i " << i << " j " << j
-                << " iter " << iter;
+              << "debug: i " << i << " j " << j
+              << " iter " << iter;
           }
         }
       }
