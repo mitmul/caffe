@@ -200,7 +200,7 @@ message NetStateRule {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available ID: 45 (last added: reshape_param)
+// LayerParameter next available ID: 44 (last added: reshape_param)
 message LayerParameter {
   repeated string bottom = 2; // the name of the bottom blobs
   repeated string top = 3; // the name of the top blobs
@@ -248,8 +248,8 @@ message LayerParameter {
     IMAGE_DATA = 12;
     INFOGAIN_LOSS = 13;
     INNER_PRODUCT = 14;
-    LABELING_DATA = 40;
-    LABELING_LOSS = 39;
+    LABELING_DATA = 39;
+    LABELING_LOSS = 40;
     LRN = 15;
     MEMORY_DATA = 29;
     MULTINOMIAL_LOGISTIC_LOSS = 16;
@@ -312,15 +312,14 @@ message LayerParameter {
   optional ImageDataParameter image_data_param = 15;
   optional InfogainLossParameter infogain_loss_param = 16;
   optional InnerProductParameter inner_product_param = 17;
-  optional LabelingDataParameter labeling_data_param = 43;
-  optional LabelingLossParameter labeling_loss_param = 42;
+  optional LabelingDataParameter labeling_data_param = 42;
   optional LRNParameter lrn_param = 18;
   optional MemoryDataParameter memory_data_param = 22;
   optional MVNParameter mvn_param = 34;
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
   optional ReLUParameter relu_param = 30;
-  optional ReshapeParameter reshape_param = 44;
+  optional ReshapeParameter reshape_param = 43;
   optional SigmoidParameter sigmoid_param = 38;
   optional SoftmaxParameter softmax_param = 39;
   optional SliceParameter slice_param = 31;
@@ -568,12 +567,6 @@ message LabelingDataParameter {
   required uint32 label_width = 5;
   optional bool transform = 6 [default = true];
   optional bool normalize = 7 [default = true];
-}
-
-message LabelingLossParameter {
-  required uint32 label_num = 1;
-  required uint32 label_height = 2;
-  required uint32 label_width = 3;
 }
 
 // Message that stores parameters used by LRNLayer

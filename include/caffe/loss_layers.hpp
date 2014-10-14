@@ -74,8 +74,9 @@ class AccuracyLayer : public Layer<Dtype> {
 
 
   /// @brief Not implemented -- AccuracyLayer cannot be used as a loss.
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {
     for (int i = 0; i < propagate_down.size(); ++i) {
       if (propagate_down[i]) { NOT_IMPLEMENTED; }
     }
@@ -197,10 +198,12 @@ class ContrastiveLossLayer : public LossLayer<Dtype> {
    *      the features @f$b@f$; Backward fills their diff with gradients if
    *      propagate_down[1]
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 
   Blob<Dtype> diff_;  // cached for backward pass
   Blob<Dtype> dist_sq_;  // cached for backward pass
@@ -294,10 +297,12 @@ class EuclideanLossLayer : public LossLayer<Dtype> {
    *          \frac{1}{n} \sum\limits_{n=1}^N (y_n - \hat{y}_n)
    *      @f$ if propagate_down[1]
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 
   Blob<Dtype> diff_;
 };
@@ -387,14 +392,15 @@ class HingeLossLayer : public LossLayer<Dtype> {
    *   -# @f$ (N \times 1 \times 1 \times 1) @f$
    *      the labels -- ignored as we can't compute their error gradients
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 };
 
 /**
  * @brief A generalization of MultinomialLogisticLossLayer that takes an
- *        "information gain" (infogain) matrix specifying the "value" of all label
- *        pairs.
+ *        "information gain" (infogain) matrix specifying the "value" of all
+ *        label pairs.
  *
  * Equivalent to the MultinomialLogisticLossLayer if the infogain matrix is the
  * identity.
@@ -481,29 +487,22 @@ class InfogainLossLayer : public LossLayer<Dtype> {
    *      (\b optional) the information gain matrix -- ignored as its error
    *      gradient computation is not implemented.
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 
   Blob<Dtype> infogain_;
 };
-
-// Forward declare SoftmaxLayer for use in SoftmaxWithLossLayer.
-template <typename Dtype> class SoftmaxLayer;
 
 template <typename Dtype>
 class LabelingLossLayer : public LossLayer<Dtype> {
  public:
   explicit LabelingLossLayer(const LayerParameter &param)
-    : LossLayer<Dtype>(param),
-      softmax_layer_(new SoftmaxLayer<Dtype>(param)) {}
+    : LossLayer<Dtype>(param) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
                           const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
-
-  virtual inline LayerParameter_LayerType type() const {
-    return LayerParameter_LayerType_LABELING_LOSS;
-  }
 
  protected:
   /// @copydoc LabelingLossLayer
@@ -511,10 +510,12 @@ class LabelingLossLayer : public LossLayer<Dtype> {
                            const vector<Blob<Dtype>*> &top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
   virtual inline int ExactNumBottomBlobs() const { return 2; }
   virtual inline int ExactNumTopBlobs() const { return 1; }
 
@@ -523,14 +524,6 @@ class LabelingLossLayer : public LossLayer<Dtype> {
   int label_width_;
 
  public:
-  /// The internal SoftmaxLayer used to map predictions to a distribution.
-  shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
-  /// prob stores the output probability predictions from the SoftmaxLayer.
-  Blob<Dtype> prob_;
-  /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
-  vector<Blob<Dtype>*> softmax_bottom_vec_;
-  /// top vector holder used in call to the underlying SoftmaxLayer::Forward
-  vector<Blob<Dtype>*> softmax_top_vec_;
   /// for Forward_gpu
   Blob<Dtype> loss_;
 };
@@ -609,8 +602,9 @@ class MultinomialLogisticLossLayer : public LossLayer<Dtype> {
    *   -# @f$ (N \times 1 \times 1 \times 1) @f$
    *      the labels -- ignored as we can't compute their error gradients
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 };
 
 /**
@@ -695,10 +689,12 @@ class SigmoidCrossEntropyLossLayer : public LossLayer<Dtype> {
    *   -# @f$ (N \times 1 \times 1 \times 1) @f$
    *      the labels -- ignored as we can't compute their error gradients
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 
   /// The internal SigmoidLayer used to map predictions to probabilities.
   shared_ptr<SigmoidLayer<Dtype> > sigmoid_layer_;
@@ -709,6 +705,9 @@ class SigmoidCrossEntropyLossLayer : public LossLayer<Dtype> {
   /// top vector holder to call the underlying SigmoidLayer::Forward
   vector<Blob<Dtype>*> sigmoid_top_vec_;
 };
+
+// Forward declare SoftmaxLayer for use in SoftmaxWithLossLayer.
+template <typename Dtype> class SoftmaxLayer;
 
 /**
  * @brief Computes the multinomial logistic loss for a one-of-many
@@ -793,10 +792,12 @@ class SoftmaxWithLossLayer : public LossLayer<Dtype> {
    *   -# @f$ (N \times 1 \times 1 \times 1) @f$
    *      the labels -- ignored as we can't compute their error gradients
    */
-  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
 
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
