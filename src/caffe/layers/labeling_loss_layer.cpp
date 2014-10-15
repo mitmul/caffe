@@ -55,16 +55,10 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
       const int label_value = static_cast<int>(label[i * spatial_dim + j]);
-      for (int c = 0; c < channels; ++c) {
-        const Dtype prob = data[i * dim + c * spatial_dim + j];
-        CHECK_GE(prob, 0.0);
-        CHECK_LE(prob, 1.0);
-        if (c == label_value) {
-          loss -= log(std::max(prob, Dtype(kLOG_THRESHOLD)));
-        } else {
-          // loss -= log(std::max(Dtype(1) - prob, Dtype(kLOG_THRESHOLD)));
-        }
-      }
+      const Dtype prob = data[i * dim + label_value * spatial_dim + j];
+      CHECK_GE(prob, 0.0);
+      CHECK_LE(prob, 1.0);
+      loss -= log(std::max(prob, Dtype(kLOG_THRESHOLD)));
     }
   }
   top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
@@ -80,6 +74,7 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
+    const Dtype *prob = prob_.cpu_data();
     Dtype *bottom_diff = bottom[0]->mutable_cpu_diff();
     caffe_copy(prob_.count(), prob_.cpu_data(), bottom_diff);
     const Dtype *bottom_label = bottom[1]->cpu_data();
@@ -90,10 +85,10 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
         const int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
-        const Dtype diff = bottom_diff[i * dim + label * spatial_dim + j];
-        CHECK_GE(diff, 0.0);
-        CHECK_LE(diff, 1.0);
-        bottom_diff[i * dim + label * spatial_dim + j] = diff - 1;
+        const Dtype data = prob[i * dim + label * spatial_dim + j];
+        CHECK_GE(data, 0.0);
+        CHECK_LE(data, 1.0);
+        bottom_diff[i * dim + label * spatial_dim + j] = data - 1;
       }
     }
     // Scale gradient

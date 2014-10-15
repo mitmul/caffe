@@ -12,19 +12,14 @@ namespace caffe {
 
 template <typename Dtype>
 __global__ void kernel_loss(
-  const int num, const int dim, const int channels, const int spatial_dim,
+  const int num, const int dim, const int spatial_dim,
   const Dtype *label, const Dtype *prob, Dtype *out) {
-  CUDA_KERNEL_LOOP(index, num * channels * spatial_dim) {
-    const int i = index / dim; // num
-    const int j = index % dim; // dim
-    const int c = j / spatial_dim; // channel
-    const int k = j % spatial_dim; // pos
-    const int l = (int)label[i * spatial_dim + k];
-    const Dtype p = prob[i * dim + c * spatial_dim + k];
-    if (c == l)
-      out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
-    // else
-      // out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
+  CUDA_KERNEL_LOOP(index, num * spatial_dim) {
+    const int i = index / spatial_dim;
+    const int j = index % spatial_dim;
+    const int l = (int)label[i * spatial_dim + j];
+    const Dtype p = prob[i * dim + l * spatial_dim + j];
+    out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
   }
 }
 
@@ -50,13 +45,12 @@ void LabelingLossLayer<Dtype>::Forward_gpu(
   Dtype *loss_data = loss_.mutable_gpu_data();
   const int num = prob_.num();
   const int dim = prob_.count() / num;
-  const int channels = prob_.channels();
   const int spatial_dim = prob_.height() * prob_.width();
 
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_loss<Dtype>
-  <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
-  (num, dim, channels, spatial_dim, bottom_label, prob_data, loss_data);
+  <<<CAFFE_GET_BLOCKS(num * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
+  (num, dim, spatial_dim, bottom_label, prob_data, loss_data);
   Dtype loss = loss_.asum_data();
   top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
 }
@@ -76,7 +70,6 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
     const Dtype *bottom_label = bottom[1]->gpu_data();
     const int num = prob_.num();
     const int dim = prob_.count() / num;
-    const int channels = prob_.channels();
     const int spatial_dim = prob_.height() * prob_.width();
 
     // NOLINT_NEXT_LINE(whitespace/operators)

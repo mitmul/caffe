@@ -189,8 +189,8 @@ TYPED_TEST(LabelingLossLayerTest, TestDiff) {
 TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  // const Dtype kLossWeight = 3.7;
-  // layer_param.add_loss_weight(kLossWeight);
+  const Dtype kLossWeight = 3.7;
+  layer_param.add_loss_weight(kLossWeight);
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
 
@@ -223,7 +223,7 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
     }
   }
 
-  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+  GradientChecker<Dtype> checker(1e-2, 1e-3, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
                                   this->blob_top_vec_, 0);
 }
