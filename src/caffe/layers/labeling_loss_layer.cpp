@@ -62,12 +62,12 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
         if (c == label_value) {
           loss -= log(std::max(prob, Dtype(kLOG_THRESHOLD)));
         } else {
-          loss -= log(std::max(Dtype(1) - prob, Dtype(kLOG_THRESHOLD)));
+          // loss -= log(std::max(Dtype(1) - prob, Dtype(kLOG_THRESHOLD)));
         }
       }
     }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
 }
 
 template <typename Dtype>
@@ -99,7 +99,7 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
     caffe_scal(prob_.count(),
-               loss_weight / num / channels / spatial_dim, bottom_diff);
+               loss_weight / num / spatial_dim, bottom_diff);
   }
 }
 

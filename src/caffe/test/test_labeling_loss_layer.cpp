@@ -150,7 +150,7 @@ TYPED_TEST(LabelingLossLayerTest, TestBackward) {
       const int label_ans = label[label_idx];
       const int prob_idx = i * dim + label_ans * spatial_dim + j;
       EXPECT_NEAR((prob_data[prob_idx] - 1)
-                  * (loss_weight / num / channels / spatial_dim),
+                  * (loss_weight / num / spatial_dim),
                   diff[prob_idx], kErrorMargin);
     }
   }

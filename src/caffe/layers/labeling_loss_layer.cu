@@ -23,8 +23,8 @@ __global__ void kernel_loss(
     const Dtype p = prob[i * dim + c * spatial_dim + k];
     if (c == l)
       out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
-    else
-      out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
+    // else
+      // out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
   }
 }
 
@@ -58,7 +58,7 @@ void LabelingLossLayer<Dtype>::Forward_gpu(
   <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
   (num, dim, channels, spatial_dim, bottom_label, prob_data, loss_data);
   Dtype loss = loss_.asum_data();
-  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
 }
 
 template <typename Dtype>
@@ -87,7 +87,7 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
     caffe_gpu_scal(prob_.count(),
-                   loss_weight / num / channels / spatial_dim, bottom_diff);
+                   loss_weight / num / spatial_dim, bottom_diff);
   }
 }
 
