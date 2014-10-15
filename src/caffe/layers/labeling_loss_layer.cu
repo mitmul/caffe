@@ -12,14 +12,19 @@ namespace caffe {
 
 template <typename Dtype>
 __global__ void kernel_loss(
-  const int num, const int dim, const int spatial_dim,
+  const int num, const int dim, const int channels, const int spatial_dim,
   const Dtype *label, const Dtype *prob, Dtype *out) {
-  CUDA_KERNEL_LOOP(index, num * spatial_dim) {
-    const int i = index / spatial_dim;
-    const int j = index % spatial_dim;
-    const int l = (int)label[i * spatial_dim + j];
-    const Dtype p = prob[i * dim + l * spatial_dim + j];
-    out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
+  CUDA_KERNEL_LOOP(index, num * channels * spatial_dim) {
+    const int i = index / dim; // num
+    const int j = index % dim; // dim
+    const int c = j / spatial_dim; // channel
+    const int k = j % spatial_dim; // pos
+    const int l = (int)label[i * spatial_dim + k];
+    const Dtype p = prob[i * dim + c * spatial_dim + k];
+    if (c == l)
+      out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
+    else
+      out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
   }
 }
 
