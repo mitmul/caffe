@@ -501,7 +501,8 @@ template <typename Dtype>
 class LabelingLossLayer : public LossLayer<Dtype> {
  public:
   explicit LabelingLossLayer(const LayerParameter &param)
-    : LossLayer<Dtype>(param) ,
+    : LossLayer<Dtype>(param),
+      sigmoid_layer_(new SigmoidLayer<Dtype>(param)),
       softmax_layer_(new SoftmaxLayer<Dtype>(param)) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
                           const vector<Blob<Dtype>*> &top);
@@ -524,10 +525,18 @@ class LabelingLossLayer : public LossLayer<Dtype> {
   virtual inline int ExactNumTopBlobs() const { return 1; }
 
  public:
+  /// The internal SigmoidLayer used to map predictions to probabilities.
+  shared_ptr<SigmoidLayer<Dtype> > sigmoid_layer_;
+  /// sigmoid_output stores the output of the SigmoidLayer.
+  Blob<Dtype> sigmoid_output_;
+  /// bottom vector holder to call the underlying SigmoidLayer::Forward
+  vector<Blob<Dtype>*> sigmoid_bottom_vec_;
+  /// top vector holder to call the underlying SigmoidLayer::Forward
+  vector<Blob<Dtype>*> sigmoid_top_vec_;
   /// The internal SoftmaxLayer used to map predictions to a distribution.
   shared_ptr<SoftmaxLayer<Dtype> > softmax_layer_;
   /// prob stores the output probability predictions from the SoftmaxLayer.
-  Blob<Dtype> prob_;
+  Blob<Dtype> softmax_output_;
   /// bottom vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward

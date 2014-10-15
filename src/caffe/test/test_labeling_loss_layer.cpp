@@ -59,11 +59,11 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   LOG(INFO) << "Softmax loss "
             << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
-  const int num = layer.prob_.num();
-  const int channels = layer.prob_.channels();
-  const int height = layer.prob_.height();
-  const int width = layer.prob_.width();
-  const int dim = layer.prob_.count() / num;
+  const int num = layer.softmax_output_.num();
+  const int channels = layer.softmax_output_.channels();
+  const int height = layer.softmax_output_.height();
+  const int width = layer.softmax_output_.width();
+  const int dim = layer.softmax_output_.count() / num;
   const int spatial_dim = height * width;
   EXPECT_EQ(num, 2);
   EXPECT_EQ(channels, 3);
@@ -71,14 +71,14 @@ TYPED_TEST(LabelingLossLayerTest, TestSoftmax) {
   EXPECT_EQ(width, 5);
 
   const Dtype kErrorMargin = 1e-5;
-  const Dtype *prob_data = layer.prob_.cpu_data();
+  const Dtype *softmax_output_data = layer.softmax_output_.cpu_data();
   for (int i = 0; i < num; ++i) {
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
         Dtype value = 0;
         for (int c = 0; c < channels; ++c) {
           const int idx = i * dim + c * spatial_dim + y * width + x;
-          value += prob_data[idx];
+          value += softmax_output_data[idx];
         }
         EXPECT_NEAR(value, 1.0, kErrorMargin);
       }
@@ -126,15 +126,12 @@ TYPED_TEST(LabelingLossLayerTest, TestBackward) {
 
   const Dtype *diff = this->blob_bottom_vec_[0]->cpu_diff();
   const Dtype *label = this->blob_bottom_vec_[1]->cpu_data();
-  const Dtype loss_weight = this->blob_top_vec_[0]->cpu_diff()[0];
-  LOG(INFO) << "Loss: " << this->blob_top_vec_[0]->cpu_data()[0];
-  LOG(INFO) << "Loss weight: " << this->blob_top_vec_[0]->cpu_diff()[0];
 
-  const int num = layer.prob_.num();
-  const int channels = layer.prob_.channels();
-  const int height = layer.prob_.height();
-  const int width = layer.prob_.width();
-  const int dim = layer.prob_.count() / num;
+  const int num = layer.softmax_output_.num();
+  const int channels = layer.softmax_output_.channels();
+  const int height = layer.softmax_output_.height();
+  const int width = layer.softmax_output_.width();
+  const int dim = layer.softmax_output_.count() / num;
   const int spatial_dim = height * width;
   const int label_dim = this->blob_bottom_vec_[1]->count() / num;
   EXPECT_EQ(num, 2);
@@ -143,15 +140,22 @@ TYPED_TEST(LabelingLossLayerTest, TestBackward) {
   EXPECT_EQ(width, 5);
 
   const Dtype kErrorMargin = 1e-5;
-  const Dtype *prob_data = layer.prob_.cpu_data();
+  const Dtype *prob_data = layer.softmax_output_.cpu_data();
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
-      const int label_idx = i * label_dim + j;
-      const int label_ans = label[label_idx];
-      const int prob_idx = i * dim + label_ans * spatial_dim + j;
-      EXPECT_NEAR((prob_data[prob_idx] - 1)
-                  * (loss_weight / num / channels / spatial_dim),
-                  diff[prob_idx], kErrorMargin);
+      const int label_ans = label[i * label_dim + j];
+      for (int c = 0; c < channels; ++c) {
+        const int prob_idx = i * dim + c * spatial_dim + j;
+        if (c == label_ans) {
+          EXPECT_NEAR(1 / std::max(prob_data[prob_idx], Dtype(FLT_MIN)),
+                      diff[prob_idx] * num * channels * spatial_dim,
+                      kErrorMargin);
+        } else {
+          EXPECT_NEAR(-1 / std::max(1 - prob_data[prob_idx], Dtype(FLT_MIN)),
+                      diff[prob_idx] * num * channels * spatial_dim,
+                      kErrorMargin);
+        }
+      }
     }
   }
 }
@@ -166,24 +170,34 @@ TYPED_TEST(LabelingLossLayerTest, TestDiff) {
   propagate_down.push_back(true);
   propagate_down.push_back(false);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-  LOG(INFO) << "data: " << this->blob_bottom_vec_[0]->cpu_data()[0] << " "
-            << "diff: " << this->blob_bottom_vec_[0]->cpu_diff()[0] << " "
-            << "loss: " << this->blob_top_vec_[0]->cpu_data()[0];
+  Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[0];
 
-  this->blob_bottom_vec_[0]->mutable_cpu_data()[0] += 1e-2;
-  LOG(INFO) << "forward: "
-            << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  Dtype step = 1e2;
+  this->blob_bottom_vec_[0]->mutable_cpu_data()[0] += step;
+  Dtype positive_objective =
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-  LOG(INFO) << "data: " << this->blob_bottom_vec_[0]->cpu_data()[0] << " "
-            << "diff: " << this->blob_bottom_vec_[0]->cpu_diff()[0] << " "
-            << "loss: " << this->blob_top_vec_[0]->cpu_data()[0];
+  LOG(INFO) << "positive_objective: " << positive_objective;
 
-  this->blob_bottom_vec_[0]->mutable_cpu_data()[0] -= 1e-2 * 2;
-  LOG(INFO) << "forward: " << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  this->blob_bottom_vec_[0]->mutable_cpu_data()[0] -= step * 2;
+  Dtype negative_objective =
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-  LOG(INFO) << "data: " << this->blob_bottom_vec_[0]->cpu_data()[0] << " "
-            << "diff: " << this->blob_bottom_vec_[0]->cpu_diff()[0] << " "
-            << "loss: " << this->blob_top_vec_[0]->cpu_data()[0];
+  LOG(INFO) << "negative_objective: " << negative_objective;
+
+  const int num = layer.softmax_output_.num();
+  const int channels = layer.softmax_output_.channels();
+  const int height = layer.softmax_output_.height();
+  const int width = layer.softmax_output_.width();
+  const int spatial_dim = height * width;
+
+  LOG(INFO) << "expected diff: "
+            << (positive_objective - negative_objective) / (2 * step);
+  LOG(INFO) << "actual diff: "
+            << diff << " " << diff *num *channels *spatial_dim;
+
+  EXPECT_NEAR(diff * num * channels * spatial_dim,
+              (positive_objective - negative_objective) / (2 * step), 1e-5);
 }
 
 TYPED_TEST(LabelingLossLayerTest, TestGradient) {
@@ -197,11 +211,11 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   LOG(INFO) << "Softmax loss "
             << layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
 
-  const int num = layer.prob_.num();
-  const int channels = layer.prob_.channels();
-  const int height = layer.prob_.height();
-  const int width = layer.prob_.width();
-  const int dim = layer.prob_.count() / num;
+  const int num = layer.softmax_output_.num();
+  const int channels = layer.softmax_output_.channels();
+  const int height = layer.softmax_output_.height();
+  const int width = layer.softmax_output_.width();
+  const int dim = layer.softmax_output_.count() / num;
   const int spatial_dim = height * width;
   EXPECT_EQ(num, 2);
   EXPECT_EQ(channels, 3);
@@ -209,14 +223,14 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   EXPECT_EQ(width, 5);
 
   const Dtype kErrorMargin = 1e-5;
-  const Dtype *prob_data = layer.prob_.cpu_data();
+  const Dtype *softmax_output_data = layer.softmax_output_.cpu_data();
   for (int i = 0; i < num; ++i) {
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
         Dtype value = 0;
         for (int c = 0; c < channels; ++c) {
           const int idx = i * dim + c * spatial_dim + y * width + x;
-          value += prob_data[idx];
+          value += softmax_output_data[idx];
         }
         EXPECT_NEAR(value, 1.0, kErrorMargin);
       }

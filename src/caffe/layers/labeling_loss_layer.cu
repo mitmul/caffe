@@ -30,28 +30,34 @@ __global__ void kernel_loss(
 
 template <typename Dtype>
 __global__ void kernel_diff(
-  const int num, const int spatial_dim, const int dim,
-  const Dtype *label, Dtype *out) {
-  CUDA_KERNEL_LOOP(index, num * spatial_dim) {
-    const int i = index / spatial_dim;
-    const int j = index % spatial_dim;
-    const int l = (int)label[i * spatial_dim + j];
-    out[i * dim + l * spatial_dim + j] -= 1;
+  const int num, const int dim, const int channels, const int spatial_dim,
+  const Dtype *label, const Dtype *prob, Dtype *out) {
+  CUDA_KERNEL_LOOP(index, num * channels * spatial_dim) {
+    const int i = index / dim; // num
+    const int j = index % dim; // dim
+    const int c = j / spatial_dim; // channel
+    const int k = j % spatial_dim; // pos
+    const int l = (int)label[i * spatial_dim + k];
+    const Dtype p = prob[i * dim + c * spatial_dim + k];
+    if (c == l)
+      out[index] = 1 / max(p, Dtype(FLT_MIN));
+    else
+      out[index] = -1 / max(1 - p, Dtype(FLT_MIN));
   }
 }
 
 template <typename Dtype>
 void LabelingLossLayer<Dtype>::Forward_gpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
-  // The forward pass computes the softmax prob values.
+  sigmoid_layer_->Forward(sigmoid_bottom_vec_, sigmoid_top_vec_);
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype *bottom_label = bottom[1]->gpu_data();
-  const Dtype *prob_data = prob_.gpu_data();
+  const Dtype *prob_data = softmax_output_.gpu_data();
   Dtype *loss_data = loss_.mutable_gpu_data();
-  const int num = prob_.num();
-  const int dim = prob_.count() / num;
-  const int channels = prob_.channels();
-  const int spatial_dim = prob_.height() * prob_.width();
+  const int num = softmax_output_.num();
+  const int dim = softmax_output_.count() / num;
+  const int channels = softmax_output_.channels();
+  const int spatial_dim = softmax_output_.height() * softmax_output_.width();
 
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_loss<Dtype>
@@ -72,21 +78,21 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
   }
   if (propagate_down[0]) {
     Dtype *bottom_diff = bottom[0]->mutable_gpu_diff();
-    caffe_copy(prob_.count(), prob_.gpu_data(), bottom_diff);
     const Dtype *bottom_label = bottom[1]->gpu_data();
-    const int num = prob_.num();
-    const int dim = prob_.count() / num;
-    const int channels = prob_.channels();
-    const int spatial_dim = prob_.height() * prob_.width();
+    const Dtype *prob_data = softmax_output_.gpu_data();
+    const int num = softmax_output_.num();
+    const int dim = softmax_output_.count() / num;
+    const int channels = softmax_output_.channels();
+    const int spatial_dim = softmax_output_.height() * softmax_output_.width();
 
     // NOLINT_NEXT_LINE(whitespace/operators)
     kernel_diff<Dtype>
-    <<<CAFFE_GET_BLOCKS(num * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
-    (num, spatial_dim, dim, bottom_label, bottom_diff);
+    <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
+    (num, dim, channels, spatial_dim, bottom_label, prob_data, bottom_diff);
 
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_gpu_scal(prob_.count(),
+    caffe_gpu_scal(softmax_output_.count(),
                    loss_weight / num / channels / spatial_dim, bottom_diff);
   }
 }
