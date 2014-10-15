@@ -11,13 +11,24 @@
 namespace caffe {
 
 template <typename Dtype>
+void LabelingLossLayer<Dtype>::LayerSetUp(
+  const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
+  LossLayer<Dtype>::LayerSetUp(bottom, top);
+  softmax_bottom_vec_.clear();
+  softmax_bottom_vec_.push_back(bottom[0]);
+  softmax_top_vec_.clear();
+  softmax_top_vec_.push_back(&prob_);
+  softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
+}
+
+template <typename Dtype>
 void LabelingLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*> &bottom,
   const vector<Blob<Dtype>*> &top) {
   LossLayer<Dtype>::Reshape(bottom, top);
-
-  // Reshape loss for gpu
-  loss_.Reshape(bottom[0]->num(), 1, bottom[1]->height(), bottom[1]->width());
+  softmax_layer_->Reshape(softmax_bottom_vec_, softmax_top_vec_);
+  loss_.Reshape(bottom[0]->num(), bottom[0]->channels(),
+                bottom[1]->height(), bottom[1]->width());
 
   // Check the shapes of data and label
   CHECK_EQ(bottom[0]->num(), bottom[1]->num());
@@ -32,21 +43,31 @@ void LabelingLossLayer<Dtype>::Reshape(
 template <typename Dtype>
 void LabelingLossLayer<Dtype>::Forward_cpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
-  const Dtype *data = bottom[0]->cpu_data();
+  // The forward pass computes the softmax prob values.
+  softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
+  const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
-  const int num = bottom[0]->num();
-  const int dim = bottom[0]->count() / num;
-  const int spatial_dim = bottom[0]->height() * bottom[0]->width();
-
+  const int num = prob_.num();
+  const int dim = prob_.count() / num;
+  const int channels = prob_.channels();
+  const int spatial_dim = prob_.height() * prob_.width();
   Dtype loss = 0;
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
       const int label_value = static_cast<int>(label[i * spatial_dim + j]);
-      loss -= log(std::max(data[i * dim + label_value * spatial_dim + j],
-                           Dtype(FLT_MIN)));
+      for (int c = 0; c < channels; ++c) {
+        const Dtype prob = data[i * dim + c * spatial_dim + j];
+        CHECK_GE(prob, 0.0);
+        CHECK_LE(prob, 1.0);
+        if (c == label_value) {
+          loss -= log(std::max(prob, Dtype(kLOG_THRESHOLD)));
+        } else {
+          loss -= log(std::max(Dtype(1) - prob, Dtype(kLOG_THRESHOLD)));
+        }
+      }
     }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
 
 template <typename Dtype>
@@ -60,22 +81,25 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
   }
   if (propagate_down[0]) {
     Dtype *bottom_diff = bottom[0]->mutable_cpu_diff();
-    caffe_copy(bottom[0]->count(), bottom[0]->cpu_data(), bottom_diff);
+    caffe_copy(prob_.count(), prob_.cpu_data(), bottom_diff);
     const Dtype *bottom_label = bottom[1]->cpu_data();
-    const int num = bottom[0]->num();
-    const int dim = bottom[0]->count() / num;
-    const int spatial_dim = bottom[0]->height() * bottom[0]->width();
-
+    const int num = prob_.num();
+    const int dim = prob_.count() / num;
+    const int channels = prob_.channels();
+    const int spatial_dim = prob_.height() * prob_.width();
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
         const int label = static_cast<int>(bottom_label[i * spatial_dim + j]);
-        bottom_diff[i * dim + label * spatial_dim + j] -= 1;
+        const Dtype diff = bottom_diff[i * dim + label * spatial_dim + j];
+        CHECK_GE(diff, 0.0);
+        CHECK_LE(diff, 1.0);
+        bottom_diff[i * dim + label * spatial_dim + j] = diff - 1;
       }
     }
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_scal(bottom[0]->count(), loss_weight / num / spatial_dim,
-               bottom_diff);
+    caffe_scal(prob_.count(),
+               loss_weight / num / channels / spatial_dim, bottom_diff);
   }
 }
 

@@ -124,7 +124,7 @@ void GradientChecker<Dtype>::CheckGradientSingle(Layer<Dtype>* layer,
     const Dtype* computed_gradients =
         computed_gradient_blobs[blob_id]->cpu_data();
     // LOG(ERROR) << "Blob " << blob_id << ": checking "
-    //     << current_blob->count() << " parameters.";
+               // << current_blob->count() << " parameters.";
     for (int feat_id = 0; feat_id < current_blob->count(); ++feat_id) {
       // For an element-wise layer, we only need to do finite differencing to
       // compute the derivative of top[top_id][top_data_id] w.r.t.
@@ -156,7 +156,7 @@ void GradientChecker<Dtype>::CheckGradientSingle(Layer<Dtype>* layer,
       Dtype computed_gradient = computed_gradients[feat_id];
       Dtype feature = current_blob->cpu_data()[feat_id];
       // LOG(ERROR) << "debug: " << current_blob->cpu_data()[feat_id] << " "
-      //     << current_blob->cpu_diff()[feat_id];
+                 // << current_blob->cpu_diff()[feat_id];
       if (kink_ - kink_range_ > fabs(feature)
           || fabs(feature) > kink_ + kink_range_) {
         // We check relative accuracy, but for too small values, we threshold
@@ -172,7 +172,7 @@ void GradientChecker<Dtype>::CheckGradientSingle(Layer<Dtype>* layer,
       }
       // LOG(ERROR) << "Feature: " << current_blob->cpu_data()[feat_id];
       // LOG(ERROR) << "computed gradient: " << computed_gradient
-      //    << " estimated_gradient: " << estimated_gradient;
+                 // << " estimated_gradient: " << estimated_gradient;
     }
   }
 }
