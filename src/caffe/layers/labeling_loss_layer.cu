@@ -62,7 +62,7 @@ void LabelingLossLayer<Dtype>::Forward_gpu(
   <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
   (num, dim, channels, spatial_dim, bottom_label, bottom_data, loss_data);
   Dtype loss = loss_.asum_data();
-  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
 
 template <typename Dtype>

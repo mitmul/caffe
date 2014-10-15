@@ -51,7 +51,7 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
       }
     }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
 
 template <typename Dtype>

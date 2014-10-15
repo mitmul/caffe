@@ -494,9 +494,6 @@ class InfogainLossLayer : public LossLayer<Dtype> {
   Blob<Dtype> infogain_;
 };
 
-// Forward declare SoftmaxLayer for use in SoftmaxWithLossLayer.
-template <typename Dtype> class SoftmaxLayer;
-
 template <typename Dtype>
 class LabelingLossLayer : public LossLayer<Dtype> {
  public:
@@ -702,6 +699,9 @@ class SigmoidCrossEntropyLossLayer : public LossLayer<Dtype> {
   /// top vector holder to call the underlying SigmoidLayer::Forward
   vector<Blob<Dtype>*> sigmoid_top_vec_;
 };
+
+// Forward declare SoftmaxLayer for use in SoftmaxWithLossLayer.
+template <typename Dtype> class SoftmaxLayer;
 
 /**
  * @brief Computes the multinomial logistic loss for a one-of-many
