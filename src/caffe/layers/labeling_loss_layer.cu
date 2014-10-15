@@ -40,29 +40,27 @@ __global__ void kernel_diff(
     const int l = (int)label[i * spatial_dim + k];
     const Dtype p = prob[i * dim + c * spatial_dim + k];
     if (c == l)
-      out[index] = 1 / max(p, Dtype(FLT_MIN));
+      out[index] = -1 / max(p, Dtype(FLT_MIN));
     else
-      out[index] = -1 / max(1 - p, Dtype(FLT_MIN));
+      out[index] = 1 / max(1 - p, Dtype(FLT_MIN));
   }
 }
 
 template <typename Dtype>
 void LabelingLossLayer<Dtype>::Forward_gpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
-  sigmoid_layer_->Forward(sigmoid_bottom_vec_, sigmoid_top_vec_);
-  softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
+  const Dtype *bottom_data = bottom[0]->gpu_data();
   const Dtype *bottom_label = bottom[1]->gpu_data();
-  const Dtype *prob_data = softmax_output_.gpu_data();
   Dtype *loss_data = loss_.mutable_gpu_data();
-  const int num = softmax_output_.num();
-  const int dim = softmax_output_.count() / num;
-  const int channels = softmax_output_.channels();
-  const int spatial_dim = softmax_output_.height() * softmax_output_.width();
+  const int num = bottom[0]->num();
+  const int dim = bottom[0]->count() / num;
+  const int channels = bottom[0]->channels();
+  const int spatial_dim = bottom[0]->height() * bottom[0]->width();
 
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_loss<Dtype>
   <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
-  (num, dim, channels, spatial_dim, bottom_label, prob_data, loss_data);
+  (num, dim, channels, spatial_dim, bottom_label, bottom_data, loss_data);
   Dtype loss = loss_.asum_data();
   top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
@@ -78,21 +76,21 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
   }
   if (propagate_down[0]) {
     Dtype *bottom_diff = bottom[0]->mutable_gpu_diff();
+    const Dtype *bottom_data = bottom[0]->gpu_data();
     const Dtype *bottom_label = bottom[1]->gpu_data();
-    const Dtype *prob_data = softmax_output_.gpu_data();
-    const int num = softmax_output_.num();
-    const int dim = softmax_output_.count() / num;
-    const int channels = softmax_output_.channels();
-    const int spatial_dim = softmax_output_.height() * softmax_output_.width();
+    const int num = bottom[0]->num();
+    const int dim = bottom[0]->count() / num;
+    const int channels = bottom[0]->channels();
+    const int spatial_dim = bottom[0]->height() * bottom[0]->width();
 
     // NOLINT_NEXT_LINE(whitespace/operators)
     kernel_diff<Dtype>
     <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
-    (num, dim, channels, spatial_dim, bottom_label, prob_data, bottom_diff);
+    (num, dim, channels, spatial_dim, bottom_label, bottom_data, bottom_diff);
 
     // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_gpu_scal(softmax_output_.count(),
+    caffe_gpu_scal(bottom[0]->count(),
                    loss_weight / num / channels / spatial_dim, bottom_diff);
   }
 }
