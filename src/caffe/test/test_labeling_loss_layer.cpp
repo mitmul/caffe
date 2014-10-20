@@ -166,9 +166,9 @@ TYPED_TEST(LabelingLossLayerTest, TestBackward) {
                       diff[prob_idx] * num * channels * spatial_dim,
                       kErrorMargin);
         } else {
-          // EXPECT_NEAR(1 / std::max(1 - prob_data[prob_idx], Dtype(FLT_MIN)),
-          //             diff[prob_idx] * num * channels * spatial_dim,
-          //             kErrorMargin);
+          EXPECT_NEAR(1 / std::max(1 - prob_data[prob_idx], Dtype(FLT_MIN)),
+                      diff[prob_idx] * num * channels * spatial_dim,
+                      kErrorMargin);
         }
       }
     }
@@ -202,12 +202,6 @@ TYPED_TEST(LabelingLossLayerTest, TestDiff) {
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
   LOG(INFO) << "negative_objective: " << negative_objective;
   this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] = step;
-
-  const int num = this->blob_bottom_vec_[0]->num();
-  const int channels = this->blob_bottom_vec_[0]->channels();
-  const int height = this->blob_bottom_vec_[0]->height();
-  const int width = this->blob_bottom_vec_[0]->width();
-  const int spatial_dim = height * width;
 
   LOG(INFO) << "expected diff: "
             << (positive_objective - negative_objective) / (2 * step);
