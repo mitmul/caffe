@@ -51,18 +51,18 @@ __global__ void kernel_diff(
 template <typename Dtype>
 void LabelingLossLayer<Dtype>::Forward_gpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
-  const Dtype *bottom_data = bottom[0]->gpu_data();
-  const Dtype *bottom_label = bottom[1]->gpu_data();
-  Dtype *loss_data = loss_.mutable_gpu_data();
+  const Dtype *data = bottom[0]->gpu_data();
+  const Dtype *label = bottom[1]->gpu_data();
   const int num = bottom[0]->num();
   const int dim = bottom[0]->count() / num;
   const int channels = bottom[0]->channels();
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
+  Dtype *loss_data = loss_.mutable_gpu_data();
 
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_loss<Dtype>
   <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
-  (num, dim, channels, spatial_dim, bottom_label, bottom_data, loss_data);
+  (num, dim, channels, spatial_dim, label, data, loss_data);
   Dtype loss = loss_.asum_data();
   top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
@@ -77,9 +77,9 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
-    Dtype *bottom_diff = bottom[0]->mutable_gpu_diff();
     const Dtype *bottom_data = bottom[0]->gpu_data();
     const Dtype *bottom_label = bottom[1]->gpu_data();
+    Dtype *bottom_diff = bottom[0]->mutable_gpu_diff();
     const int num = bottom[0]->num();
     const int dim = bottom[0]->count() / num;
     const int channels = bottom[0]->channels();

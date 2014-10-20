@@ -27,7 +27,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
 
     // fill values
     Dtype *data = blob_bottom_data_->mutable_cpu_data();
-    caffe_rng_uniform<Dtype>(blob_bottom_data_->count(), 0, 1, data);
+    caffe_rng_uniform<Dtype>(blob_bottom_data_->count(), 0.01, 9.99, data);
     const int dim = blob_bottom_data_->count() / blob_bottom_data_->num();
     const int channels = blob_bottom_data_->channels();
     const int spatial_dim = dim / channels;
