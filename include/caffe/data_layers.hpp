@@ -269,23 +269,13 @@ class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
  protected:
   virtual void InternalThreadEntry();
 
-  // LMDB
-  MDB_env *mdb_env_;
-  MDB_dbi mdb_dbi_;
-  MDB_txn *mdb_txn_;
-  MDB_cursor *mdb_cursor_;
-  MDB_val mdb_key_, mdb_value_;
-
-  int batch_size_, label_num_, label_height_, label_width_;
-  int data_channels_, data_height_, data_width_, data_size_;
-  bool transform_;
-  bool normalize_;
+  shared_ptr<Dataset<string, Datum> > dataset_;
+  Dataset<string, Datum>::const_iterator iter_;
 
  private:
-  void Transform(Dtype *data, const int &num,
-                 const int &ch, const int &height, const int &width,
-                 const int &angle, const int &flipCode,
-                 const bool &normalize);
+  void Transform(Dtype *data, const int &num, const int &ch, const int &height,
+                 const int &width, const int &angle, const int &flipCode,
+                 const bool &transform, const bool &normalize);
 };
 
 /**

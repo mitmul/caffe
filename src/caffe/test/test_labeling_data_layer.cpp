@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 
+#include "lmdb.h"
 #include "gtest/gtest.h"
 
 #include "caffe/blob.hpp"
