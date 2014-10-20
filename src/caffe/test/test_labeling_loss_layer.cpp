@@ -27,7 +27,7 @@ class LabelingLossLayerTest : public MultiDeviceTest<TypeParam> {
 
     // fill values
     Dtype *data = blob_bottom_data_->mutable_cpu_data();
-    caffe_rng_uniform<Dtype>(blob_bottom_data_->count(), 0.2, 0.8, data);
+    caffe_rng_uniform<Dtype>(blob_bottom_data_->count(), 0, 1, data);
     const int dim = blob_bottom_data_->count() / blob_bottom_data_->num();
     const int channels = blob_bottom_data_->channels();
     const int spatial_dim = dim / channels;
@@ -186,30 +186,39 @@ TYPED_TEST(LabelingLossLayerTest, TestDiff) {
   propagate_down.push_back(false);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
 
-  const int feature_id = 120;
-  Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[feature_id];
+  for (int feature_id = 0; feature_id < this->blob_bottom_vec_[0]->count();
+       ++feature_id) {
+    const Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[feature_id];
+    const Dtype feature = this->blob_bottom_vec_[0]->cpu_data()[feature_id];
 
-  Dtype step = 1e-2;
-  this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] += step;
-  Dtype positive_objective =
-    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-  layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-  LOG(INFO) << "positive_objective: " << positive_objective;
+    const Dtype step = 1e-3;
+    const Dtype threshold = 1e-3;
+    this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] += step;
+    const Dtype positive_objective =
+      layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
 
-  this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] -= step * 2;
-  Dtype negative_objective =
-    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-  layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-  LOG(INFO) << "negative_objective: " << negative_objective;
-  this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] = step;
+    this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] -=
+      Dtype(step * 2);
+    const Dtype negative_objective =
+      layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
+    this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] = step;
 
-  LOG(INFO) << "expected diff: "
-            << (positive_objective - negative_objective) / (2 * step);
-  LOG(INFO) << "actual diff: "
-            << diff;
+    const Dtype expected_diff =
+      (positive_objective - negative_objective) / (2 * step);
 
-  EXPECT_NEAR(diff,
-              (positive_objective - negative_objective) / (2 * step), 1e-2);
+    if (fabs(diff - expected_diff) > threshold) {
+      LOG(INFO) << "feature id: " << feature_id;
+      LOG(INFO) << "feature: " << feature;
+      LOG(INFO) << "diff: " << diff;
+      LOG(INFO) << "positive_objective: " << positive_objective;
+      LOG(INFO) << "negative_objective: " << negative_objective;
+      LOG(INFO) << "expected diff: " << expected_diff;
+      LOG(INFO) << "actual diff: " << diff;
+    }
+    EXPECT_NEAR(diff, expected_diff, threshold);
+  }
 }
 
 TYPED_TEST(LabelingLossLayerTest, TestGradient) {
@@ -219,7 +228,7 @@ TYPED_TEST(LabelingLossLayerTest, TestGradient) {
   layer_param.add_loss_weight(kLossWeight);
   LabelingLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+  GradientChecker<Dtype> checker(1e-3, 1e-3, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
                                   this->blob_top_vec_, 0);
 }

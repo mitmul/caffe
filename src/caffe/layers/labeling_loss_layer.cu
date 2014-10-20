@@ -21,10 +21,11 @@ __global__ void kernel_loss(
     const int k = j % spatial_dim; // pos
     const int l = (int)label[i * spatial_dim + k];
     const Dtype p = prob[i * dim + c * spatial_dim + k];
-    if (c + 1 == l)
+    if (c + 1 == l) {
       out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
-    else
-      out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
+    } else {
+      out[index] = -log(max(Dtype(1) - p, Dtype(kLOG_THRESHOLD)));
+    }
   }
 }
 
@@ -39,10 +40,11 @@ __global__ void kernel_diff(
     const int k = j % spatial_dim; // pos
     const int l = (int)label[i * spatial_dim + k];
     const Dtype p = prob[i * dim + c * spatial_dim + k];
-    if (c + 1 == l)
-      out[index] = -1 / max(p, Dtype(FLT_MIN));
-    else
-      out[index] = 1 / max(1 - p, Dtype(FLT_MIN));
+    if (c + 1 == l) {
+      out[index] = -Dtype(1) / max(p, Dtype(kLOG_THRESHOLD));
+    } else {
+      out[index] = Dtype(1) / max(Dtype(1) - p, Dtype(kLOG_THRESHOLD));
+    }
   }
 }
 
