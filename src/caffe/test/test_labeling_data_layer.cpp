@@ -98,7 +98,6 @@ class LabelingDataLayerTest : public MultiDeviceTest<TypeParam> {
       param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(5);
     labeling_data_param->set_source(filename_->c_str());
-    labeling_data_param->set_label_num(6);
     labeling_data_param->set_label_height(2);
     labeling_data_param->set_label_width(3);
     labeling_data_param->set_transform(false);
@@ -174,7 +173,6 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
       param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(batch_size);
     labeling_data_param->set_source(db_file.c_str());
-    labeling_data_param->set_label_num(3);
     labeling_data_param->set_label_height(16);
     labeling_data_param->set_label_width(16);
     labeling_data_param->set_transform(true);

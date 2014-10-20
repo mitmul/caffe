@@ -118,7 +118,6 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
   LabelingDataParameter labeling_data_param =
     this->layer_param_.labeling_data_param();
   const int batch_size = labeling_data_param.batch_size();
-  const int label_num = labeling_data_param.label_num();
   const int label_height = labeling_data_param.label_height();
   const int label_width = labeling_data_param.label_width();
   const int spatial_dim = label_height * label_width;

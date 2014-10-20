@@ -21,10 +21,10 @@ __global__ void kernel_loss(
     const int k = j % spatial_dim; // pos
     const int l = (int)label[i * spatial_dim + k];
     const Dtype p = prob[i * dim + c * spatial_dim + k];
-    if (c == l)
+    if (c + 1 == l)
       out[index] = -log(max(p, Dtype(kLOG_THRESHOLD)));
-    else
-      out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
+    // else
+    // out[index] = -log(max(1 - p, Dtype(kLOG_THRESHOLD)));
   }
 }
 
@@ -39,10 +39,10 @@ __global__ void kernel_diff(
     const int k = j % spatial_dim; // pos
     const int l = (int)label[i * spatial_dim + k];
     const Dtype p = prob[i * dim + c * spatial_dim + k];
-    if (c == l)
+    if (c + 1 == l)
       out[index] = -1 / max(p, Dtype(FLT_MIN));
-    else
-      out[index] = 1 / max(1 - p, Dtype(FLT_MIN));
+    // else
+    // out[index] = 1 / max(1 - p, Dtype(FLT_MIN));
   }
 }
 
@@ -59,7 +59,7 @@ void LabelingLossLayer<Dtype>::Forward_gpu(
 
   // NOLINT_NEXT_LINE(whitespace/operators)
   kernel_loss<Dtype>
-  <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
+  <<< CAFFE_GET_BLOCKS(num *channels *spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
   (num, dim, channels, spatial_dim, bottom_label, bottom_data, loss_data);
   Dtype loss = loss_.asum_data();
   top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
@@ -85,7 +85,7 @@ void LabelingLossLayer<Dtype>::Backward_gpu(
 
     // NOLINT_NEXT_LINE(whitespace/operators)
     kernel_diff<Dtype>
-    <<<CAFFE_GET_BLOCKS(num * channels * spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
+    <<< CAFFE_GET_BLOCKS(num *channels *spatial_dim), CAFFE_CUDA_NUM_THREADS>>>
     (num, dim, channels, spatial_dim, bottom_label, bottom_data, bottom_diff);
 
     // Scale gradient

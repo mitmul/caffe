@@ -43,10 +43,11 @@ void LabelingLossLayer<Dtype>::Forward_cpu(
       const int label_value = static_cast<int>(label[i * spatial_dim + j]);
       for (int c = 0; c < channels; ++c) {
         const Dtype p = data[i * dim + c * spatial_dim + j];
-        if (c == label_value) {
+        // ignore pix==0 in label image
+        if (c + 1 == label_value) {
           loss -= log(std::max(p, Dtype(kLOG_THRESHOLD)));
         } else {
-          loss -= log(std::max(Dtype(1) - p, Dtype(kLOG_THRESHOLD)));
+          // loss -= log(std::max(Dtype(1) - p, Dtype(kLOG_THRESHOLD)));
         }
       }
     }
@@ -77,10 +78,10 @@ void LabelingLossLayer<Dtype>::Backward_cpu(
         for (int c = 0; c < channels; ++c) {
           const Dtype data = bottom_data[i * dim + c * spatial_dim + j];
           Dtype diff = 0;
-          if (c == label) {
+          if (c + 1 == label) {
             diff = -Dtype(1) / std::max(data, Dtype(FLT_MIN));
           } else {
-            diff = Dtype(1) / std::max(Dtype(1) - data, Dtype(FLT_MIN));
+            // diff = Dtype(1) / std::max(Dtype(1) - data, Dtype(FLT_MIN));
           }
           bottom_diff[i * dim + c * spatial_dim + j] = diff;
         }
