@@ -179,7 +179,7 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     // should be performred only for data
     Transform(top_data, item_id, channels, height, width,
               angle, flipCode, transform, normalize);
-    Transform(top_label, item_id, 1, label_height, label_width,
+    Transform(top_label, item_id, label_classes, label_height, label_width,
               angle, flipCode, transform, false);
 
     // go to the next iter

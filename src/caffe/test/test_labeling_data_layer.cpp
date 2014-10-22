@@ -479,14 +479,18 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB_multi) {
     const int lchannels = this->blob_top_label_->channels();
     const int lheight = this->blob_top_label_->height();
     const int lwidth = this->blob_top_label_->width();
+    const int lspatial_dim = lheight * lwidth;
     const int ldim = lchannels * lheight * lwidth;
     for (int i = 0; i < lnum; ++i) {
       cv::Mat label(lheight, lwidth, CV_32FC(lchannels));
-      for (int y = 0; y < lheight; ++y) {
-        for (int x = 0; x < lwidth; ++x) {
-          float pix = this->blob_top_label_->cpu_data()[
-                        i * ldim + y * lwidth + x];
-          ((float *)label.data)[y * lwidth + x] = pix;
+      for (int c = 0; c < channels; ++c) {
+        for (int y = 0; y < lheight; ++y) {
+          for (int x = 0; x < lwidth; ++x) {
+            float pix = this->blob_top_label_->cpu_data()[
+                          i * ldim + c * lspatial_dim + y * lwidth + x];
+            ((float *)label.data)[
+              y * lwidth * lchannels + x * lchannels + c] = pix;
+          }
         }
       }
       cv::Mat dst;
