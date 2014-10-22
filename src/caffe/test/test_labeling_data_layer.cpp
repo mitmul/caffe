@@ -424,7 +424,7 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB_multi) {
       param.mutable_labeling_data_param();
     labeling_data_param->set_batch_size(batch_size);
     labeling_data_param->set_source(db_file.c_str());
-    labeling_data_param->set_label_classes(1);
+    labeling_data_param->set_label_classes(3);
     labeling_data_param->set_label_height(16);
     labeling_data_param->set_label_width(16);
     labeling_data_param->set_transform(true);
