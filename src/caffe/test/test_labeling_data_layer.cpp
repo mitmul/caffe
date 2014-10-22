@@ -318,12 +318,12 @@ TYPED_TEST(LabelingDataLayerTest, TestRead_binary) {
   }
 }
 
-TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
+TYPED_TEST(LabelingDataLayerTest, TestLMDB_binary) {
   typedef typename TypeParam::Dtype Dtype;
 
   string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
   string db_file =
-    CMAKE_SOURCE_DIR "caffe/test/test_data/sample_labeling_data.lmdb" CMAKE_EXT;
+    CMAKE_SOURCE_DIR "caffe/test/test_data/sample_binary.lmdb" CMAKE_EXT;
   if (fopen(db_file.c_str(), "r") != NULL) {
     const unsigned int seed = (unsigned) time(NULL);
     Caffe::set_random_seed(seed);
@@ -381,7 +381,7 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
       cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
       dst.convertTo(dst, CV_8U);
       stringstream ss;
-      ss << out_dir << "/test_data_" << i << ".png";
+      ss << out_dir << "/test_bin_data_" << i << ".png";
       cv::imwrite(ss.str(), dst);
     }
 
@@ -400,10 +400,99 @@ TYPED_TEST(LabelingDataLayerTest, TestLMDB) {
         }
       }
       cv::Mat dst;
-      cv::normalize(label, dst, 0, 255, cv::NORM_MINMAX);
+      label.convertTo(dst, CV_8U, 255);
+      stringstream ss;
+      ss << out_dir << "/test_bin_label_" << i << ".png";
+      cv::imwrite(ss.str(), dst);
+    }
+  }
+}
+
+TYPED_TEST(LabelingDataLayerTest, TestLMDB_multi) {
+  typedef typename TypeParam::Dtype Dtype;
+
+  string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
+  string db_file =
+    CMAKE_SOURCE_DIR "caffe/test/test_data/sample_multi.lmdb" CMAKE_EXT;
+  if (fopen(db_file.c_str(), "r") != NULL) {
+    const unsigned int seed = (unsigned) time(NULL);
+    Caffe::set_random_seed(seed);
+
+    const int batch_size = 100;
+    LayerParameter param;
+    LabelingDataParameter *labeling_data_param =
+      param.mutable_labeling_data_param();
+    labeling_data_param->set_batch_size(batch_size);
+    labeling_data_param->set_source(db_file.c_str());
+    labeling_data_param->set_label_classes(1);
+    labeling_data_param->set_label_height(16);
+    labeling_data_param->set_label_width(16);
+    labeling_data_param->set_transform(true);
+    labeling_data_param->set_normalize(true);
+
+    LabelingDataLayer<Dtype> layer(param);
+    layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+
+    EXPECT_EQ(this->blob_top_data_->num(), batch_size);
+    EXPECT_EQ(this->blob_top_data_->channels(), 3);
+    EXPECT_EQ(this->blob_top_data_->height(), 64);
+    EXPECT_EQ(this->blob_top_data_->width(), 64);
+
+    EXPECT_EQ(this->blob_top_label_->num(), batch_size);
+    EXPECT_EQ(this->blob_top_label_->channels(), 3);
+    EXPECT_EQ(this->blob_top_label_->height(), 16);
+    EXPECT_EQ(this->blob_top_label_->width(), 16);
+
+    layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+    const int num = this->blob_top_data_->num();
+    const int channels = this->blob_top_data_->channels();
+    const int height = this->blob_top_data_->height();
+    const int width = this->blob_top_data_->width();
+    const int dim = channels * height * width;
+    const int spatial_dim = width * height;
+    for (int i = 0; i < num; ++i) {
+      cv::Mat img(height, width, CV_32FC(channels));
+      for (int c = 0; c < channels; ++c) {
+        for (int y = 0; y < height; ++y) {
+          for (int x = 0; x < width; ++x) {
+            float pix = this->blob_top_data_->cpu_data()[
+                          i * dim + c * spatial_dim + y * width + x];
+            ((float *)img.data)[y * width * channels + x * channels + c] = pix;
+          }
+        }
+      }
+      cv::Scalar mean, stddev;
+      cv::meanStdDev(img, mean, stddev);
+      for (int c = 0; c < channels; ++c) {
+        EXPECT_NEAR(mean[c], 0, 1e-5);
+        EXPECT_NEAR(stddev[c], 1, 1e-5);
+      }
+      cv::Mat dst;
+      cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
       dst.convertTo(dst, CV_8U);
       stringstream ss;
-      ss << out_dir << "/test_label_" << i << ".png";
+      ss << out_dir << "/test_multi_data_" << i << ".png";
+      cv::imwrite(ss.str(), dst);
+    }
+
+    const int lnum = this->blob_top_label_->num();
+    const int lchannels = this->blob_top_label_->channels();
+    const int lheight = this->blob_top_label_->height();
+    const int lwidth = this->blob_top_label_->width();
+    const int ldim = lchannels * lheight * lwidth;
+    for (int i = 0; i < lnum; ++i) {
+      cv::Mat label(lheight, lwidth, CV_32FC(lchannels));
+      for (int y = 0; y < lheight; ++y) {
+        for (int x = 0; x < lwidth; ++x) {
+          float pix = this->blob_top_label_->cpu_data()[
+                        i * ldim + y * lwidth + x];
+          ((float *)label.data)[y * lwidth + x] = pix;
+        }
+      }
+      cv::Mat dst;
+      label.convertTo(dst, CV_8U, 255);
+      stringstream ss;
+      ss << out_dir << "/test_multi_label_" << i << ".png";
       cv::imwrite(ss.str(), dst);
     }
   }
