@@ -31,21 +31,31 @@ void LabelingDataLayer<Dtype>::DataLayerSetUp(
   LabelingDataParameter labeling_data_param =
     this->layer_param_.labeling_data_param();
   const int batch_size = labeling_data_param.batch_size();
+  const int label_classes = labeling_data_param.label_classes();
   const int label_height = labeling_data_param.label_height();
   const int label_width = labeling_data_param.label_width();
+
+  CHECK_NE(label_classes, 2)
+      << "a 2-class labeling task should be treated as a binary labeling task";
 
   // data
   top[0]->Reshape(batch_size, datum.channels(), datum.height(), datum.width());
   this->prefetch_data_.Reshape(batch_size, datum.channels(),
                                datum.height(), datum.width());
-  LOG(INFO) << "input data size: " << top[0]->num() << "," << top[0]->channels()
-            << "," << top[0]->height() << "," << top[0]->width();
+  LOG(INFO) << "input data size: "
+            << top[0]->num() << ","
+            << top[0]->channels() << ","
+            << top[0]->height() << ","
+            << top[0]->width();
 
   // label
-  top[1]->Reshape(batch_size, 1, label_height, label_width);
-  this->prefetch_label_.Reshape(batch_size, 1, label_height, label_width);
-  LOG(INFO) << "input label size: " << top[1]->num() << ","
-            << top[1]->channels() << "," << top[1]->height() << ","
+  top[1]->Reshape(batch_size, label_classes, label_height, label_width);
+  this->prefetch_label_.Reshape(batch_size, label_classes,
+                                label_height, label_width);
+  LOG(INFO) << "input label size: "
+            << top[1]->num() << ","
+            << top[1]->channels() << ","
+            << top[1]->height() << ","
             << top[1]->width();
 }
 
@@ -118,6 +128,7 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
   LabelingDataParameter labeling_data_param =
     this->layer_param_.labeling_data_param();
   const int batch_size = labeling_data_param.batch_size();
+  const int label_classes = labeling_data_param.label_classes();
   const int label_height = labeling_data_param.label_height();
   const int label_width = labeling_data_param.label_width();
   const int spatial_dim = label_height * label_width;
@@ -141,8 +152,24 @@ void LabelingDataLayer<Dtype>::InternalThreadEntry() {
     const google::protobuf::RepeatedField<float> label = datum.float_data();
     const float *label_data = label.data();
     for (int pos = 0; pos < spatial_dim; ++pos) {
-      int index = item_id * spatial_dim + pos;
-      top_label[index] = static_cast<Dtype>(label_data[pos]);
+      // binary labeling task
+      if (label_classes == 1) {
+        const int index = item_id * spatial_dim + pos;
+        top_label[index] = label_data[pos]; // 0 or 1
+      }
+      // multi-class labeling task
+      else {
+        const int label = static_cast<int>(label_data[pos]);
+        for (int c = 0; c < label_classes; ++c) {
+          int index = item_id * label_classes * spatial_dim
+                      + c * spatial_dim + pos;
+          if (c == label) {
+            top_label[index] = 1.0;
+          } else {
+            top_label[index] = 0.0;
+          }
+        }
+      }
     }
 
     // do some data augmentation

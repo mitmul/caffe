@@ -569,10 +569,11 @@ message InnerProductParameter {
 message LabelingDataParameter {
   required string source = 1;
   required uint32 batch_size = 2;
-  required uint32 label_height = 3;
-  required uint32 label_width = 4;
-  optional bool transform = 5 [default = true];
-  optional bool normalize = 6 [default = true];
+  required uint32 label_classes = 3;
+  required uint32 label_height = 4;
+  required uint32 label_width = 5;
+  optional bool transform = 6 [default = true];
+  optional bool normalize = 7 [default = true];
 }
 
 // Message that stores parameters used by LRNLayer
