@@ -494,34 +494,6 @@ class InfogainLossLayer : public LossLayer<Dtype> {
   Blob<Dtype> infogain_;
 };
 
-template <typename Dtype>
-class LabelingLossLayer : public LossLayer<Dtype> {
- public:
-  explicit LabelingLossLayer(const LayerParameter &param)
-    : LossLayer<Dtype>(param) {}
-  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                       const vector<Blob<Dtype>*> &top);
-
- protected:
-  /// @copydoc LabelingLossLayer
-  virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
-                           const vector<Blob<Dtype>*> &top);
-  virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                           const vector<Blob<Dtype>*> &top);
-  virtual void Backward_cpu(
-    const vector<Blob<Dtype>*> &top,
-    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual void Backward_gpu(
-    const vector<Blob<Dtype>*> &top,
-    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-  virtual inline int ExactNumBottomBlobs() const { return 2; }
-  virtual inline int ExactNumTopBlobs() const { return 1; }
-
- public:
-  /// for Forward_gpu
-  Blob<Dtype> loss_;
-};
-
 /**
  * @brief Computes the multinomial logistic loss for a one-of-many
  *        classification task, directly taking a predicted probability

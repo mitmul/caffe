@@ -250,34 +250,6 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
   int lines_id_;
 };
 
-template <typename Dtype>
-class LabelingDataLayer : public BasePrefetchingDataLayer<Dtype> {
- public:
-  explicit LabelingDataLayer(const LayerParameter &param)
-    : BasePrefetchingDataLayer<Dtype>(param) {}
-  virtual ~LabelingDataLayer();
-  virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                              const vector<Blob<Dtype>*> &top);
-
-  virtual inline LayerParameter_LayerType type() const {
-    return LayerParameter_LayerType_LABELING_DATA;
-  }
-  virtual inline int ExactNumBottomBlobs() const { return 0; }
-  virtual inline int MinTopBlobs() const { return 1; }
-  virtual inline int MaxTopBlobs() const { return 2; }
-
- protected:
-  virtual void InternalThreadEntry();
-
-  shared_ptr<Dataset<string, Datum> > dataset_;
-  Dataset<string, Datum>::const_iterator iter_;
-
- private:
-  void Transform(Dtype *data, const int &num, const int &ch, const int &height,
-                 const int &width, const int &angle, const int &flipCode,
-                 const bool &transform, const bool &normalize);
-};
-
 /**
  * @brief Provides data to the Net from memory.
  *

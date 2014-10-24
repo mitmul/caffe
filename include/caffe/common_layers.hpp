@@ -12,6 +12,7 @@
 #include "caffe/loss_layers.hpp"
 #include "caffe/neuron_layers.hpp"
 #include "caffe/proto/caffe.pb.h"
+#include "caffe/util/io.hpp"
 
 namespace caffe {
 
@@ -70,6 +71,38 @@ class ArgMaxLayer : public Layer<Dtype> {
   }
   bool out_max_val_;
   size_t top_k_;
+};
+
+/**
+ * @brief Perform some transformation to input data and label.
+ */
+template <typename Dtype>
+class AugmentLayer : public Layer<Dtype> {
+ public:
+  explicit AugmentLayer(const LayerParameter &param)
+    : Layer<Dtype>(param) {}
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top);
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_AUGMENT;
+  }
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
+                           const vector<Blob<Dtype>*> &top);
+  /// @brief Not implemented (non-differentiable function)
+  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
+                            const vector<bool> &propagate_down,
+                            const vector<Blob<Dtype>*> &bottom) {
+    NOT_IMPLEMENTED;
+  }
+
+ private:
+  cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
+                         const int &height, const int &width);
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
 };
 
 /**
@@ -409,9 +442,11 @@ class SoftmaxLayer : public Layer<Dtype> {
   virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
   virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+                            const vector<bool> &propagate_down,
+                            const vector<Blob<Dtype>*> &bottom);
   virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+                            const vector<bool> &propagate_down,
+                            const vector<Blob<Dtype>*> &bottom);
 
   /// sum_multiplier is used to carry out sum using BLAS
   Blob<Dtype> sum_multiplier_;

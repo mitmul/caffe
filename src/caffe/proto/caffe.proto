@@ -206,7 +206,7 @@ message NetStateRule {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available ID: 44 (last added: reshape_param)
+// LayerParameter next available ID: 44 (last added: augment_param)
 message LayerParameter {
   repeated string bottom = 2; // the name of the bottom blobs
   repeated string top = 3; // the name of the top blobs
@@ -227,7 +227,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 41 (last added: RESHAPE)
+  // LayerType next available ID: 41 (last added: AUGMENT)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -254,7 +254,6 @@ message LayerParameter {
     IMAGE_DATA = 12;
     INFOGAIN_LOSS = 13;
     INNER_PRODUCT = 14;
-    LABELING_DATA = 39;
     LRN = 15;
     MEMORY_DATA = 29;
     MULTINOMIAL_LOGISTIC_LOSS = 16;
@@ -262,7 +261,7 @@ message LayerParameter {
     POOLING = 17;
     POWER = 26;
     RELU = 18;
-    RESHAPE = 40;
+    RESHAPE = 39;
     SIGMOID = 19;
     SIGMOID_CROSS_ENTROPY_LOSS = 27;
     SILENCE = 36;
@@ -271,6 +270,7 @@ message LayerParameter {
     SPLIT = 22;
     SLICE = 33;
     TANH = 23;
+    AUGMENT = 40;
     WINDOW_DATA = 24;
     THRESHOLD = 31;
   }
@@ -317,16 +317,16 @@ message LayerParameter {
   optional ImageDataParameter image_data_param = 15;
   optional InfogainLossParameter infogain_loss_param = 16;
   optional InnerProductParameter inner_product_param = 17;
-  optional LabelingDataParameter labeling_data_param = 42;
   optional LRNParameter lrn_param = 18;
   optional MemoryDataParameter memory_data_param = 22;
   optional MVNParameter mvn_param = 34;
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
   optional ReLUParameter relu_param = 30;
-  optional ReshapeParameter reshape_param = 43;
+  optional ReshapeParameter reshape_param = 42;
   optional SigmoidParameter sigmoid_param = 38;
   optional SoftmaxParameter softmax_param = 39;
+  optional AugmentParameter augment_param = 43;
   optional SliceParameter slice_param = 31;
   optional TanHParameter tanh_param = 37;
   optional ThresholdParameter threshold_param = 25;
@@ -565,16 +565,6 @@ message InnerProductParameter {
   optional FillerParameter bias_filler = 4; // The filler for the bias
 }
 
-message LabelingDataParameter {
-  required string source = 1;
-  required uint32 batch_size = 2;
-  required uint32 label_classes = 3;
-  required uint32 label_height = 4;
-  required uint32 label_width = 5;
-  optional bool transform = 6 [default = true];
-  optional bool normalize = 7 [default = true];
-}
-
 // Message that stores parameters used by LRNLayer
 message LRNParameter {
   optional uint32 local_size = 1 [default = 5];
@@ -715,6 +705,18 @@ message TanHParameter {
 // Message that stores parameters used by ThresholdLayer
 message ThresholdParameter {
   optional float threshold = 1 [default = 0]; // Strictly positive values
+}
+
+message AugmentParameter {
+  // crop a certain region around the center of input data
+  required uint32 data_crop_size = 1;
+  required uint32 label_crop_size = 2;
+  // randomly rotate arount the center
+  optional bool rotate = 3 [default = false];
+  // mean subtraction
+  repeated float mean = 4;
+  // stddev division
+  repeated float stddev = 5;
 }
 
 // Message that stores parameters used by WindowDataLayer
