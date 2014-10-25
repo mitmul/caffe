@@ -717,6 +717,8 @@ message AugmentParameter {
   repeated float mean = 4;
   // stddev division
   repeated float stddev = 5;
+  // data-wise mean subtraction and stddev division
+  optional bool normalize = 6 [default = false];
 }
 
 // Message that stores parameters used by WindowDataLayer

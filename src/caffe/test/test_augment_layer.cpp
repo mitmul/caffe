@@ -100,6 +100,13 @@ class AugmentLayerTest : public MultiDeviceTest<TypeParam> {
           }
         }
       }
+
+      cv::Scalar mean, stddev;
+      cv::meanStdDev(img, mean, stddev);
+      for (int c = 0; c < channels; ++c) {
+        LOG(INFO) << "mean: " << mean[c] << "\tstddev: " << stddev[c];
+      }
+
       cv::Mat dst;
       cv::normalize(img, dst, 0, 255, cv::NORM_MINMAX);
       dst.convertTo(dst, CV_8U);
@@ -139,16 +146,17 @@ TYPED_TEST(AugmentLayerTest, TestRead) {
   augment_param->set_data_crop_size(64);
   augment_param->set_label_crop_size(16);
   augment_param->set_rotate(true);
-  google::protobuf::RepeatedField<float> *mean =
-    augment_param->mutable_mean();
-  mean->Add(75.871057942708333);
-  mean->Add(84.302632378472225);
-  mean->Add(82.718964843750001);
-  google::protobuf::RepeatedField<float> *stddev =
-    augment_param->mutable_stddev();
-  stddev->Add(50.142589887293951);
-  stddev->Add(48.17382927556428);
-  stddev->Add(50.290859541028532);
+  augment_param->set_normalize(true);
+  // google::protobuf::RepeatedField<float> *mean =
+  //   augment_param->mutable_mean();
+  // mean->Add(75.871057942708333);
+  // mean->Add(84.302632378472225);
+  // mean->Add(82.718964843750001);
+  // google::protobuf::RepeatedField<float> *stddev =
+  //   augment_param->mutable_stddev();
+  // stddev->Add(50.142589887293951);
+  // stddev->Add(48.17382927556428);
+  // stddev->Add(50.290859541028532);
 
   // save image dir
   string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;

@@ -66,30 +66,45 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                        label_height / 2 - label_size / 2,
                        label_size, label_size)).copyTo(label_patch);
 
-    // mean subtraction
-    const google::protobuf::RepeatedField<float> mean =
-      this->layer_param_.augment_param().mean();
-    if (mean.size() > 0) {
-      CHECK_EQ(mean.size(), data_channels);
-      vector<cv::Mat> splitted;
-      cv::split(data_patch, splitted);
-      for (int j = 0; j < splitted.size(); ++j) {
-        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0, -mean.Get(j));
+    // patch-wise mean subtraction and stddev division
+    if (this->layer_param_.augment_param().normalize()) {
+      cv::Scalar mean, stddev;
+      cv::meanStdDev(data_patch, mean, stddev);
+      cv::Mat *slice = new cv::Mat[data_channels];
+      cv::split(data_patch, slice);
+      for (int c = 0; c < data_channels; ++c) {
+        cv::subtract(slice[c], mean[c], slice[c]);
+        slice[c] /= stddev[c];
       }
-      cv::merge(splitted, data_patch);
+      cv::merge(slice, data_channels, data_patch);
+      delete [] slice;
     }
-
-    // stddev division
-    const google::protobuf::RepeatedField<float> stddev =
-      this->layer_param_.augment_param().stddev();
-    if (stddev.size() > 0) {
-      CHECK_EQ(stddev.size(), data_channels);
-      vector<cv::Mat> splitted;
-      cv::split(data_patch, splitted);
-      for (int j = 0; j < splitted.size(); ++j) {
-        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0 / stddev.Get(j));
+    else {
+      // mean subtraction
+      const google::protobuf::RepeatedField<float> mean =
+        this->layer_param_.augment_param().mean();
+      if (mean.size() > 0) {
+        CHECK_EQ(mean.size(), data_channels);
+        vector<cv::Mat> splitted;
+        cv::split(data_patch, splitted);
+        for (int j = 0; j < splitted.size(); ++j) {
+          splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0, -mean.Get(j));
+        }
+        cv::merge(splitted, data_patch);
       }
-      cv::merge(splitted, data_patch);
+
+      // stddev division
+      const google::protobuf::RepeatedField<float> stddev =
+        this->layer_param_.augment_param().stddev();
+      if (stddev.size() > 0) {
+        CHECK_EQ(stddev.size(), data_channels);
+        vector<cv::Mat> splitted;
+        cv::split(data_patch, splitted);
+        for (int j = 0; j < splitted.size(); ++j) {
+          splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0 / stddev.Get(j));
+        }
+        cv::merge(splitted, data_patch);
+      }
     }
 
     // revert into blob
