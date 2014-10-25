@@ -95,9 +95,7 @@ class AugmentLayer : public Layer<Dtype> {
   /// @brief Not implemented (non-differentiable function)
   virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
                             const vector<bool> &propagate_down,
-                            const vector<Blob<Dtype>*> &bottom) {
-    NOT_IMPLEMENTED;
-  }
+                            const vector<Blob<Dtype>*> &bottom) {}
 
  private:
   cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
