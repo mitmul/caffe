@@ -81,6 +81,8 @@ class AugmentLayer : public Layer<Dtype> {
  public:
   explicit AugmentLayer(const LayerParameter &param)
     : Layer<Dtype>(param) {}
+  void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                  const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
   virtual inline LayerParameter_LayerType type() const {

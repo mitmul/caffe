@@ -5,10 +5,22 @@
 namespace caffe {
 
 template <typename Dtype>
+void AugmentLayer<Dtype>::LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                                     const vector<Blob<Dtype>*> &top) {
+  for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+    LOG(INFO) << "augment input: " << bottom[blob_id]->num() << ", "
+              << bottom[blob_id]->channels() << ", "
+              << bottom[blob_id]->height() << ", "
+              << bottom[blob_id]->width();
+  }
+}
+
+template <typename Dtype>
 void AugmentLayer<Dtype>::Reshape(const vector<Blob<Dtype>*> &bottom,
                                   const vector<Blob<Dtype>*> &top) {
   const google::protobuf::RepeatedField<uint32_t> crop_sizes =
     this->layer_param_.augment_param().crop_size();
+  CHECK_EQ(crop_sizes.size(), bottom.size());
   for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
     top[blob_id]->Reshape(bottom[blob_id]->num(), bottom[blob_id]->channels(),
                           crop_sizes.Get(blob_id), crop_sizes.Get(blob_id));
@@ -114,9 +126,9 @@ void AugmentLayer<Dtype>::Backward_cpu(
   const vector<bool> &propagate_down,
   const vector<Blob<Dtype>*> &bottom)
 {
-  for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
-    bottom[blob_id]->ShareDiff(*top[blob_id]);
-  }
+  // for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+  //   bottom[blob_id]->ShareDiff(*top[blob_id]);
+  // }
 }
 
 template <typename Dtype>
