@@ -7,111 +7,115 @@ namespace caffe {
 template <typename Dtype>
 void AugmentLayer<Dtype>::Reshape(const vector<Blob<Dtype>*> &bottom,
                                   const vector<Blob<Dtype>*> &top) {
-  const int data_size =
-    this->layer_param_.augment_param().data_crop_size();
-  const int label_size =
-    this->layer_param_.augment_param().label_crop_size();
-
-  top[0]->Reshape(bottom[0]->num(), bottom[0]->channels(),
-                  data_size, data_size);
-  top[1]->Reshape(bottom[1]->num(), bottom[1]->channels(),
-                  label_size, label_size);
+  const google::protobuf::RepeatedField<uint32_t> crop_sizes =
+    this->layer_param_.augment_param().crop_size();
+  for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+    top[blob_id]->Reshape(bottom[blob_id]->num(), bottom[blob_id]->channels(),
+                          crop_sizes.Get(blob_id), crop_sizes.Get(blob_id));
+  }
 }
 
 template <typename Dtype>
 void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                                       const vector<Blob<Dtype>*> &top) {
-  const int data_channels = bottom[0]->channels();
-  const int data_height = bottom[0]->height();
-  const int data_width = bottom[0]->width();
-  CHECK_EQ(data_height, data_width);
-
-  const int label_channels = bottom[1]->channels();
-  const int label_height = bottom[1]->height();
-  const int label_width = bottom[1]->width();
-  CHECK_EQ(label_height, label_width);
+  CHECK_EQ(bottom.size(), top.size());
+  const google::protobuf::RepeatedField<uint32_t> crop_sizes =
+    this->layer_param_.augment_param().crop_size();
+  CHECK_EQ(crop_sizes.size(), bottom.size());
 
   for (int i = 0; i < bottom[0]->num(); ++i) {
-    const Dtype *data = bottom[0]->cpu_data() + bottom[0]->offset(i);
-    cv::Mat data_img = ConvertToCVMat(data, data_channels,
-                                      data_height, data_width);
-    const Dtype *label = bottom[1]->cpu_data() + bottom[1]->offset(i);
-    cv::Mat label_img = ConvertToCVMat(label, label_channels,
-                                       label_height, label_width);
+    vector<cv::Mat> imgs;
+    // both rotation and cropping are performed to all bottom blobs
+    const double angle = static_cast<double>(caffe_rng_rand() % 360);
+    for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+      const int channels = bottom[blob_id]->channels();
+      const int height = bottom[blob_id]->height();
+      const int width = bottom[blob_id]->width();
+      const Dtype *data = bottom[blob_id]->cpu_data()
+                          + bottom[blob_id]->offset(i);
+      cv::Mat img = ConvertToCVMat(data, channels, height, width);
 
-    // randomly rotate
-    if (this->layer_param_.augment_param().rotate()) {
-      const double angle = static_cast<double>(caffe_rng_rand() % 360);
-      cv::Point2f data_pt(data_width / 2.0, data_height / 2.0);
-      cv::Mat data_rot = cv::getRotationMatrix2D(data_pt, angle, 1.0);
-      cv::warpAffine(data_img, data_img, data_rot,
-                     cv::Size(data_width, data_height));
-      cv::Point2f label_pt(label_width / 2.0, label_height / 2.0);
-      cv::Mat label_rot = cv::getRotationMatrix2D(label_pt, angle, 1.0);
-      cv::warpAffine(label_img, label_img, label_rot,
-                     cv::Size(label_width, label_height));
+      // randomly rotate
+      if (this->layer_param_.augment_param().rotate()) {
+        cv::Point2f pt(width / 2.0, height / 2.0);
+        cv::Mat rot = cv::getRotationMatrix2D(pt, angle, 1.0);
+        cv::warpAffine(img, img, rot, cv::Size(width, height));
+      }
+
+      // crop center
+      const int size = crop_sizes.Get(blob_id);
+      cv::Mat patch(size, size, CV_64FC(channels));
+      img(cv::Rect(width / 2 - size / 2,
+                   height / 2 - size / 2, size, size)).copyTo(patch);
+      imgs.push_back(patch);
     }
 
-    // crop center
-    const int data_size =
-      this->layer_param_.augment_param().data_crop_size();
-    const int label_size =
-      this->layer_param_.augment_param().label_crop_size();
-    cv::Mat data_patch(data_size, data_size, CV_64FC(data_channels));
-    data_img(cv::Rect(data_width / 2 - data_size / 2,
-                      data_height / 2 - data_size / 2,
-                      data_size, data_size)).copyTo(data_patch);
-    cv::Mat label_patch(label_size, label_size, CV_64FC(label_channels));
-    label_img(cv::Rect(label_width / 2 - label_size / 2,
-                       label_height / 2 - label_size / 2,
-                       label_size, label_size)).copyTo(label_patch);
-
-    // patch-wise mean subtraction and stddev division
-    if (this->layer_param_.augment_param().normalize()) {
-      cv::Scalar mean, stddev;
-      cv::meanStdDev(data_patch, mean, stddev);
-      cv::Mat *slice = new cv::Mat[data_channels];
-      cv::split(data_patch, slice);
-      for (int c = 0; c < data_channels; ++c) {
+    // patch-wise mean subtraction
+    cv::Scalar mean, stddev;
+    cv::meanStdDev(imgs[0], mean, stddev);
+    if (this->layer_param_.augment_param().mean_normalize()) {
+      cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
+      cv::split(imgs[0], slice);
+      for (int c = 0; c < bottom[0]->channels(); ++c) {
         cv::subtract(slice[c], mean[c], slice[c]);
-        slice[c] /= stddev[c];
       }
-      cv::merge(slice, data_channels, data_patch);
+      cv::merge(slice, bottom[0]->channels(), imgs[0]);
       delete [] slice;
     }
-    else {
-      // mean subtraction
-      const google::protobuf::RepeatedField<float> mean =
-        this->layer_param_.augment_param().mean();
-      if (mean.size() > 0) {
-        CHECK_EQ(mean.size(), data_channels);
-        vector<cv::Mat> splitted;
-        cv::split(data_patch, splitted);
-        for (int j = 0; j < splitted.size(); ++j) {
-          splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0, -mean.Get(j));
-        }
-        cv::merge(splitted, data_patch);
-      }
 
-      // stddev division
-      const google::protobuf::RepeatedField<float> stddev =
-        this->layer_param_.augment_param().stddev();
-      if (stddev.size() > 0) {
-        CHECK_EQ(stddev.size(), data_channels);
-        vector<cv::Mat> splitted;
-        cv::split(data_patch, splitted);
-        for (int j = 0; j < splitted.size(); ++j) {
-          splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0 / stddev.Get(j));
-        }
-        cv::merge(splitted, data_patch);
+    // patch-wise stddev division
+    if (this->layer_param_.augment_param().stddev_normalize()) {
+      cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
+      cv::split(imgs[0], slice);
+      for (int c = 0; c < bottom[0]->channels(); ++c) {
+        slice[c] /= stddev[c];
       }
+      cv::merge(slice, bottom[0]->channels(), imgs[0]);
+      delete [] slice;
+    }
+
+    // constant value subtraction
+    const google::protobuf::RepeatedField<float> subs =
+      this->layer_param_.augment_param().subtract();
+    if (subs.size() > 0) {
+      CHECK_EQ(subs.size(), bottom[0]->channels());
+      vector<cv::Mat> splitted;
+      cv::split(imgs[0], splitted);
+      for (int j = 0; j < splitted.size(); ++j) {
+        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0, -subs.Get(j));
+      }
+      cv::merge(splitted, imgs[0]);
+    }
+
+    // stddev division
+    const google::protobuf::RepeatedField<float> divs =
+      this->layer_param_.augment_param().divide();
+    if (divs.size() > 0) {
+      CHECK_EQ(divs.size(), bottom[0]->channels());
+      vector<cv::Mat> splitted;
+      cv::split(imgs[0], splitted);
+      for (int j = 0; j < splitted.size(); ++j) {
+        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0 / divs.Get(j));
+      }
+      cv::merge(splitted, imgs[0]);
     }
 
     // revert into blob
-    ConvertFromCVMat(data_patch,
-                     top[0]->mutable_cpu_data() + top[0]->offset(i));
-    ConvertFromCVMat(label_patch,
-                     top[1]->mutable_cpu_data() + top[1]->offset(i));
+    for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+      ConvertFromCVMat(imgs[blob_id], top[blob_id]->mutable_cpu_data()
+                       + top[blob_id]->offset(i));
+    }
+  }
+}
+
+template <typename Dtype>
+void AugmentLayer<Dtype>::Backward_cpu(
+  const vector<Blob<Dtype>*> &top,
+  const vector<bool> &propagate_down,
+  const vector<Blob<Dtype>*> &bottom)
+{
+  for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
+    bottom[blob_id]->ShareDiff(*top[blob_id]);
   }
 }
 

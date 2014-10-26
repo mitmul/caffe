@@ -709,16 +709,17 @@ message ThresholdParameter {
 
 message AugmentParameter {
   // crop a certain region around the center of input data
-  required uint32 data_crop_size = 1;
-  required uint32 label_crop_size = 2;
+  repeated uint32 crop_size = 1;
   // randomly rotate arount the center
-  optional bool rotate = 3 [default = false];
-  // mean subtraction
-  repeated float mean = 4;
-  // stddev division
-  repeated float stddev = 5;
-  // data-wise mean subtraction and stddev division
-  optional bool normalize = 6 [default = false];
+  optional bool rotate = 2 [default = false];
+  // subtract constant value from data
+  repeated float subtract = 3;
+  // divide data with constant value
+  repeated float divide = 4;
+  // data-wise mean subtraction
+  optional bool mean_normalize = 5 [default = false];
+  // data-wise stddev division
+  optional bool stddev_normalize = 6 [default = false];
 }
 
 // Message that stores parameters used by WindowDataLayer

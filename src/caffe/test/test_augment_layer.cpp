@@ -143,20 +143,13 @@ TYPED_TEST(AugmentLayerTest, TestRead) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter param;
   AugmentParameter *augment_param = param.mutable_augment_param();
-  augment_param->set_data_crop_size(64);
-  augment_param->set_label_crop_size(16);
+  google::protobuf::RepeatedField<uint32_t> *crop_sizes =
+    augment_param->mutable_crop_size();
+  crop_sizes->Add(64);
+  crop_sizes->Add(16);
   augment_param->set_rotate(true);
-  augment_param->set_normalize(true);
-  // google::protobuf::RepeatedField<float> *mean =
-  //   augment_param->mutable_mean();
-  // mean->Add(75.871057942708333);
-  // mean->Add(84.302632378472225);
-  // mean->Add(82.718964843750001);
-  // google::protobuf::RepeatedField<float> *stddev =
-  //   augment_param->mutable_stddev();
-  // stddev->Add(50.142589887293951);
-  // stddev->Add(48.17382927556428);
-  // stddev->Add(50.290859541028532);
+  augment_param->set_mean_normalize(true);
+  augment_param->set_stddev_normalize(true);
 
   // save image dir
   string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
@@ -166,6 +159,36 @@ TYPED_TEST(AugmentLayerTest, TestRead) {
   augment.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
   this->SaveData(*this->blob_top_data_, out_dir, "data");
   this->SaveData(*this->blob_top_label_, out_dir, "label");
+}
+
+TYPED_TEST(AugmentLayerTest, TestNorm) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter param;
+  AugmentParameter *augment_param = param.mutable_augment_param();
+  google::protobuf::RepeatedField<uint32_t> *crop_sizes =
+    augment_param->mutable_crop_size();
+  crop_sizes->Add(64);
+  crop_sizes->Add(16);
+  augment_param->set_rotate(true);
+  google::protobuf::RepeatedField<float> *mean =
+    augment_param->mutable_subtract();
+  mean->Add(75.871057942708333);
+  mean->Add(84.302632378472225);
+  mean->Add(82.718964843750001);
+  google::protobuf::RepeatedField<float> *stddev =
+    augment_param->mutable_divide();
+  stddev->Add(50.142589887293951);
+  stddev->Add(48.17382927556428);
+  stddev->Add(50.290859541028532);
+
+  // save image dir
+  string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
+
+  AugmentLayer<Dtype> augment(param);
+  augment.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  augment.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  this->SaveData(*this->blob_top_data_, out_dir, "data_norm");
+  this->SaveData(*this->blob_top_label_, out_dir, "label_norm");
 }
 
 }  // namespace caffe
