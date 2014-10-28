@@ -84,16 +84,20 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestSoftmax) {
 
   // confirm that prepared input data is surely softmaxed
   const Dtype kErrorMargin = 1e-5;
-  const Dtype *softmax_output_data = layer.prob_.cpu_data();
+  const Dtype *data = layer.prob_.cpu_data();
+  const Dtype *label = this->blob_bottom_vec_[1]->cpu_data();
   for (int i = 0; i < num; ++i) {
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
-        Dtype value = 0;
+        Dtype data_value = 0;
+        Dtype label_value = 0;
         for (int c = 0; c < channels; ++c) {
           const int idx = i * dim + c * spatial_dim + y * width + x;
-          value += softmax_output_data[idx];
+          data_value += data[idx];
+          label_value += label[idx];
         }
-        EXPECT_NEAR(value, 1.0, kErrorMargin);
+        EXPECT_NEAR(data_value, 1.0, kErrorMargin);
+        EXPECT_NEAR(label_value, 1.0, kErrorMargin);
       }
     }
   }

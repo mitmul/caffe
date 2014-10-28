@@ -43,8 +43,9 @@ template <typename Dtype>
 void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
   // The forward pass computes the softmax prob values.
+  softmax_bottom_vec_[0] = bottom[0];
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
-  const Dtype *prob_data = prob_.cpu_data();
+  const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
   const int num = bottom[0]->num();
   const int dim = bottom[0]->count() / num;
@@ -55,7 +56,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     for (int j = 0; j < spatial_dim; ++j) {
       for (int c = 0; c < channels; ++c) {
         const Dtype label_value = label[i * dim + c * spatial_dim + j];
-        const Dtype predict = prob_data[i * dim + c * spatial_dim + j];
+        const Dtype predict = data[i * dim + c * spatial_dim + j];
         CHECK_GE(predict, 0);
         CHECK_LE(predict, 1);
         CHECK_GE(label_value, 0);
@@ -77,7 +78,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
-    const Dtype *prob_data = prob_.cpu_data();
+    const Dtype *data = prob_.cpu_data();
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff = bottom[0]->mutable_cpu_diff();
     const int num = bottom[0]->num();
@@ -85,10 +86,10 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const int channels = bottom[0]->channels();
     const int spatial_dim = bottom[0]->height() * bottom[0]->width();
     for (int i = 0; i < num; ++i) {
-      for (int j = 0; j < spatial_dim; ++j) {
-        for (int c = 0; c < channels; ++c) {
+      for (int c = 0; c < channels; ++c) {
+        for (int j = 0; j < spatial_dim; ++j) {
           const Dtype label_value = label[i * dim + c * spatial_dim + j];
-          const Dtype predict = prob_data[i * dim + c * spatial_dim + j];
+          const Dtype predict = data[i * dim + c * spatial_dim + j];
           CHECK_GE(predict, 0);
           CHECK_LE(predict, 1);
           CHECK_GE(label_value, 0);
