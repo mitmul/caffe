@@ -84,7 +84,7 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestSoftmax) {
 
   // confirm that prepared input data is surely softmaxed
   const Dtype kErrorMargin = 1e-5;
-  const Dtype *softmax_output_data = this->blob_bottom_vec_[0]->cpu_data();
+  const Dtype *softmax_output_data = layer.prob_.cpu_data();
   for (int i = 0; i < num; ++i) {
     for (int y = 0; y < height; ++y) {
       for (int x = 0; x < width; ++x) {
@@ -137,7 +137,7 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestBackward) {
   propagate_down.push_back(false);
   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
 
-  const Dtype *data = this->blob_bottom_vec_[0]->cpu_data();
+  const Dtype *data = layer.prob_.cpu_data();
   const Dtype *diff = this->blob_bottom_vec_[0]->cpu_diff();
   const Dtype *label = this->blob_bottom_vec_[1]->cpu_data();
 
@@ -167,52 +167,6 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestBackward) {
     }
   }
 }
-
-// TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestDiff) {
-//   typedef typename TypeParam::Dtype Dtype;
-//   LayerParameter layer_param;
-//   SoftmaxCrossEntropyLossLayer<Dtype> layer(layer_param);
-//   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-//   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-//   vector<bool> propagate_down;
-//   propagate_down.push_back(true);
-//   propagate_down.push_back(false);
-//   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-
-//   const Dtype step = 1e-3;
-//   const Dtype threshold = 1e-3;
-//   for (int feature_id = 0; feature_id < this->blob_bottom_vec_[0]->count();
-//        ++feature_id) {
-//     const Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[feature_id];
-//     const Dtype feature = this->blob_bottom_vec_[0]->cpu_data()[feature_id];
-
-//     this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] += step;
-//     const Dtype positive_objective =
-//       layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-//     layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-
-//     this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] -=
-//       Dtype(step * 2);
-//     const Dtype negative_objective =
-//       layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-//     layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
-//     this->blob_bottom_vec_[0]->mutable_cpu_data()[feature_id] = step;
-
-//     const Dtype expected_diff =
-//       (positive_objective - negative_objective) / (2 * step);
-
-//     if (fabs(diff - expected_diff) > threshold) {
-//       LOG(INFO) << "feature id: " << feature_id;
-//       LOG(INFO) << "feature: " << feature;
-//       LOG(INFO) << "diff at: " << diff;
-//       LOG(INFO) << "positive_objective: " << positive_objective;
-//       LOG(INFO) << "negative_objective: " << negative_objective;
-//       LOG(INFO) << "expected diff: " << expected_diff;
-//       LOG(INFO) << "actual diff: " << diff;
-//     }
-//     EXPECT_NEAR(diff, expected_diff, threshold);
-//   }
-// }
 
 TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;

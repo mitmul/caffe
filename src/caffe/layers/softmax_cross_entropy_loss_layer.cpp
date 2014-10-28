@@ -58,6 +58,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
         const Dtype predict = prob_data[i * dim + c * spatial_dim + j];
         CHECK_GE(predict, 0);
         CHECK_LE(predict, 1);
+        CHECK_GE(label_value, 0);
+        CHECK_LE(label_value, 1);
         loss -= label_value * log(std::max(predict, Dtype(kLOG_THRESHOLD)));
       }
     }
@@ -89,6 +91,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
           const Dtype predict = prob_data[i * dim + c * spatial_dim + j];
           CHECK_GE(predict, 0);
           CHECK_LE(predict, 1);
+          CHECK_GE(label_value, 0);
+          CHECK_LE(label_value, 1);
           diff[i * dim + c * spatial_dim + j] = label_value * (predict - 1);
         }
       }
