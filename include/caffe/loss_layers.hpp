@@ -710,6 +710,8 @@ class SoftmaxCrossEntropyLossLayer : public LossLayer<Dtype> {
   vector<Blob<Dtype>*> softmax_bottom_vec_;
   /// top vector holder used in call to the underlying SoftmaxLayer::Forward
   vector<Blob<Dtype>*> softmax_top_vec_;
+  /// to compute loss using GPU
+  Blob<Dtype> loss_;
 };
 
 /**

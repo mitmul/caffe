@@ -26,13 +26,18 @@ class SoftmaxCrossEntropyLossLayerTest : public MultiDeviceTest<TypeParam> {
     Caffe::set_random_seed(25364);
 
     // Fill the data and labelvector
-    Dtype *data = blob_bottom_data_->mutable_cpu_data();
+    FillerParameter filler_param;
+    filler_param.set_min(0.0);
+    filler_param.set_max(1.0);
+    UniformFiller<Dtype> filler(filler_param);
+    filler.Fill(this->blob_bottom_data_);
+
     Dtype *label = blob_bottom_label_->mutable_cpu_data();
-    caffe_rng_uniform<Dtype>(blob_bottom_data_->count(), 0.01, 9.99, data);
     const int num = blob_bottom_data_->num();
     const int dim = blob_bottom_data_->count() / num;
     const int channels = blob_bottom_data_->channels();
     const int spatial_dim = dim / channels;
+    // set label to be 1-of-K coding form
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
         for (int k = 0; k < channels; ++k) {
@@ -164,9 +169,80 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestBackward) {
         const Dtype predict = data[i * dim + c * spatial_dim + j];
         EXPECT_GE(predict, 0);
         EXPECT_LE(predict, 1);
-        EXPECT_NEAR(diff[i * dim + c * spatial_dim + j] * num * spatial_dim,
-                    -(label_value * (1 - predict)),
+        const int index = i * dim + c * spatial_dim + j;
+        EXPECT_NEAR(diff[index] * num * channels * spatial_dim,
+                    predict - label_value,
                     kErrorMargin);
+      }
+    }
+  }
+}
+
+TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestDiff) {
+  typedef typename TypeParam::Dtype Dtype;
+  LayerParameter layer_param;
+  SoftmaxCrossEntropyLossLayer<Dtype> layer(layer_param);
+  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+  layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+  vector<bool> propagate_down;
+  propagate_down.push_back(true);
+  propagate_down.push_back(false);
+  layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
+
+  const Dtype step = 1e-2;
+  const Dtype threshold = 1e-2;
+  const int num = this->blob_bottom_vec_[0]->num();
+  const int channels = this->blob_bottom_vec_[0]->channels();
+  const int dim = this->blob_bottom_vec_[0]->count() / num;
+  const int height = this->blob_bottom_vec_[0]->height();
+  const int width = this->blob_bottom_vec_[0]->width();
+  const int spatial_dim = height * width;
+  for (int i = 0; i < num; ++i) {
+    for (int h = 0; h < height; ++h) {
+      for (int w = 0; w < width; ++w) {
+        for (int c = 0; c < channels; ++c) {
+          const int index = i * dim + c * spatial_dim + h * width + w;
+          const Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[index];
+          const Dtype feature = this->blob_bottom_vec_[0]->cpu_data()[index];
+          const Dtype label = this->blob_bottom_vec_[1]->cpu_data()[index];
+
+          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
+          const Dtype positive_objective =
+            layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+          layer.Backward(this->blob_top_vec_, propagate_down,
+                         this->blob_bottom_vec_);
+
+          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] -= step * 2;
+          const Dtype negative_objective =
+            layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+          layer.Backward(this->blob_top_vec_, propagate_down,
+                         this->blob_bottom_vec_);
+
+          // reverse data value
+          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
+
+          EXPECT_NE(positive_objective, negative_objective);
+
+          const Dtype expected_diff =
+            (positive_objective - negative_objective) / (2 * step);
+
+          if (fabs(diff - expected_diff) > threshold) {
+            LOG(INFO) << "num: " << i;
+            LOG(INFO) << "channels: " << c;
+            LOG(INFO) << "height: " << h;
+            LOG(INFO) << "width: " << w;
+            LOG(INFO) << "feature: " << feature;
+            LOG(INFO) << "diff: " << diff;
+            LOG(INFO) << "label: " << label;
+            LOG(INFO) << "positive_objective: " << positive_objective;
+            LOG(INFO) << "negative_objective: " << negative_objective;
+            LOG(INFO) << "delta: " << positive_objective - negative_objective;
+            LOG(INFO) << "expected diff: " << expected_diff;
+            LOG(INFO) << "computed diff: " << diff;
+            LOG(INFO) << "difference: " << diff - expected_diff;
+          }
+          EXPECT_NEAR(diff, expected_diff, threshold);
+        }
       }
     }
   }
@@ -179,7 +255,7 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestGradient) {
   layer_param.add_loss_weight(kLossWeight);
   SoftmaxCrossEntropyLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  GradientChecker<Dtype> checker(1e-3, 1e-3, 1701);
+  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
                                   this->blob_top_vec_, 0);
 }

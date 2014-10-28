@@ -27,6 +27,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*> &top) {
   LossLayer<Dtype>::Reshape(bottom, top);
   softmax_layer_->Reshape(softmax_bottom_vec_, softmax_top_vec_);
+  loss_.Reshape(bottom[0]->num(), bottom[0]->channels(),
+                bottom[0]->height(), bottom[0]->width());
 
   // Check the shapes of data and label
   CHECK_EQ(bottom[0]->num(), bottom[1]->num())
@@ -43,29 +45,22 @@ template <typename Dtype>
 void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
   // The forward pass computes the softmax prob values.
-  softmax_bottom_vec_[0] = bottom[0];
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
   const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
+  const int count = bottom[0]->count();
   const int num = bottom[0]->num();
-  const int dim = bottom[0]->count() / num;
   const int channels = bottom[0]->channels();
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
   Dtype loss = 0;
-  for (int i = 0; i < num; ++i) {
-    for (int j = 0; j < spatial_dim; ++j) {
-      for (int c = 0; c < channels; ++c) {
-        const Dtype label_value = label[i * dim + c * spatial_dim + j];
-        const Dtype predict = data[i * dim + c * spatial_dim + j];
-        CHECK_GE(predict, 0);
-        CHECK_LE(predict, 1);
-        CHECK_GE(label_value, 0);
-        CHECK_LE(label_value, 1);
-        loss -= label_value * log(std::max(predict, Dtype(kLOG_THRESHOLD)));
-      }
-    }
+  for (int i = 0; i < count; ++i) {
+    CHECK_GT(data[i], Dtype(kLOG_THRESHOLD));
+    CHECK_GT(1 - data[i], Dtype(kLOG_THRESHOLD));
+    loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)))
+            + (1 - label[i]) * log(std::max(1 - data[i],
+                                            Dtype(kLOG_THRESHOLD)));
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
 }
 
 template <typename Dtype>
@@ -81,26 +76,15 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const Dtype *data = prob_.cpu_data();
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff = bottom[0]->mutable_cpu_diff();
+    const int count = bottom[0]->count();
+    caffe_sub(count, data, label, diff);
+
+    // Scale gradient
     const int num = bottom[0]->num();
-    const int dim = bottom[0]->count() / num;
     const int channels = bottom[0]->channels();
     const int spatial_dim = bottom[0]->height() * bottom[0]->width();
-    for (int i = 0; i < num; ++i) {
-      for (int c = 0; c < channels; ++c) {
-        for (int j = 0; j < spatial_dim; ++j) {
-          const Dtype label_value = label[i * dim + c * spatial_dim + j];
-          const Dtype predict = data[i * dim + c * spatial_dim + j];
-          CHECK_GE(predict, 0);
-          CHECK_LE(predict, 1);
-          CHECK_GE(label_value, 0);
-          CHECK_LE(label_value, 1);
-          diff[i * dim + c * spatial_dim + j] = label_value * (predict - 1);
-        }
-      }
-    }
-    // Scale gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_scal(bottom[0]->count(), loss_weight / num / spatial_dim, diff);
+    caffe_scal(count, loss_weight / num / channels / spatial_dim, diff);
   }
 }
 
