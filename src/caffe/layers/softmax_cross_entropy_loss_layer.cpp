@@ -54,8 +54,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
   Dtype loss = 0;
   for (int i = 0; i < count; ++i) {
-    CHECK_GT(data[i], Dtype(kLOG_THRESHOLD));
-    CHECK_GT(1 - data[i], Dtype(kLOG_THRESHOLD));
+    // loss -= data[i] * (label[i] - (data[i] >= 0)) -
+    //         log(1 + exp(data[i] - 2 * data[i] * (data[i] >= 0)));
     loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)))
             + (1 - label[i]) * log(std::max(1 - data[i],
                                             Dtype(kLOG_THRESHOLD)));

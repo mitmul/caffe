@@ -206,7 +206,7 @@ message NetStateRule {
 // NOTE
 // Update the next available ID when you add a new LayerParameter field.
 //
-// LayerParameter next available ID: 44 (last added: augment_param)
+// LayerParameter next available ID: 45 (last added: precision_recall_loss_param)
 message LayerParameter {
   repeated string bottom = 2; // the name of the bottom blobs
   repeated string top = 3; // the name of the top blobs
@@ -227,7 +227,7 @@ message LayerParameter {
   // line above the enum. Update the next available ID when you add a new
   // LayerType.
   //
-  // LayerType next available ID: 42 (last added: SOFTMAX_CROSS_ENTROPY_LOSS)
+  // LayerType next available ID: 43 (last added: PRECISION_RECALL_LOSS)
   enum LayerType {
     // "NONE" layer type is 0th enum element so that we don't cause confusion
     // by defaulting to an existent LayerType (instead, should usually error if
@@ -260,6 +260,7 @@ message LayerParameter {
     MVN = 34;
     POOLING = 17;
     POWER = 26;
+    PRECISION_RECALL_LOSS = 42;
     RELU = 18;
     RESHAPE = 39;
     SIGMOID = 19;
@@ -323,6 +324,7 @@ message LayerParameter {
   optional MVNParameter mvn_param = 34;
   optional PoolingParameter pooling_param = 19;
   optional PowerParameter power_param = 21;
+  optional PrecisionRecallLossParameter precision_recall_loss_param = 44;
   optional ReLUParameter relu_param = 30;
   optional ReshapeParameter reshape_param = 42;
   optional SigmoidParameter sigmoid_param = 38;
@@ -632,6 +634,11 @@ message PowerParameter {
   optional float power = 1 [default = 1.0];
   optional float scale = 2 [default = 1.0];
   optional float shift = 3 [default = 0.0];
+}
+
+// Message that stores parameters used by PrecisionRecallLosslayer
+message PrecisionRecallLossParameter {
+  optional uint32 point_num = 1 [default = 100];
 }
 
 // Message that stores parameters used by ReLULayer

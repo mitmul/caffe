@@ -574,6 +574,43 @@ class MultinomialLogisticLossLayer : public LossLayer<Dtype> {
 };
 
 /**
+ * @brief compute area under the precision recall curve (AUPRC)
+ * This layer needs a softmaxed prediction blob and a label blob as inputs.
+ */
+template <typename Dtype>
+class PrecisionRecallLossLayer : public LossLayer<Dtype> {
+ public:
+  explicit PrecisionRecallLossLayer(const LayerParameter &param)
+    : LossLayer<Dtype>(param) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                          const vector<Blob<Dtype>*> &top);
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top);
+
+  virtual inline LayerParameter_LayerType type() const {
+    return LayerParameter_LayerType_PRECISION_RECALL_LOSS;
+  }
+
+  virtual inline int ExactNumBottomBlobs() const { return 2; }
+  virtual inline int ExactNumTopBlobs() const { return 1; }
+
+ protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
+                           const vector<Blob<Dtype>*> &top);
+  virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
+                           const vector<Blob<Dtype>*> &top);
+  virtual void Backward_cpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+  virtual void Backward_gpu(
+    const vector<Blob<Dtype>*> &top,
+    const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+
+ public:
+  Blob<Dtype> loss_;
+};
+
+/**
  * @brief Computes the cross-entropy (logistic) loss @f$
  *          E = \frac{-1}{n} \sum\limits_{n=1}^N \left[
  *                  p_n \log \hat{p}_n +
