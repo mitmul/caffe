@@ -142,86 +142,86 @@ TYPED_TEST(PrecisionRecallLossLayerTest, TestForward) {
   EXPECT_GE(fabs(loss_weight_1), kNonTrivialAbsThresh);
 }
 
-TYPED_TEST(PrecisionRecallLossLayerTest, TestDiff) {
-  typedef typename TypeParam::Dtype Dtype;
-  LayerParameter layer_param;
-  PrecisionRecallLossLayer<Dtype> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-  vector<bool> propagate_down;
-  propagate_down.push_back(true);
-  propagate_down.push_back(false);
-  layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
+// TYPED_TEST(PrecisionRecallLossLayerTest, TestDiff) {
+//   typedef typename TypeParam::Dtype Dtype;
+//   LayerParameter layer_param;
+//   PrecisionRecallLossLayer<Dtype> layer(layer_param);
+//   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+//   layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+//   vector<bool> propagate_down;
+//   propagate_down.push_back(true);
+//   propagate_down.push_back(false);
+//   layer.Backward(this->blob_top_vec_, propagate_down, this->blob_bottom_vec_);
 
-  const Dtype step = 1e-2;
-  const Dtype threshold = 1e-2;
-  const int num = this->blob_bottom_vec_[0]->num();
-  const int channels = this->blob_bottom_vec_[0]->channels();
-  const int dim = this->blob_bottom_vec_[0]->count() / num;
-  const int height = this->blob_bottom_vec_[0]->height();
-  const int width = this->blob_bottom_vec_[0]->width();
-  const int spatial_dim = height * width;
-  for (int i = 0; i < num; ++i) {
-    for (int h = 0; h < height; ++h) {
-      for (int w = 0; w < width; ++w) {
-        for (int c = 0; c < channels; ++c) {
-          const int index = i * dim + c * spatial_dim + h * width + w;
-          const Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[index];
-          const Dtype feature = this->blob_bottom_vec_[0]->cpu_data()[index];
-          const Dtype label = this->blob_bottom_vec_[1]->cpu_data()[index];
+//   const Dtype step = 1e-2;
+//   const Dtype threshold = 1e-2;
+//   const int num = this->blob_bottom_vec_[0]->num();
+//   const int channels = this->blob_bottom_vec_[0]->channels();
+//   const int dim = this->blob_bottom_vec_[0]->count() / num;
+//   const int height = this->blob_bottom_vec_[0]->height();
+//   const int width = this->blob_bottom_vec_[0]->width();
+//   const int spatial_dim = height * width;
+//   for (int i = 0; i < num; ++i) {
+//     for (int h = 0; h < height; ++h) {
+//       for (int w = 0; w < width; ++w) {
+//         for (int c = 0; c < channels; ++c) {
+//           const int index = i * dim + c * spatial_dim + h * width + w;
+//           const Dtype diff = this->blob_bottom_vec_[0]->cpu_diff()[index];
+//           const Dtype feature = this->blob_bottom_vec_[0]->cpu_data()[index];
+//           const Dtype label = this->blob_bottom_vec_[1]->cpu_data()[index];
 
-          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
-          const Dtype positive_objective =
-            layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-          layer.Backward(this->blob_top_vec_, propagate_down,
-                         this->blob_bottom_vec_);
+//           this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
+//           const Dtype positive_objective =
+//             layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+//           layer.Backward(this->blob_top_vec_, propagate_down,
+//                          this->blob_bottom_vec_);
 
-          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] -= step * 2;
-          const Dtype negative_objective =
-            layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
-          layer.Backward(this->blob_top_vec_, propagate_down,
-                         this->blob_bottom_vec_);
+//           this->blob_bottom_vec_[0]->mutable_cpu_data()[index] -= step * 2;
+//           const Dtype negative_objective =
+//             layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+//           layer.Backward(this->blob_top_vec_, propagate_down,
+//                          this->blob_bottom_vec_);
 
-          // reverse data value
-          this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
+//           // reverse data value
+//           this->blob_bottom_vec_[0]->mutable_cpu_data()[index] += step;
 
-          EXPECT_NE(positive_objective, negative_objective);
+//           EXPECT_NE(positive_objective, negative_objective);
 
-          const Dtype expected_diff =
-            (positive_objective - negative_objective) / (2 * step);
+//           const Dtype expected_diff =
+//             (positive_objective - negative_objective) / (2 * step);
 
-          if (fabs(diff - expected_diff) > threshold) {
-            LOG(INFO) << "num: " << i;
-            LOG(INFO) << "channels: " << c;
-            LOG(INFO) << "height: " << h;
-            LOG(INFO) << "width: " << w;
-            LOG(INFO) << "feature: " << feature;
-            LOG(INFO) << "diff: " << diff;
-            LOG(INFO) << "label: " << label;
-            LOG(INFO) << "positive_objective: " << positive_objective;
-            LOG(INFO) << "negative_objective: " << negative_objective;
-            LOG(INFO) << "delta: " << positive_objective - negative_objective;
-            LOG(INFO) << "expected diff: " << expected_diff;
-            LOG(INFO) << "computed diff: " << diff;
-            LOG(INFO) << "difference: " << diff - expected_diff;
-          }
-          EXPECT_NEAR(diff, expected_diff, threshold);
-        }
-      }
-    }
-  }
-}
+//           if (fabs(diff - expected_diff) > threshold) {
+//             LOG(INFO) << "num: " << i;
+//             LOG(INFO) << "channels: " << c;
+//             LOG(INFO) << "height: " << h;
+//             LOG(INFO) << "width: " << w;
+//             LOG(INFO) << "feature: " << feature;
+//             LOG(INFO) << "diff: " << diff;
+//             LOG(INFO) << "label: " << label;
+//             LOG(INFO) << "positive_objective: " << positive_objective;
+//             LOG(INFO) << "negative_objective: " << negative_objective;
+//             LOG(INFO) << "delta: " << positive_objective - negative_objective;
+//             LOG(INFO) << "expected diff: " << expected_diff;
+//             LOG(INFO) << "computed diff: " << diff;
+//             LOG(INFO) << "difference: " << diff - expected_diff;
+//           }
+//           EXPECT_NEAR(diff, expected_diff, threshold);
+//         }
+//       }
+//     }
+//   }
+// }
 
-TYPED_TEST(PrecisionRecallLossLayerTest, TestGradient) {
-  typedef typename TypeParam::Dtype Dtype;
-  LayerParameter layer_param;
-  const Dtype kLossWeight = 3.7;
-  layer_param.add_loss_weight(kLossWeight);
-  PrecisionRecallLossLayer<Dtype> layer(layer_param);
-  layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
-  GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
-  checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-                                  this->blob_top_vec_, 0);
-}
+// TYPED_TEST(PrecisionRecallLossLayerTest, TestGradient) {
+//   typedef typename TypeParam::Dtype Dtype;
+//   LayerParameter layer_param;
+//   const Dtype kLossWeight = 3.7;
+//   layer_param.add_loss_weight(kLossWeight);
+//   PrecisionRecallLossLayer<Dtype> layer(layer_param);
+//   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
+//   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
+//   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
+//                                   this->blob_top_vec_, 0);
+// }
 
 }  // namespace caffe

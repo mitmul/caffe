@@ -46,9 +46,11 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
   const int channels = bottom[0]->channels();
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
   const int pnum = this->layer_param_.precision_recall_loss_param().point_num();
-  Dtype auprc = 0.0;
+  Dtype mean_breakeven = 0.0;
   for (int i = 0; i < num; ++i) {
     for (int c = 0; c < channels; ++c) {
+      Dtype breakeven = 1.0;
+      Dtype prec_diff = 1.0;
       for (int p = 0; p <= pnum; ++p) {
         // compute precision and recall at below threshold
         const Dtype thresh = 1.0 / pnum * p;
@@ -74,71 +76,29 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
         }
         Dtype precision = 0.0;
         Dtype recall = 0.0;
-        if (true_positive > 0) {
+        if (true_positive + false_positive > 0) {
           precision =
             (Dtype)true_positive / (Dtype)(true_positive + false_positive);
+        }
+        if (true_positive + false_negative > 0) {
           recall =
             (Dtype)true_positive / (Dtype)(true_positive + false_negative);
         }
-        auprc += precision * recall;
+        if (prec_diff > fabs(precision - recall)) {
+          breakeven = precision;
+          prec_diff = fabs(precision - recall);
+        }
       }
+      mean_breakeven += breakeven;
     }
   }
-  top[0]->mutable_cpu_data()[0] = auprc / num;
+  top[0]->mutable_cpu_data()[0] = 1.0 - (mean_breakeven / num / channels);
 }
 template <typename Dtype>
 void PrecisionRecallLossLayer<Dtype>::Backward_cpu(
   const vector<Blob<Dtype>*> &top,
   const vector<bool> &propagate_down,
   const vector<Blob<Dtype>*> &bottom) {
-  const Dtype *data = bottom[0]->cpu_data();
-  const Dtype *label = bottom[1]->cpu_data();
-  Dtype *diff = bottom[0]->mutable_cpu_diff();
-  const int num = bottom[0]->num();
-  const int dim = bottom[0]->count() / num;
-  const int channels = bottom[0]->channels();
-  const int spatial_dim = bottom[0]->height() * bottom[0]->width();
-  const int pnum = this->layer_param_.precision_recall_loss_param().point_num();
-  Dtype auprc = 0.0;
-  for (int i = 0; i < num; ++i) {
-    for (int c = 0; c < channels; ++c) {
-      for (int p = 0; p <= pnum; ++p) {
-        // compute precision and recall at below threshold
-        const Dtype thresh = 1.0 / pnum * p;
-        int true_positive = 0;
-        int false_positive = 0;
-        int false_negative = 0;
-        int true_negative = 0;
-        for (int j = 0; j < spatial_dim; ++j) {
-          const Dtype data_value = data[i * dim + c * spatial_dim + j];
-          const int label_value = (int)label[i * dim + c * spatial_dim + j];
-          if (label_value == 1 && data_value >= thresh) {
-            ++true_positive;
-          }
-          if (label_value == 0 && data_value >= thresh) {
-            ++false_positive;
-          }
-          if (label_value == 1 && data_value < thresh) {
-            ++false_negative;
-          }
-          if (label_value == 0 && data_value < thresh) {
-            ++true_negative;
-          }
-        }
-        Dtype precision = 0.0;
-        Dtype recall = 0.0;
-        if (true_positive > 0) {
-          precision =
-            (Dtype)true_positive / (Dtype)(true_positive + false_positive);
-          recall =
-            (Dtype)true_positive / (Dtype)(true_positive + false_negative);
-        }
-        auprc += precision * recall;
-      }
-    }
-  }
-  top[0]->mutable_cpu_data()[0] = auprc / num;
-
 }
 
 INSTANTIATE_CLASS(PrecisionRecallLossLayer);
