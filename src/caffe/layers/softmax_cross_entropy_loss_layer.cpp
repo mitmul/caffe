@@ -46,19 +46,19 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
-  const Dtype *data = prob_.cpu_data();
-  const Dtype *label = bottom[1]->cpu_data();
+  // Compute the loss (negative log likelihood)
   const int count = bottom[0]->count();
   const int num = bottom[0]->num();
-  const int channels = bottom[0]->channels();
-  const int spatial_dim = bottom[0]->height() * bottom[0]->width();
+  const int dim = bottom[0]->count() / num;
+  // Stable version of loss computation from input data
+  const Dtype *data = prob_.cpu_data();
+  const Dtype *label = bottom[1]->cpu_data();
   Dtype loss = 0;
   for (int i = 0; i < count; ++i) {
-    loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)))
-            + (1 - label[i]) * log(std::max(1 - data[i],
-                                            Dtype(kLOG_THRESHOLD)));
+    loss -= data[i] * (label[i] - (data[i] >= 0)) -
+            log(1 + exp(data[i] - 2 * data[i] * (data[i] >= 0)));
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / channels / spatial_dim;
+  top[0]->mutable_cpu_data()[0] = loss / num / dim;
 }
 
 template <typename Dtype>
@@ -71,20 +71,23 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
+    // First, compute the diff
+    const int count = bottom[0]->count();
+    const int num = bottom[0]->num();
+    const int dim = bottom[0]->count() / num;
     const Dtype *data = prob_.cpu_data();
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff = bottom[0]->mutable_cpu_diff();
-    const int count = bottom[0]->count();
     caffe_sub(count, data, label, diff);
-
-    // Scale gradient
-    const int num = bottom[0]->num();
-    const int channels = bottom[0]->channels();
-    const int spatial_dim = bottom[0]->height() * bottom[0]->width();
+    // Scale down gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_scal(count, loss_weight / num / channels / spatial_dim, diff);
+    caffe_scal(count, loss_weight / num / dim, diff);
   }
 }
+
+#ifdef CPU_ONLY
+STUB_GPU(SoftmaxCrossEntropyLossLayer);
+#endif
 
 INSTANTIATE_CLASS(SoftmaxCrossEntropyLossLayer);
 REGISTER_LAYER_CLASS(SOFTMAX_CROSS_ENTROPY_LOSS, SoftmaxCrossEntropyLossLayer);

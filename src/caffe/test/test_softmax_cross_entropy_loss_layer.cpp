@@ -170,7 +170,7 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestBackward) {
         EXPECT_GE(predict, 0);
         EXPECT_LE(predict, 1);
         const int index = i * dim + c * spatial_dim + j;
-        EXPECT_NEAR(diff[index] * num * channels * spatial_dim,
+        EXPECT_NEAR(diff[index] * num * dim,
                     predict - label_value,
                     kErrorMargin);
       }
