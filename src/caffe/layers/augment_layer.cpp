@@ -34,11 +34,14 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
   const google::protobuf::RepeatedField<uint32_t> crop_sizes =
     this->layer_param_.augment_param().crop_size();
   CHECK_EQ(crop_sizes.size(), bottom.size());
+  const google::protobuf::RepeatedField<bool> binarize =
+    this->layer_param_.augment_param().binarize();
+  CHECK_EQ(binarize.size(), bottom.size());
 
   for (int i = 0; i < bottom[0]->num(); ++i) {
     vector<cv::Mat> imgs;
     // both rotation and cropping are performed to all bottom blobs
-    const double angle = static_cast<double>(caffe_rng_rand() % 360);
+    const float angle = static_cast<float>(caffe_rng_rand() % 360);
     for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
       const int channels = bottom[blob_id]->channels();
       const int height = bottom[blob_id]->height();
@@ -56,9 +59,21 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
 
       // crop center
       const int size = crop_sizes.Get(blob_id);
-      cv::Mat patch(size, size, CV_64FC(channels));
+      cv::Mat patch(size, size, CV_32FC(channels));
       img(cv::Rect(width / 2 - size / 2,
                    height / 2 - size / 2, size, size)).copyTo(patch);
+
+      // binarization
+      if (binarize.Get(blob_id)) {
+        cv::Mat *slice = new cv::Mat[bottom[blob_id]->channels()];
+        cv::split(patch, slice);
+        for (int c = 0; c < bottom[blob_id]->channels(); ++c) {
+          cv::Mat tmp = slice[c].clone();
+          cv::threshold(tmp, slice[c], 0.5, 1, cv::THRESH_BINARY);
+        }
+        cv::merge(slice, bottom[blob_id]->channels(), patch);
+        delete [] slice;
+      }
       imgs.push_back(patch);
     }
 
@@ -94,7 +109,7 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       vector<cv::Mat> splitted;
       cv::split(imgs[0], splitted);
       for (int j = 0; j < splitted.size(); ++j) {
-        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0, -subs.Get(j));
+        splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0, -subs.Get(j));
       }
       cv::merge(splitted, imgs[0]);
     }
@@ -107,7 +122,7 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       vector<cv::Mat> splitted;
       cv::split(imgs[0], splitted);
       for (int j = 0; j < splitted.size(); ++j) {
-        splitted.at(j).convertTo(splitted.at(j), CV_64F, 1.0 / divs.Get(j));
+        splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0 / divs.Get(j));
       }
       cv::merge(splitted, imgs[0]);
     }
@@ -135,14 +150,14 @@ template <typename Dtype>
 cv::Mat AugmentLayer<Dtype>::ConvertToCVMat(
   const Dtype *data, const int &channels,
   const int &height, const int &width) {
-  cv::Mat img(height, width, CV_64FC(channels));
+  cv::Mat img(height, width, CV_32FC(channels));
   for (int c = 0; c < channels; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         int index = c * height * width + h * width + w;
-        double val = static_cast<double>(data[index]);
+        float val = static_cast<float>(data[index]);
         int pos = h * width * channels + w * channels + c;
-        reinterpret_cast<double *>(img.data)[pos] = val;
+        reinterpret_cast<float *>(img.data)[pos] = val;
       }
     }
   }
@@ -159,7 +174,7 @@ void AugmentLayer<Dtype>::ConvertFromCVMat(const cv::Mat img, Dtype *data) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         const int pos = h * width * channels + w * channels + c;
-        double val = reinterpret_cast<double *>(img.data)[pos];
+        float val = reinterpret_cast<float *>(img.data)[pos];
         const int index = c * height * width + h * width + w;
         data[index] = static_cast<Dtype>(val);
       }

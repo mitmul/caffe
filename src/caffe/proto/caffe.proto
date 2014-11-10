@@ -638,7 +638,7 @@ message PowerParameter {
 
 // Message that stores parameters used by PrecisionRecallLosslayer
 message PrecisionRecallLossParameter {
-  optional uint32 point_num = 1 [default = 100];
+  optional uint32 point_num = 1 [default = 256];
 }
 
 // Message that stores parameters used by ReLULayer
@@ -718,16 +718,18 @@ message ThresholdParameter {
 message AugmentParameter {
   // crop a certain region around the center of input data
   repeated uint32 crop_size = 1;
+  // binarization
+  repeated bool binarize = 2;
   // randomly rotate arount the center
-  optional bool rotate = 2 [default = false];
+  optional bool rotate = 3 [default = false];
   // subtract constant value from data
-  repeated float subtract = 3;
+  repeated float subtract = 4;
   // divide data with constant value
-  repeated float divide = 4;
+  repeated float divide = 5;
   // data-wise mean subtraction
-  optional bool mean_normalize = 5 [default = false];
+  optional bool mean_normalize = 6 [default = false];
   // data-wise stddev division
-  optional bool stddev_normalize = 6 [default = false];
+  optional bool stddev_normalize = 7 [default = false];
 }
 
 // Message that stores parameters used by WindowDataLayer

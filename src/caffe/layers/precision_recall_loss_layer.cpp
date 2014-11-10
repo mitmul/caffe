@@ -46,18 +46,17 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
   const int channels = bottom[0]->channels();
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
   const int pnum = this->layer_param_.precision_recall_loss_param().point_num();
-  Dtype mean_breakeven = 0.0;
-  for (int i = 0; i < num; ++i) {
-    for (int c = 0; c < channels; ++c) {
-      Dtype breakeven = 1.0;
-      Dtype prec_diff = 1.0;
-      for (int p = 0; p <= pnum; ++p) {
+  Dtype breakeven = 0.0;
+  Dtype prec_diff = 1.0;
+  for (int p = 0; p <= pnum; ++p) {
+    int true_positive = 0;
+    int false_positive = 0;
+    int false_negative = 0;
+    int true_negative = 0;
+    for (int i = 0; i < num; ++i) {
+      for (int c = 0; c < channels; ++c) {
         // compute precision and recall at below threshold
         const Dtype thresh = 1.0 / pnum * p;
-        int true_positive = 0;
-        int false_positive = 0;
-        int false_negative = 0;
-        int true_negative = 0;
         for (int j = 0; j < spatial_dim; ++j) {
           const Dtype data_value = data[i * dim + c * spatial_dim + j];
           const int label_value = (int)label[i * dim + c * spatial_dim + j];
@@ -74,25 +73,30 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
             ++true_negative;
           }
         }
-        Dtype precision = 0.0;
-        Dtype recall = 0.0;
-        if (true_positive + false_positive > 0) {
-          precision =
-            (Dtype)true_positive / (Dtype)(true_positive + false_positive);
-        }
-        if (true_positive + false_negative > 0) {
-          recall =
-            (Dtype)true_positive / (Dtype)(true_positive + false_negative);
-        }
-        if (prec_diff > fabs(precision - recall)) {
-          breakeven = precision;
-          prec_diff = fabs(precision - recall);
-        }
       }
-      mean_breakeven += breakeven;
+    }
+    Dtype precision = 0.0;
+    Dtype recall = 0.0;
+    if (true_positive + false_positive > 0) {
+      precision =
+        (Dtype)true_positive / (Dtype)(true_positive + false_positive);
+    } else if (true_positive == 0) {
+      precision = 1.0;
+    }
+    if (true_positive + false_negative > 0) {
+      recall =
+        (Dtype)true_positive / (Dtype)(true_positive + false_negative);
+    } else if (true_positive == 0) {
+      recall = 1.0;
+    }
+    if (prec_diff > fabs(precision - recall)
+        && precision > 0 && precision < 1
+        && recall > 0 && recall < 1) {
+      breakeven = precision;
+      prec_diff = fabs(precision - recall);
     }
   }
-  top[0]->mutable_cpu_data()[0] = 1.0 - (mean_breakeven / num / channels);
+  top[0]->mutable_cpu_data()[0] = 1.0 - breakeven;
 }
 template <typename Dtype>
 void PrecisionRecallLossLayer<Dtype>::Backward_cpu(
