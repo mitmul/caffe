@@ -73,26 +73,26 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
           }
         }
       }
-    }
-    Dtype precision = 0.0;
-    Dtype recall = 0.0;
-    if (true_positive + false_positive > 0) {
-      precision =
-        (Dtype)true_positive / (Dtype)(true_positive + false_positive);
-    } else if (true_positive == 0) {
-      precision = 1.0;
-    }
-    if (true_positive + false_negative > 0) {
-      recall =
-        (Dtype)true_positive / (Dtype)(true_positive + false_negative);
-    } else if (true_positive == 0) {
-      recall = 1.0;
-    }
-    if (prec_diff > fabs(precision - recall)
-        && precision > 0 && precision < 1
-        && recall > 0 && recall < 1) {
-      breakeven = precision;
-      prec_diff = fabs(precision - recall);
+      Dtype precision = 0.0;
+      Dtype recall = 0.0;
+      if (true_positive + false_positive > 0) {
+        precision =
+          (Dtype)true_positive / (Dtype)(true_positive + false_positive);
+      } else if (true_positive == 0) {
+        precision = 1.0;
+      }
+      if (true_positive + false_negative > 0) {
+        recall =
+          (Dtype)true_positive / (Dtype)(true_positive + false_negative);
+      } else if (true_positive == 0) {
+        recall = 1.0;
+      }
+      if (prec_diff > fabs(precision - recall)
+          && precision > 0 && precision < 1
+          && recall > 0 && recall < 1) {
+        breakeven = precision;
+        prec_diff = fabs(precision - recall);
+      }
     }
     top[c]->mutable_cpu_data()[0] = 1.0 - breakeven;
   }
