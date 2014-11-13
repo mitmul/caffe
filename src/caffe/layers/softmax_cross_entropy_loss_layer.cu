@@ -16,8 +16,8 @@ __global__ void kernel_loss(const int count, const Dtype *data,
   CUDA_KERNEL_LOOP(index, count) {
     const int l = (int)label[index];
     const Dtype p = data[index];
-    out[index] = -(p * (l - (p >= 0)) -
-                   log(1 + exp(p - 2 * p * (p >= 0))));
+    out[index] = -(l * log(max(p, Dtype(kLOG_THRESHOLD)))
+                   + (1 - l) * log(max(1 - p, Dtype(kLOG_THRESHOLD))));
   }
 }
 
