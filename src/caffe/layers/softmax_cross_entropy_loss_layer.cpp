@@ -71,12 +71,12 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
         }
       }
     }
-    top[0]->mutable_cpu_data()[0] = loss / num / dim;
   } else {
     for (int i = 0; i < count; ++i) {
       loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
     }
   }
+  top[0]->mutable_cpu_data()[0] = loss / num / dim;
 }
 
 template <typename Dtype>

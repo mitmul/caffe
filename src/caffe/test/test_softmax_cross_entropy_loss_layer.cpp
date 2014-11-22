@@ -251,7 +251,7 @@ TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestDiff) {
 TYPED_TEST(SoftmaxCrossEntropyLossLayerTest, TestGradient) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  const Dtype kLossWeight = 3.7;
+  const Dtype kLossWeight = 3;
   layer_param.add_loss_weight(kLossWeight);
   SoftmaxCrossEntropyLossLayer<Dtype> layer(layer_param);
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
