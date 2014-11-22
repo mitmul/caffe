@@ -36,7 +36,8 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
   CHECK_EQ(crop_sizes.size(), bottom.size());
   const google::protobuf::RepeatedField<bool> binarize =
     this->layer_param_.augment_param().binarize();
-  CHECK_EQ(binarize.size(), bottom.size());
+  if (binarize.size() > 0)
+    CHECK_EQ(binarize.size(), bottom.size());
 
   for (int i = 0; i < bottom[0]->num(); ++i) {
     vector<cv::Mat> imgs;

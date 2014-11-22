@@ -150,6 +150,10 @@ TYPED_TEST(AugmentLayerTest, TestRead) {
   augment_param->set_rotate(true);
   augment_param->set_mean_normalize(true);
   augment_param->set_stddev_normalize(true);
+  google::protobuf::RepeatedField<bool> *binarize =
+    augment_param->mutable_binarize();
+  binarize->Add(false);
+  binarize->Add(true);
 
   // save image dir
   string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
@@ -180,6 +184,10 @@ TYPED_TEST(AugmentLayerTest, TestNorm) {
   stddev->Add(50.142589887293951);
   stddev->Add(48.17382927556428);
   stddev->Add(50.290859541028532);
+  google::protobuf::RepeatedField<bool> *binarize =
+    augment_param->mutable_binarize();
+  binarize->Add(false);
+  binarize->Add(true);
 
   // save image dir
   string out_dir = CMAKE_SOURCE_DIR "caffe/test/test_data" CMAKE_EXT;
