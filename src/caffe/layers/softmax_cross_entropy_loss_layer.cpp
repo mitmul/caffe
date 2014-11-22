@@ -50,14 +50,33 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const int count = bottom[0]->count();
   const int num = bottom[0]->num();
   const int dim = bottom[0]->count() / num;
+  const int spatial_dim = bottom[0]->width() * bottom[0]->height();
+  const int channels = bottom[0]->channels();
   // Stable version of loss computation from input data
   const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
   Dtype loss = 0;
-  for (int i = 0; i < count; ++i) {
-    loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
+  const google::protobuf::RepeatedField<float> weights =
+    this->layer_param_.softmax_cross_entropy_param().weights();
+  if (weights.size() > 0) {
+    CHECK_EQ(weights.size(), bottom[0]->channels());
+    for (int i = 0; i < num; ++i) {
+      for (int j = 0; j < spatial_dim; ++j) {
+        for (int c = 0; c < channels; ++c) {
+          const int index = i * dim + c * spatial_dim + j;
+          if (weights.size() > 0) {
+            loss -= weights.Get(c) * label[index] *
+                    log(std::max(data[index], Dtype(kLOG_THRESHOLD)));
+          }
+        }
+      }
+    }
+    top[0]->mutable_cpu_data()[0] = loss / num / dim;
+  } else {
+    for (int i = 0; i < count; ++i) {
+      loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
+    }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / dim;
 }
 
 template <typename Dtype>
