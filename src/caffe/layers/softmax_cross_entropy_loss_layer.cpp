@@ -74,8 +74,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     }
   } else {
     for (int i = 0; i < count; ++i) {
-      loss -= input_data[i] * (target[i] - (input_data[i] >= 0)) -
-              log(1 + exp(input_data[i] - 2 * input_data[i] * (input_data[i] >= 0)));
+      loss -= data[i] * (label[i] - (data[i] >= 0)) -
+              log(1 + exp(data[i] - 2 * data[i] * (data[i] >= 0)));
     }
   }
   top[0]->mutable_cpu_data()[0] = loss / num / dim;
