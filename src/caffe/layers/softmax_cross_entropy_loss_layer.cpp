@@ -56,6 +56,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
   Dtype loss = 0;
+
   const google::protobuf::RepeatedField<float> weights =
     this->layer_param_.softmax_cross_entropy_param().weights();
   if (weights.size() > 0) {
@@ -73,7 +74,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     }
   } else {
     for (int i = 0; i < count; ++i) {
-      loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
+      loss -= input_data[i] * (target[i] - (input_data[i] >= 0)) -
+              log(1 + exp(input_data[i] - 2 * input_data[i] * (input_data[i] >= 0)));
     }
   }
   top[0]->mutable_cpu_data()[0] = loss / num / dim;

@@ -29,17 +29,28 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
   const int count = bottom[0]->count();
   const int num = bottom[0]->num();
   const int dim = bottom[0]->count() / num;
+
+  // // Stable version of loss computation from input data
+  // const Dtype *data = prob_.gpu_data();
+  // const Dtype *label = bottom[1]->gpu_data();
+  // Dtype *loss_data = loss_.mutable_gpu_data();
+  // caffe_copy(count, data, loss_data);
+  // // NOLINT_NEXT_LINE(whitespace/operators)
+  // kernel_loss<Dtype>
+  // <<< CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>
+  // (count, data, label, loss_data);
+  // Dtype loss = loss_.asum_data();
+  // top[0]->mutable_cpu_data()[0] = loss / num / dim;
+
   // Stable version of loss computation from input data
-  const Dtype *data = prob_.gpu_data();
-  const Dtype *label = bottom[1]->gpu_data();
-  Dtype *loss_data = loss_.mutable_gpu_data();
-  caffe_copy(count, data, loss_data);
-  // NOLINT_NEXT_LINE(whitespace/operators)
-  kernel_loss<Dtype>
-  <<< CAFFE_GET_BLOCKS(count), CAFFE_CUDA_NUM_THREADS>>>
-  (count, data, label, loss_data);
-  Dtype loss = loss_.asum_data();
-  top[0]->mutable_cpu_data()[0] = loss / num / dim;
+  const Dtype *input_data = bottom[0]->cpu_data();
+  const Dtype *target = bottom[1]->cpu_data();
+  Dtype loss = 0;
+  for (int i = 0; i < count; ++i) {
+    loss -= input_data[i] * (target[i] - (input_data[i] >= 0)) -
+            log(1 + exp(input_data[i] - 2 * input_data[i] * (input_data[i] >= 0)));
+  }
+  top[0]->mutable_cpu_data()[0] = loss / num;
 }
 
 template <typename Dtype>
