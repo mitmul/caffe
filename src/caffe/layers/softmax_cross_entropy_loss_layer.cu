@@ -27,7 +27,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
   Dtype loss = 0;
 
   const google::protobuf::RepeatedField<float> weights =
-    this->layer_param_.softmax_cross_entropy_param().weights();
+    this->layer_param_.softmax_cross_entropy_loss_param().weights();
   if (weights.size() > 0) {
     CHECK_EQ(weights.size(), bottom[0]->channels());
     for (int i = 0; i < num; ++i) {
@@ -68,7 +68,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_gpu(
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff = bottom[0]->mutable_cpu_diff();
     const google::protobuf::RepeatedField<float> weights =
-      this->layer_param_.softmax_cross_entropy_param().weights();
+      this->layer_param_.softmax_cross_entropy_loss_param().weights();
     if (weights.size() > 0) {
       CHECK_EQ(weights.size(), bottom[0]->channels());
       for (int i = 0; i < num; ++i) {

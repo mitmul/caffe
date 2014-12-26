@@ -329,7 +329,7 @@ message LayerParameter {
   optional ReshapeParameter reshape_param = 42;
   optional SigmoidParameter sigmoid_param = 38;
   optional SoftmaxParameter softmax_param = 39;
-  optional SoftmaxCrossEntropyParameter softmax_cross_entropy_param = 45;
+  optional SoftmaxCrossEntropyParameter softmax_cross_entropy_loss_param = 45;
   optional AugmentParameter augment_param = 43;
   optional SliceParameter slice_param = 31;
   optional TanHParameter tanh_param = 37;
