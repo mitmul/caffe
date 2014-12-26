@@ -65,10 +65,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
       for (int j = 0; j < spatial_dim; ++j) {
         for (int c = 0; c < channels; ++c) {
           const int index = i * dim + c * spatial_dim + j;
-          if (weights.size() > 0) {
-            loss -= weights.Get(c) * label[index] *
-                    log(std::max(data[index], Dtype(kLOG_THRESHOLD)));
-          }
+          loss -= weights.Get(c) * label[index] *
+                  log(std::max(data[index], Dtype(kLOG_THRESHOLD)));
         }
       }
     }
@@ -95,10 +93,26 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const int count = bottom[0]->count();
     const int num = bottom[0]->num();
     const int dim = bottom[0]->count() / num;
+    const int spatial_dim = bottom[0]->width() * bottom[0]->height();
+    const int channels = bottom[0]->channels();
     const Dtype *data = prob_.cpu_data();
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff = bottom[0]->mutable_cpu_diff();
-    caffe_sub(count, data, label, diff);
+    const google::protobuf::RepeatedField<float> weights =
+      this->layer_param_.softmax_cross_entropy_param().weights();
+    if (weights.size() > 0) {
+      CHECK_EQ(weights.size(), bottom[0]->channels());
+      for (int i = 0; i < num; ++i) {
+        for (int j = 0; j < spatial_dim; ++j) {
+          for (int c = 0; c < channels; ++c) {
+            const int index = i * dim + c * spatial_dim + j;
+            diff[index] = weights.Get(c) * (data[index] - label[index]);
+          }
+        }
+      }
+    } else {
+      caffe_sub(count, data, label, diff);
+    }
     // Scale down gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
     caffe_scal(count, loss_weight / num / dim, diff);
