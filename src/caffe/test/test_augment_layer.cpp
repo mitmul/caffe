@@ -37,7 +37,7 @@ class AugmentLayerTest : public MultiDeviceTest<TypeParam> {
 
     LayerParameter data_param;
     DataParameter *data_dparam = data_param.mutable_data_param();
-    data_dparam->set_batch_size(10);
+    data_dparam->set_batch_size(100);
     data_dparam->set_source(data_db_file.c_str());
     data_dparam->set_backend(DataParameter_DB_LMDB);
     data_layer_ = new DataLayer<Dtype>(data_param);
@@ -57,7 +57,7 @@ class AugmentLayerTest : public MultiDeviceTest<TypeParam> {
 
     LayerParameter label_param;
     DataParameter *label_dparam = label_param.mutable_data_param();
-    label_dparam->set_batch_size(10);
+    label_dparam->set_batch_size(100);
     label_dparam->set_source(label_db_file.c_str());
     label_dparam->set_backend(DataParameter_DB_LMDB);
     label_layer_ = new DataLayer<Dtype>(label_param);
@@ -147,6 +147,7 @@ TYPED_TEST(AugmentLayerTest, TestRead) {
     augment_param->mutable_crop_size();
   crop_sizes->Add(64);
   crop_sizes->Add(16);
+  augment_param->set_flip(true);
   augment_param->set_rotate(true);
   augment_param->set_mean_normalize(true);
   augment_param->set_stddev_normalize(true);
@@ -173,6 +174,7 @@ TYPED_TEST(AugmentLayerTest, TestNorm) {
     augment_param->mutable_crop_size();
   crop_sizes->Add(64);
   crop_sizes->Add(16);
+  augment_param->set_flip(true);
   augment_param->set_rotate(true);
   google::protobuf::RepeatedField<float> *mean =
     augment_param->mutable_subtract();

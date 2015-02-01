@@ -43,6 +43,8 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
     vector<cv::Mat> imgs;
     // both rotation and cropping are performed to all bottom blobs
     const float angle = static_cast<float>(caffe_rng_rand() % 360);
+    // flip_code takes the value ranging -1, 0, 1, 2(=disable)
+    const int flip_code = caffe_rng_rand() % 4 - 1;
     for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
       const int channels = bottom[blob_id]->channels();
       const int height = bottom[blob_id]->height();
@@ -50,6 +52,12 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       const Dtype *data = bottom[blob_id]->cpu_data()
                           + bottom[blob_id]->offset(i);
       cv::Mat img = ConvertToCVMat(data, channels, height, width);
+
+      // randomly flipping (when flip_code == 2, it's disabled)
+      if (this->layer_param_.augment_param().flip()
+          && flip_code != 2) {
+        cv::flip(img, img, flip_code);
+      }
 
       // randomly rotate
       if (this->layer_param_.augment_param().rotate()) {
