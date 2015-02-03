@@ -59,24 +59,11 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
     Dtype *label = bottom[1]->mutable_cpu_data() + bottom[1]->offset(i);
 
     // randomly flipping (when flip_code == 2, it's disabled)
-    if (this->layer_param_.regression_augment_param().flip() && flip_code != 2) {
+    if (this->layer_param_.regression_augment_param().flip()
+        && flip_code == 1) {
       cv::flip(img, img, flip_code);
-      switch (flip_code) {
-      case 0: // flip around the x-axis
-        for (int lc = 1; lc < label_channels; lc += 2)
-          label[lc] = height - label[lc];
-        break;
-      case 1: // flip around the y-axis
-        for (int lc = 0; lc < label_channels; lc += 2)
-          label[lc] = width - label[lc];
-        break;
-      case -1: // flip around both axes
-        for (int lc = 0; lc < label_channels; ++lc) {
-          int base = lc % 2 == 0 ? width : height;
-          label[lc] = base - label[lc];
-        }
-        break;
-      }
+      for (int lc = 0; lc < label_channels; lc += 2)
+        label[lc] = width - label[lc];
     }
 
     // crop center
