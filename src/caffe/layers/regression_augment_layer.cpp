@@ -69,11 +69,13 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
       case 1: // flip around the y-axis
         for (int lc = 0; lc < label_channels; lc += 2)
           label[lc] = width - label[lc];
+        break;
       case -1: // flip around both axes
         for (int lc = 0; lc < label_channels; ++lc) {
           int base = lc % 2 == 0 ? width : height;
           label[lc] = base - label[lc];
         }
+        break;
       }
     }
 
