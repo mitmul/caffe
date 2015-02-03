@@ -59,7 +59,7 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
     Dtype *label = bottom[1]->mutable_cpu_data() + bottom[1]->offset(i);
 
     // randomly flipping (when flip_code == 2, it's disabled)
-    if (this->layer_param_.augment_param().flip() && flip_code != 2) {
+    if (this->layer_param_.regression_augment_param().flip() && flip_code != 2) {
       cv::flip(img, img, flip_code);
       switch (flip_code) {
       case 0: // flip around the x-axis
@@ -87,57 +87,58 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
 
     // patch-wise mean subtraction
     cv::Scalar mean, stddev;
-    cv::meanStdDev(img, mean, stddev);
-    if (this->layer_param_.augment_param().mean_normalize()) {
+    cv::meanStdDev(crop_img, mean, stddev);
+    if (this->layer_param_.regression_augment_param().mean_normalize()) {
       cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
-      cv::split(img, slice);
+      cv::split(crop_img, slice);
       for (int c = 0; c < bottom[0]->channels(); ++c) {
         cv::subtract(slice[c], mean[c], slice[c]);
       }
-      cv::merge(slice, bottom[0]->channels(), img);
+      cv::merge(slice, bottom[0]->channels(), crop_img);
       delete [] slice;
     }
 
     // patch-wise stddev division
-    if (this->layer_param_.augment_param().stddev_normalize()) {
+    if (this->layer_param_.regression_augment_param().stddev_normalize()) {
       cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
-      cv::split(img, slice);
+      cv::split(crop_img, slice);
       for (int c = 0; c < bottom[0]->channels(); ++c) {
         slice[c] /= stddev[c];
       }
-      cv::merge(slice, bottom[0]->channels(), img);
+      cv::merge(slice, bottom[0]->channels(), crop_img);
       delete [] slice;
     }
 
     // constant value subtraction
     const google::protobuf::RepeatedField<float> subs =
-      this->layer_param_.augment_param().subtract();
+      this->layer_param_.regression_augment_param().subtract();
     if (subs.size() > 0) {
       CHECK_EQ(subs.size(), bottom[0]->channels());
       vector<cv::Mat> splitted;
-      cv::split(img, splitted);
+      cv::split(crop_img, splitted);
       for (int j = 0; j < splitted.size(); ++j) {
         splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0, -subs.Get(j));
       }
-      cv::merge(splitted, img);
+      cv::merge(splitted, crop_img);
     }
 
     // stddev division
     const google::protobuf::RepeatedField<float> divs =
-      this->layer_param_.augment_param().divide();
+      this->layer_param_.regression_augment_param().divide();
     if (divs.size() > 0) {
       CHECK_EQ(divs.size(), bottom[0]->channels());
       vector<cv::Mat> splitted;
-      cv::split(img, splitted);
+      cv::split(crop_img, splitted);
       for (int j = 0; j < splitted.size(); ++j) {
         splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0 / divs.Get(j));
       }
-      cv::merge(splitted, img);
+      cv::merge(splitted, crop_img);
     }
 
-    ConvertFromCVMat(img, top[0]->mutable_cpu_data() + top[0]->offset(i));
+    ConvertFromCVMat(crop_img, channels, crop_size, crop_size,
+                     top[0]->mutable_cpu_data() + top[0]->offset(i));
     Dtype *top_label = top[1]->mutable_cpu_data() + top[1]->offset(i);
-    memcpy(top_label, label, label_channels);
+    caffe_copy(label_channels, label, top_label);
   }
 }
 
@@ -153,13 +154,15 @@ template <typename Dtype>
 cv::Mat RegressionAugmentLayer<Dtype>::ConvertToCVMat(
   const Dtype *data, const int &channels,
   const int &height, const int &width) {
+
   cv::Mat img(height, width, CV_32FC(channels));
   for (int c = 0; c < channels; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {
         int index = c * height * width + h * width + w;
+        float val = static_cast<float>(data[index]);
         int pos = h * width * channels + w * channels + c;
-        reinterpret_cast<float *>(img.data)[pos] = data[index];
+        reinterpret_cast<float *>(img.data)[pos] = val;
       }
     }
   }
@@ -168,10 +171,10 @@ cv::Mat RegressionAugmentLayer<Dtype>::ConvertToCVMat(
 }
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::ConvertFromCVMat(const cv::Mat img, Dtype *data) {
-  const int channels = img.channels();
-  const int height = img.rows;
-  const int width = img.cols;
+void RegressionAugmentLayer<Dtype>::ConvertFromCVMat(
+  const cv::Mat img, const int &channels, const int &height,
+  const int &width, Dtype *data) {
+
   for (int c = 0; c < channels; ++c) {
     for (int h = 0; h < height; ++h) {
       for (int w = 0; w < width; ++w) {

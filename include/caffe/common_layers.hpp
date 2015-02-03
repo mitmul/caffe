@@ -136,7 +136,8 @@ class RegressionAugmentLayer : public Layer<Dtype> {
  private:
   cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
                          const int &height, const int &width);
-  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
+  void ConvertFromCVMat(const cv::Mat img, const int &channels,
+                        const int &height, const int &width, Dtype *data);
 };
 
 /**

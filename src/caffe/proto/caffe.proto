@@ -746,10 +746,14 @@ message RegressionAugmentParameter {
   optional uint32 crop_size = 1 [default = 220];
   // randomly flipping
   optional bool flip = 2 [default = false];
+  // subtract constant value from data
+  repeated float subtract = 3;
+  // divide data with constant value
+  repeated float divide = 4;
   // data-wise mean subtraction
-  optional bool mean_normalize = 7 [default = false];
+  optional bool mean_normalize = 5 [default = false];
   // data-wise stddev division
-  optional bool stddev_normalize = 8 [default = false];
+  optional bool stddev_normalize = 6 [default = false];
 }
 
 // Message that stores parameters used by WindowDataLayer
