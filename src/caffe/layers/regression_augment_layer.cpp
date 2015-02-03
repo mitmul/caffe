@@ -83,6 +83,9 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
     for (int lc = 0; lc < label_channels; ++lc) {
       int shift = lc % 2 == 0 ? lt_x : lt_y;
       label[lc] -= shift;
+
+      // normalize
+      label[lc] = (label[lc] - crop_size / 2.0) / crop_size;
     }
 
     // patch-wise mean subtraction
