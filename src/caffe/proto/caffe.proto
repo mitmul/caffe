@@ -60,6 +60,10 @@ message NetParameter {
   // Some layers may be included/excluded depending on this state and the states
   // specified in the layers' include and exclude fields.
   optional NetState state = 6;
+
+  // Print debugging information about results while running Net::Forward,
+  // Net::Backward, and Net::Update.
+  optional bool debug_info = 7 [default = false];
 }
 
 // NOTE
@@ -241,6 +245,7 @@ message LayerParameter {
     CONTRASTIVE_LOSS = 37;
     CONVOLUTION = 4;
     DATA = 5;
+    DECONVOLUTION = 39;
     DROPOUT = 6;
     DUMMY_DATA = 32;
     EUCLIDEAN_LOSS = 7;
@@ -341,6 +346,9 @@ message LayerParameter {
   // Parameters for data pre-processing.
   optional TransformationParameter transform_param = 36;
 
+  // Parameters shared by loss layers.
+  optional LossParameter loss_param = 42;
+
   // Note: certain layers may have more than one computational engine
   // for their implementation. These layers include an Engine type and
   // engine parameter for selecting the implementation.
@@ -369,6 +377,15 @@ message TransformationParameter {
   // or can be repeated the same number of times as channels
   // (would subtract them from the corresponding channel)
   repeated float mean_value = 5;
+}
+
+// Message that stores parameters shared by loss layers
+message LossParameter {
+  // If specified, ignore instances with the given label.
+  optional int32 ignore_label = 1;
+  // If true, normalize each batch across all instances (including spatial
+  // dimesions, but not ignored instances); else, divide by batch size only.
+  optional bool normalize = 2 [default = true];
 }
 
 // Message that stores parameters used by AccuracyLayer
