@@ -6,7 +6,6 @@
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
-#include "caffe/dataset_factory.hpp"
 #include "caffe/filler.hpp"
 #include "caffe/proto/caffe.pb.h"
 #include "caffe/util/io.hpp"
