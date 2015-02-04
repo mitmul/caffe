@@ -39,8 +39,8 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
   const uint32_t crop_size =
     this->layer_param_.regression_augment_param().crop_size();
 
-  // flip_code takes the value ranging -1, 0, 1, 2(=disable)
-  const int flip_code = caffe_rng_rand() % 4 - 1;
+  // flip_code takes the value ranging 0, 1
+  const int flip_code = caffe_rng_rand() % 2;
 
   // input image settings
   const int channels = bottom[0]->channels();
