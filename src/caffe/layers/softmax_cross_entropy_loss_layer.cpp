@@ -76,7 +76,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
               log(1 + exp(data[i] - 2 * data[i] * (data[i] >= 0)));
     }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / dim;
+  top[0]->mutable_cpu_data()[0] = loss / dim;
 }
 
 template <typename Dtype>
@@ -115,7 +115,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     }
     // Scale down gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_scal(count, loss_weight / num / dim, diff);
+    caffe_scal(count, loss_weight / dim, diff);
   }
 }
 
