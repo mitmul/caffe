@@ -39,9 +39,6 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
   const uint32_t crop_size =
     this->layer_param_.regression_augment_param().crop_size();
 
-  // flip_code takes the value ranging 0, 1
-  const int flip_code = caffe_rng_rand() % 2;
-
   // input image settings
   const int channels = bottom[0]->channels();
   const int height = bottom[0]->height();
@@ -53,12 +50,13 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
   const int lt_y = caffe_rng_rand() % (height - crop_size);
 
   // foreach data in a minibatch
-  for (int i = 0; i < bottom[0]->num(); ++i) {
+  for (int i = 0; i < bottom[0]->num(); ++i) {    
     const Dtype *data = bottom[0]->cpu_data() + bottom[0]->offset(i);
     cv::Mat img = ConvertToCVMat(data, channels, height, width);
     Dtype *label = bottom[1]->mutable_cpu_data() + bottom[1]->offset(i);
 
     // randomly flipping (when flip_code == 2, it's disabled)
+    const int flip_code = caffe_rng_rand() % 2;
     if (this->layer_param_.regression_augment_param().flip()
         && flip_code == 1) {
       cv::flip(img, img, flip_code);
@@ -74,7 +72,7 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
       label[lc] -= shift;
 
       // normalize
-      label[lc] = (label[lc] - crop_size / 2.0) / crop_size;
+      label[lc] = (label[lc] - crop_size / 2.0) / (crop_size / 2.0);
     }
 
     // patch-wise mean subtraction
