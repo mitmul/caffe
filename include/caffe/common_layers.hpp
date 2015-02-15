@@ -83,9 +83,7 @@ class AugmentLayer : public Layer<Dtype> {
                   const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
-  virtual inline LayerParameter_LayerType type() const {
-    return LayerParameter_LayerType_AUGMENT;
-  }
+  virtual inline const char* type() const { return "Augment"; }
   virtual inline int MinBottomBlobs() const { return 1; }
   virtual inline int MaxBottomBlobs() const { return 2; }
   virtual inline int MinTopBlobs() const { return 1; }
@@ -116,9 +114,7 @@ class RegressionAugmentLayer : public Layer<Dtype> {
                   const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
-  virtual inline LayerParameter_LayerType type() const {
-    return LayerParameter_LayerType_REGRESSION_AUGMENT;
-  }
+  virtual inline const char* type() const { return "RegressionAugment"; }
   virtual inline int MinBottomBlobs() const { return 1; }
   virtual inline int MaxBottomBlobs() const { return 2; }
   virtual inline int MinTopBlobs() const { return 1; }
@@ -266,6 +262,7 @@ class ReshapeLayer : public Layer<Dtype> {
                           const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
+  virtual inline const char* type() const { return "Reshape"; }
 
  protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,

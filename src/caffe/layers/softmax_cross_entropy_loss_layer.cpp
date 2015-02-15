@@ -85,7 +85,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
   const vector<bool> &propagate_down,
   const vector<Blob<Dtype>*> &bottom) {
   if (propagate_down[1]) {
-    LOG(FATAL) << this->type_name()
+    LOG(FATAL) << this->type()
                << " Layer cannot backpropagate to label inputs.";
   }
   if (propagate_down[0]) {
@@ -124,6 +124,6 @@ STUB_GPU(SoftmaxCrossEntropyLossLayer);
 #endif
 
 INSTANTIATE_CLASS(SoftmaxCrossEntropyLossLayer);
-REGISTER_LAYER_CLASS(SOFTMAX_CROSS_ENTROPY_LOSS, SoftmaxCrossEntropyLossLayer);
+REGISTER_LAYER_CLASS(SoftmaxCrossEntropyLoss);
 
 }  // namespace caffe

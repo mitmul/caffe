@@ -178,6 +178,6 @@ void RegressionAugmentLayer<Dtype>::ConvertFromCVMat(
 }
 
 INSTANTIATE_CLASS(RegressionAugmentLayer);
-REGISTER_LAYER_CLASS(REGRESSION_AUGMENT, RegressionAugmentLayer);
+REGISTER_LAYER_CLASS(RegressionAugment);
 
 }  // namespace caffe

@@ -114,6 +114,6 @@ STUB_GPU(PrecisionRecallLossLayer);
 #endif
 
 INSTANTIATE_CLASS(PrecisionRecallLossLayer);
-REGISTER_LAYER_CLASS(PRECISION_RECALL_LOSS, PrecisionRecallLossLayer);
+REGISTER_LAYER_CLASS(PrecisionRecallLoss);
 
 }  // namespace caffe

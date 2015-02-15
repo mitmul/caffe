@@ -192,6 +192,6 @@ void AugmentLayer<Dtype>::ConvertFromCVMat(const cv::Mat img, Dtype *data) {
 }
 
 INSTANTIATE_CLASS(AugmentLayer);
-REGISTER_LAYER_CLASS(AUGMENT, AugmentLayer);
+REGISTER_LAYER_CLASS(Augment);
 
 }  // namespace caffe
