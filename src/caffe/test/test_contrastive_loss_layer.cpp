@@ -22,10 +22,10 @@ class ContrastiveLossLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   ContrastiveLossLayerTest()
-      : blob_bottom_data_i_(new Blob<Dtype>(128, 10, 1, 1)),
-        blob_bottom_data_j_(new Blob<Dtype>(128, 10, 1, 1)),
-        blob_bottom_y_(new Blob<Dtype>(128, 1, 1, 1)),
-        blob_top_loss_(new Blob<Dtype>()) {
+    : blob_bottom_data_i_(new Blob<Dtype>(128, 10, 1, 1)),
+      blob_bottom_data_j_(new Blob<Dtype>(128, 10, 1, 1)),
+      blob_bottom_y_(new Blob<Dtype>(128, 1, 1, 1)),
+      blob_top_loss_(new Blob<Dtype>()) {
     // fill the values
     FillerParameter filler_param;
     filler_param.set_mean(0.0);
@@ -48,10 +48,10 @@ class ContrastiveLossLayerTest : public MultiDeviceTest<TypeParam> {
     delete blob_top_loss_;
   }
 
-  Blob<Dtype>* const blob_bottom_data_i_;
-  Blob<Dtype>* const blob_bottom_data_j_;
-  Blob<Dtype>* const blob_bottom_y_;
-  Blob<Dtype>* const blob_top_loss_;
+  Blob<Dtype> *const blob_bottom_data_i_;
+  Blob<Dtype> *const blob_bottom_data_j_;
+  Blob<Dtype> *const blob_bottom_y_;
+  Blob<Dtype> *const blob_top_loss_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -72,14 +72,14 @@ TYPED_TEST(ContrastiveLossLayerTest, TestForward) {
   for (int i = 0; i < num; ++i) {
     Dtype dist_sq(0);
     for (int j = 0; j < channels; ++j) {
-      Dtype diff = this->blob_bottom_data_i_->cpu_data()[i*channels+j] -
-          this->blob_bottom_data_j_->cpu_data()[i*channels+j];
-      dist_sq += diff*diff;
+      Dtype diff = this->blob_bottom_data_i_->cpu_data()[i * channels + j] -
+                   this->blob_bottom_data_j_->cpu_data()[i * channels + j];
+      dist_sq += diff * diff;
     }
     if (this->blob_bottom_y_->cpu_data()[i]) {  // similar pairs
       loss += dist_sq;
     } else {
-      loss += std::max(margin-dist_sq, Dtype(0));
+      loss += std::max(margin - dist_sq, Dtype(0));
     }
   }
   loss /= static_cast<Dtype>(num) * Dtype(2);
@@ -94,9 +94,9 @@ TYPED_TEST(ContrastiveLossLayerTest, TestGradient) {
   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   // check the gradient for the first two bottom layers
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_, 0);
+                                  this->blob_top_vec_, 0);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_, 1);
+                                  this->blob_top_vec_, 1);
 }
 
 }  // namespace caffe

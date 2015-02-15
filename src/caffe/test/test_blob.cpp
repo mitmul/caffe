@@ -14,11 +14,11 @@ template <typename Dtype>
 class BlobSimpleTest : public ::testing::Test {
  protected:
   BlobSimpleTest()
-      : blob_(new Blob<Dtype>()),
-        blob_preshaped_(new Blob<Dtype>(2, 3, 4, 5)) {}
+    : blob_(new Blob<Dtype>()),
+      blob_preshaped_(new Blob<Dtype>(2, 3, 4, 5)) {}
   virtual ~BlobSimpleTest() { delete blob_; delete blob_preshaped_; }
-  Blob<Dtype>* const blob_;
-  Blob<Dtype>* const blob_preshaped_;
+  Blob<Dtype> *const blob_;
+  Blob<Dtype> *const blob_preshaped_;
 };
 
 TYPED_TEST_CASE(BlobSimpleTest, TestDtypes);

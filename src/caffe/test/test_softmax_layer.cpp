@@ -19,8 +19,8 @@ class SoftmaxLayerTest : public MultiDeviceTest<TypeParam> {
   typedef typename TypeParam::Dtype Dtype;
  protected:
   SoftmaxLayerTest()
-      : blob_bottom_(new Blob<Dtype>(2, 10, 2, 3)),
-        blob_top_(new Blob<Dtype>()) {
+    : blob_bottom_(new Blob<Dtype>(2, 10, 2, 3)),
+      blob_top_(new Blob<Dtype>()) {
     // fill the values
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
@@ -29,8 +29,8 @@ class SoftmaxLayerTest : public MultiDeviceTest<TypeParam> {
     blob_top_vec_.push_back(blob_top_);
   }
   virtual ~SoftmaxLayerTest() { delete blob_bottom_; delete blob_top_; }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -60,10 +60,10 @@ TYPED_TEST(SoftmaxLayerTest, TestForward) {
         }
         for (int j = 0; j < this->blob_bottom_->channels(); ++j) {
           EXPECT_GE(this->blob_top_->data_at(i, j, k, l) + 1e-4,
-              exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
+                    exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
               << "debug: " << i << " " << j;
           EXPECT_LE(this->blob_top_->data_at(i, j, k, l) - 1e-4,
-              exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
+                    exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
               << "debug: " << i << " " << j;
         }
       }
@@ -77,7 +77,7 @@ TYPED_TEST(SoftmaxLayerTest, TestGradient) {
   SoftmaxLayer<Dtype> layer(layer_param);
   GradientChecker<Dtype> checker(1e-2, 1e-3);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 #ifdef USE_CUDNN
@@ -85,8 +85,8 @@ template <typename Dtype>
 class CuDNNSoftmaxLayerTest : public ::testing::Test {
  protected:
   CuDNNSoftmaxLayerTest()
-      : blob_bottom_(new Blob<Dtype>(2, 10, 2, 3)),
-        blob_top_(new Blob<Dtype>()) {
+    : blob_bottom_(new Blob<Dtype>(2, 10, 2, 3)),
+      blob_top_(new Blob<Dtype>()) {
     // fill the values
     FillerParameter filler_param;
     GaussianFiller<Dtype> filler(filler_param);
@@ -95,8 +95,8 @@ class CuDNNSoftmaxLayerTest : public ::testing::Test {
     blob_top_vec_.push_back(blob_top_);
   }
   virtual ~CuDNNSoftmaxLayerTest() { delete blob_bottom_; delete blob_top_; }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -126,10 +126,10 @@ TYPED_TEST(CuDNNSoftmaxLayerTest, TestForwardCuDNN) {
         }
         for (int j = 0; j < this->blob_bottom_->channels(); ++j) {
           EXPECT_GE(this->blob_top_->data_at(i, j, k, l) + 1e-4,
-              exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
+                    exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
               << "debug: " << i << " " << j;
           EXPECT_LE(this->blob_top_->data_at(i, j, k, l) - 1e-4,
-              exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
+                    exp(this->blob_bottom_->data_at(i, j, k, l)) / scale)
               << "debug: " << i << " " << j;
         }
       }
@@ -143,7 +143,7 @@ TYPED_TEST(CuDNNSoftmaxLayerTest, TestGradientCuDNN) {
   CuDNNSoftmaxLayer<TypeParam> layer(layer_param);
   GradientChecker<TypeParam> checker(1e-2, 1e-3);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_);
+                                  this->blob_top_vec_);
 }
 
 #endif

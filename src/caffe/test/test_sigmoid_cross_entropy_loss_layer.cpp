@@ -21,9 +21,9 @@ class SigmoidCrossEntropyLossLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   SigmoidCrossEntropyLossLayerTest()
-      : blob_bottom_data_(new Blob<Dtype>(10, 5, 1, 1)),
-        blob_bottom_targets_(new Blob<Dtype>(10, 5, 1, 1)),
-        blob_top_loss_(new Blob<Dtype>()) {
+    : blob_bottom_data_(new Blob<Dtype>(10, 5, 1, 1)),
+      blob_bottom_targets_(new Blob<Dtype>(10, 5, 1, 1)),
+      blob_top_loss_(new Blob<Dtype>()) {
     // Fill the data vector
     FillerParameter data_filler_param;
     data_filler_param.set_std(1);
@@ -46,8 +46,8 @@ class SigmoidCrossEntropyLossLayerTest : public MultiDeviceTest<TypeParam> {
   }
 
   Dtype SigmoidCrossEntropyLossReference(const int count, const int num,
-                                         const Dtype* input,
-                                         const Dtype* target) {
+                                         const Dtype *input,
+                                         const Dtype *target) {
     Dtype loss = 0;
     for (int i = 0; i < count; ++i) {
       const Dtype prediction = 1 / (1 + exp(-input[i]));
@@ -81,21 +81,21 @@ class SigmoidCrossEntropyLossLayerTest : public MultiDeviceTest<TypeParam> {
       SigmoidCrossEntropyLossLayer<Dtype> layer(layer_param);
       layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
       Dtype layer_loss =
-          layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
+        layer.Forward(this->blob_bottom_vec_, this->blob_top_vec_);
       const int count = this->blob_bottom_data_->count();
       const int num = this->blob_bottom_data_->num();
-      const Dtype* blob_bottom_data = this->blob_bottom_data_->cpu_data();
-      const Dtype* blob_bottom_targets =
-          this->blob_bottom_targets_->cpu_data();
+      const Dtype *blob_bottom_data = this->blob_bottom_data_->cpu_data();
+      const Dtype *blob_bottom_targets =
+        this->blob_bottom_targets_->cpu_data();
       Dtype reference_loss = kLossWeight * SigmoidCrossEntropyLossReference(
-          count, num, blob_bottom_data, blob_bottom_targets);
+                               count, num, blob_bottom_data, blob_bottom_targets);
       EXPECT_NEAR(reference_loss, layer_loss, eps) << "debug: trial #" << i;
     }
   }
 
-  Blob<Dtype>* const blob_bottom_data_;
-  Blob<Dtype>* const blob_bottom_targets_;
-  Blob<Dtype>* const blob_top_loss_;
+  Blob<Dtype> *const blob_bottom_data_;
+  Blob<Dtype> *const blob_bottom_targets_;
+  Blob<Dtype> *const blob_top_loss_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
 };
@@ -115,7 +115,7 @@ TYPED_TEST(SigmoidCrossEntropyLossLayerTest, TestGradient) {
   layer.SetUp(this->blob_bottom_vec_, this->blob_top_vec_);
   GradientChecker<Dtype> checker(1e-2, 1e-2, 1701);
   checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-      this->blob_top_vec_, 0);
+                                  this->blob_top_vec_, 0);
 }
 
 

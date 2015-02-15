@@ -1,5 +1,7 @@
 ## General
 
+sftp-config.json
+
 # Compiled Object files
 *.slo
 *.lo
@@ -62,6 +64,7 @@ models/*
 *.binaryproto
 *leveldb
 *lmdb
+*png
 
 # build, distribute, and bins (+ python proto bindings)
 build

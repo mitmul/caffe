@@ -314,6 +314,11 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+
+  optional PrecisionRecallLossParameter precision_recall_loss_param = 200;
+  optional SoftmaxCrossEntropyParameter softmax_cross_entropy_loss_param = 201;
+  optional AugmentParameter augment_param = 202;
+  optional RegressionAugmentParameter regression_augment_param = 203;
 }
 
 // Message that stores parameters used to apply transformation
@@ -612,6 +617,11 @@ message PowerParameter {
   optional float shift = 3 [default = 0.0];
 }
 
+// Message that stores parameters used by PrecisionRecallLosslayer
+message PrecisionRecallLossParameter {
+  optional uint32 point_num = 1 [default = 256];
+}
+
 // Message that stores parameters used by ReLULayer
 message ReLUParameter {
   // Allow non-zero slope for negative inputs to speed up optimization
@@ -626,6 +636,19 @@ message ReLUParameter {
     CUDNN = 2;
   }
   optional Engine engine = 2 [default = DEFAULT];
+}
+
+// Message that stores parameters used by ReshapeLayer
+message ReshapeParameter {
+  // Specify the output dimensions. If some of the following parameters are
+  // omitted or set to 0 explicitly, the corresponding dimension from the bottom
+  // layer is used (unchanged). Also, if exactly one of them is set to -1, its
+  // value is calculated from the count of the bottom layer and the remaining
+  // dimensions, if possible.
+  optional int32 num = 1 [default = 0];
+  optional int32 channels = 2 [default = 0];
+  optional int32 height = 3 [default = 0];
+  optional int32 width = 4 [default = 0];
 }
 
 // Message that stores parameters used by SigmoidLayer
@@ -658,6 +681,10 @@ message SoftmaxParameter {
   optional Engine engine = 1 [default = DEFAULT];
 }
 
+message SoftmaxCrossEntropyParameter {
+  repeated float weights = 1;
+}
+
 // Message that stores parameters used by TanHLayer
 message TanHParameter {
   enum Engine {
@@ -671,6 +698,40 @@ message TanHParameter {
 // Message that stores parameters used by ThresholdLayer
 message ThresholdParameter {
   optional float threshold = 1 [default = 0]; // Strictly positive values
+}
+
+message AugmentParameter {
+  // crop a certain region around the center of input data
+  repeated uint32 crop_size = 1;
+  // binarization
+  repeated bool binarize = 2;
+  // randomly flipping
+  optional bool flip = 3 [default = false];
+  // randomly rotate arount the center
+  optional bool rotate = 4 [default = false];
+  // subtract constant value from data
+  repeated float subtract = 5;
+  // divide data with constant value
+  repeated float divide = 6;
+  // data-wise mean subtraction
+  optional bool mean_normalize = 7 [default = false];
+  // data-wise stddev division
+  optional bool stddev_normalize = 8 [default = false];
+}
+
+message RegressionAugmentParameter {
+  // crop a certain region around the center of input data
+  optional uint32 crop_size = 1 [default = 220];
+  // randomly flipping
+  optional bool flip = 2 [default = false];
+  // subtract constant value from data
+  repeated float subtract = 3;
+  // divide data with constant value
+  repeated float divide = 4;
+  // data-wise mean subtraction
+  optional bool mean_normalize = 5 [default = false];
+  // data-wise stddev division
+  optional bool stddev_normalize = 6 [default = false];
 }
 
 // Message that stores parameters used by WindowDataLayer

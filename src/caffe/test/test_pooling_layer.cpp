@@ -19,9 +19,9 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
 
  protected:
   PoolingLayerTest()
-      : blob_bottom_(new Blob<Dtype>()),
-        blob_top_(new Blob<Dtype>()),
-        blob_top_mask_(new Blob<Dtype>()) {}
+    : blob_bottom_(new Blob<Dtype>()),
+      blob_top_(new Blob<Dtype>()),
+      blob_top_mask_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     Caffe::set_random_seed(1701);
     blob_bottom_->Reshape(2, 3, 6, 5);
@@ -37,15 +37,15 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
     delete blob_top_;
     delete blob_top_mask_;
   }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
-  Blob<Dtype>* const blob_top_mask_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
+  Blob<Dtype> *const blob_top_mask_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
   // Test for 2x 2 square pooling layer
   void TestForwardSquare() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_size(2);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
     const int num = 2;
@@ -117,7 +117,7 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
   // Test for 3x 2 rectangular pooling layer with kernel_h > kernel_w
   void TestForwardRectHigh() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_h(3);
     pooling_param->set_kernel_w(2);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
@@ -211,10 +211,10 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
       EXPECT_EQ(blob_top_->cpu_data()[i + 19], 18);
     }
     if (blob_top_vec_.size() > 1) {
-        // [ 1     8     4    17    17]
-        // [ 8    21    21    17    17]
-        // [13    27    27    17    17]
-        // [32    32    27    35    35]
+      // [ 1     8     4    17    17]
+      // [ 8    21    21    17    17]
+      // [13    27    27    17    17]
+      // [32    32    27    35    35]
       for (int i = 0; i < 20 * num * channels; i += 20) {
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  0],  0);
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  1],  7);
@@ -242,7 +242,7 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
   // Test for rectangular pooling layer with kernel_w > kernel_h
   void TestForwardRectWide() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_h(2);
     pooling_param->set_kernel_w(3);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
@@ -337,11 +337,11 @@ class PoolingLayerTest : public MultiDeviceTest<TypeParam> {
       EXPECT_EQ(blob_top_->cpu_data()[i + 19], 18);
     }
     if (blob_top_vec_.size() > 1) {
-        // [ 1     8     4     4]
-        // [ 8     8    17    17]
-        // [21    21    21    17]
-        // [27    27    27    22]
-        // [32    32    27    35]
+      // [ 1     8     4     4]
+      // [ 8     8    17    17]
+      // [21    21    21    17]
+      // [27    27    27    22]
+      // [32    32    27    35]
       for (int i = 0; i < 20 * num * channels; i += 20) {
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  0],  0);
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  1],  7);
@@ -373,7 +373,7 @@ TYPED_TEST_CASE(PoolingLayerTest, TestDtypesAndDevices);
 TYPED_TEST(PoolingLayerTest, TestSetup) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(2);
   PoolingLayer<Dtype> layer(layer_param);
@@ -387,7 +387,7 @@ TYPED_TEST(PoolingLayerTest, TestSetup) {
 TYPED_TEST(PoolingLayerTest, TestSetupPadded) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(2);
   pooling_param->set_pad(1);
@@ -458,7 +458,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMax) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -467,7 +467,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMax) {
       PoolingLayer<Dtype> layer(layer_param);
       GradientChecker<Dtype> checker(1e-4, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
     }
   }
 }
@@ -475,7 +475,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMax) {
 TYPED_TEST(PoolingLayerTest, TestForwardMaxPadded) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(2);
   pooling_param->set_pad(2);
@@ -522,7 +522,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMaxTopMask) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -531,7 +531,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMaxTopMask) {
       PoolingLayer<Dtype> layer(layer_param);
       GradientChecker<Dtype> checker(1e-4, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
       this->blob_top_vec_.pop_back();
     }
   }
@@ -540,7 +540,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientMaxTopMask) {
 TYPED_TEST(PoolingLayerTest, TestForwardAve) {
   typedef typename TypeParam::Dtype Dtype;
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(1);
   pooling_param->set_pad(1);
@@ -574,7 +574,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientAve) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -582,7 +582,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientAve) {
       PoolingLayer<Dtype> layer(layer_param);
       GradientChecker<Dtype> checker(1e-2, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
     }
   }
 }
@@ -592,7 +592,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientAvePadded) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -601,7 +601,7 @@ TYPED_TEST(PoolingLayerTest, TestGradientAvePadded) {
       PoolingLayer<Dtype> layer(layer_param);
       GradientChecker<Dtype> checker(1e-2, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
     }
   }
 }
@@ -611,9 +611,9 @@ template <typename Dtype>
 class CuDNNPoolingLayerTest : public ::testing::Test {
  protected:
   CuDNNPoolingLayerTest()
-      : blob_bottom_(new Blob<Dtype>()),
-        blob_top_(new Blob<Dtype>()),
-        blob_top_mask_(new Blob<Dtype>()) {}
+    : blob_bottom_(new Blob<Dtype>()),
+      blob_top_(new Blob<Dtype>()),
+      blob_top_mask_(new Blob<Dtype>()) {}
   virtual void SetUp() {
     Caffe::set_random_seed(1701);
     blob_bottom_->Reshape(2, 3, 6, 5);
@@ -629,15 +629,15 @@ class CuDNNPoolingLayerTest : public ::testing::Test {
     delete blob_top_;
     delete blob_top_mask_;
   }
-  Blob<Dtype>* const blob_bottom_;
-  Blob<Dtype>* const blob_top_;
-  Blob<Dtype>* const blob_top_mask_;
+  Blob<Dtype> *const blob_bottom_;
+  Blob<Dtype> *const blob_top_;
+  Blob<Dtype> *const blob_top_mask_;
   vector<Blob<Dtype>*> blob_bottom_vec_;
   vector<Blob<Dtype>*> blob_top_vec_;
   // Test for 2x 2 square pooling layer
   void TestForwardSquare() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_size(2);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
     const int num = 2;
@@ -709,7 +709,7 @@ class CuDNNPoolingLayerTest : public ::testing::Test {
   // Test for 3x 2 rectangular pooling layer with kernel_h > kernel_w
   void TestForwardRectHigh() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_h(3);
     pooling_param->set_kernel_w(2);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
@@ -803,10 +803,10 @@ class CuDNNPoolingLayerTest : public ::testing::Test {
       EXPECT_EQ(blob_top_->cpu_data()[i + 19], 18);
     }
     if (blob_top_vec_.size() > 1) {
-        // [ 1     8     4    17    17]
-        // [ 8    21    21    17    17]
-        // [13    27    27    17    17]
-        // [32    32    27    35    35]
+      // [ 1     8     4    17    17]
+      // [ 8    21    21    17    17]
+      // [13    27    27    17    17]
+      // [32    32    27    35    35]
       for (int i = 0; i < 20 * num * channels; i += 20) {
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  0],  0);
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  1],  7);
@@ -834,7 +834,7 @@ class CuDNNPoolingLayerTest : public ::testing::Test {
   // Test for rectangular pooling layer with kernel_w > kernel_h
   void TestForwardRectWide() {
     LayerParameter layer_param;
-    PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+    PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
     pooling_param->set_kernel_h(2);
     pooling_param->set_kernel_w(3);
     pooling_param->set_pool(PoolingParameter_PoolMethod_MAX);
@@ -929,11 +929,11 @@ class CuDNNPoolingLayerTest : public ::testing::Test {
       EXPECT_EQ(blob_top_->cpu_data()[i + 19], 18);
     }
     if (blob_top_vec_.size() > 1) {
-        // [ 1     8     4     4]
-        // [ 8     8    17    17]
-        // [21    21    21    17]
-        // [27    27    27    22]
-        // [32    32    27    35]
+      // [ 1     8     4     4]
+      // [ 8     8    17    17]
+      // [21    21    21    17]
+      // [27    27    27    22]
+      // [32    32    27    35]
       for (int i = 0; i < 20 * num * channels; i += 20) {
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  0],  0);
         EXPECT_EQ(blob_top_mask_->cpu_data()[i +  1],  7);
@@ -965,7 +965,7 @@ TYPED_TEST_CASE(CuDNNPoolingLayerTest, TestDtypes);
 TYPED_TEST(CuDNNPoolingLayerTest, TestSetupCuDNN) {
   Caffe::set_mode(Caffe::GPU);
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(2);
   CuDNNPoolingLayer<TypeParam> layer(layer_param);
@@ -1047,7 +1047,7 @@ TYPED_TEST(CuDNNPoolingLayerTest, TestGradientMaxCuDNN) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -1057,7 +1057,7 @@ TYPED_TEST(CuDNNPoolingLayerTest, TestGradientMaxCuDNN) {
       CuDNNPoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-4, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
     }
   }
 }
@@ -1134,7 +1134,7 @@ TYPED_TEST(CuDNNPoolingLayerTest, TestGradientMaxTopMaskCuDNN) {
 TYPED_TEST(CuDNNPoolingLayerTest, TestForwardAveCuDNN) {
   Caffe::set_mode(Caffe::GPU);
   LayerParameter layer_param;
-  PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+  PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
   pooling_param->set_kernel_size(3);
   pooling_param->set_stride(1);
   // Currently, cuDNN pooling does not support padding, so we use
@@ -1162,7 +1162,7 @@ TYPED_TEST(CuDNNPoolingLayerTest, TestGradientAveCuDNN) {
   for (int kernel_h = 3; kernel_h <= 4; kernel_h++) {
     for (int kernel_w = 3; kernel_w <= 4; kernel_w++) {
       LayerParameter layer_param;
-      PoolingParameter* pooling_param = layer_param.mutable_pooling_param();
+      PoolingParameter *pooling_param = layer_param.mutable_pooling_param();
       pooling_param->set_kernel_h(kernel_h);
       pooling_param->set_kernel_w(kernel_w);
       pooling_param->set_stride(2);
@@ -1170,7 +1170,7 @@ TYPED_TEST(CuDNNPoolingLayerTest, TestGradientAveCuDNN) {
       CuDNNPoolingLayer<TypeParam> layer(layer_param);
       GradientChecker<TypeParam> checker(1e-2, 1e-2);
       checker.CheckGradientExhaustive(&layer, this->blob_bottom_vec_,
-          this->blob_top_vec_);
+                                      this->blob_top_vec_);
     }
   }
 }
