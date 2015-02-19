@@ -106,15 +106,15 @@ class AugmentLayer : public Layer<Dtype> {
  * @brief Perform some transformation to input data and label.
  */
 template <typename Dtype>
-class RegressionAugmentLayer : public Layer<Dtype> {
+class PoseDataAugmentLayer : public Layer<Dtype> {
  public:
-  explicit RegressionAugmentLayer(const LayerParameter &param)
+  explicit PoseDataAugmentLayer(const LayerParameter &param)
     : Layer<Dtype>(param) {}
   void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
                   const vector<Blob<Dtype>*> &top);
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top);
-  virtual inline const char* type() const { return "RegressionAugment"; }
+  virtual inline const char* type() const { return "PoseDataAugment"; }
   virtual inline int MinBottomBlobs() const { return 1; }
   virtual inline int MaxBottomBlobs() const { return 2; }
   virtual inline int MinTopBlobs() const { return 1; }
