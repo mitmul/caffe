@@ -31,9 +31,6 @@ sftp-config.json
 # IPython notebook checkpoints
 .ipynb_checkpoints
 
-# CMake generated files
-*.gen.cmake
-
 # Editor temporaries
 *.swp
 *~
@@ -45,6 +42,9 @@ sftp-config.json
 # Eclipse Project settings
 *.*project
 .settings
+
+# QtCreator files
+*.user
 
 # OSX dir files
 .DS_Store
@@ -74,6 +74,8 @@ distribute/*
 *.testbin
 *.bin
 python/caffe/proto/
+cmake_build
+.cmake_build
 
 # Generated documentation
 docs/_site
