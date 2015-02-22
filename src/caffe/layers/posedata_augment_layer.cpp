@@ -5,7 +5,7 @@
 namespace caffe {
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::LayerSetUp(
+void PoseDataAugmentLayer<Dtype>::LayerSetUp(
   const vector<Blob<Dtype>*> &bottom,
   const vector<Blob<Dtype>*> &top) {
 
@@ -18,7 +18,7 @@ void RegressionAugmentLayer<Dtype>::LayerSetUp(
 }
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::Reshape(
+void PoseDataAugmentLayer<Dtype>::Reshape(
   const vector<Blob<Dtype>*> &bottom,
   const vector<Blob<Dtype>*> &top) {
 
@@ -31,7 +31,7 @@ void RegressionAugmentLayer<Dtype>::Reshape(
 }
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::Forward_cpu(
+void PoseDataAugmentLayer<Dtype>::Forward_cpu(
   const vector<Blob<Dtype>*> &bottom,
   const vector<Blob<Dtype>*> &top) {
 
@@ -50,12 +50,12 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
   const int lt_y = caffe_rng_rand() % (height - crop_size);
 
   // foreach data in a minibatch
-  for (int i = 0; i < bottom[0]->num(); ++i) {    
+  for (int i = 0; i < bottom[0]->num(); ++i) {
     const Dtype *data = bottom[0]->cpu_data() + bottom[0]->offset(i);
     cv::Mat img = ConvertToCVMat(data, channels, height, width);
     Dtype *label = bottom[1]->mutable_cpu_data() + bottom[1]->offset(i);
 
-    // randomly flipping (when flip_code == 2, it's disabled)
+    // randomly flipping (when flip_code == 0, it's disabled)
     const int flip_code = caffe_rng_rand() % 2;
     if (this->layer_param_.regression_augment_param().flip()
         && flip_code == 1) {
@@ -133,7 +133,7 @@ void RegressionAugmentLayer<Dtype>::Forward_cpu(
 }
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::Backward_cpu(
+void PoseDataAugmentLayer<Dtype>::Backward_cpu(
   const vector<Blob<Dtype>*> &top,
   const vector<bool> &propagate_down,
   const vector<Blob<Dtype>*> &bottom)
@@ -141,7 +141,7 @@ void RegressionAugmentLayer<Dtype>::Backward_cpu(
 }
 
 template <typename Dtype>
-cv::Mat RegressionAugmentLayer<Dtype>::ConvertToCVMat(
+cv::Mat PoseDataAugmentLayer<Dtype>::ConvertToCVMat(
   const Dtype *data, const int &channels,
   const int &height, const int &width) {
 
@@ -161,7 +161,7 @@ cv::Mat RegressionAugmentLayer<Dtype>::ConvertToCVMat(
 }
 
 template <typename Dtype>
-void RegressionAugmentLayer<Dtype>::ConvertFromCVMat(
+void PoseDataAugmentLayer<Dtype>::ConvertFromCVMat(
   const cv::Mat img, const int &channels, const int &height,
   const int &width, Dtype *data) {
 
@@ -177,7 +177,7 @@ void RegressionAugmentLayer<Dtype>::ConvertFromCVMat(
   }
 }
 
-INSTANTIATE_CLASS(RegressionAugmentLayer);
-REGISTER_LAYER_CLASS(RegressionAugment);
+INSTANTIATE_CLASS(PoseDataAugmentLayer);
+REGISTER_LAYER_CLASS(PoseDataAugment);
 
 }  // namespace caffe
