@@ -126,6 +126,20 @@ class AdaGradSolver : public SGDSolver<Dtype> {
 };
 
 template <typename Dtype>
+class RMSpropSolver : public SGDSolver<Dtype> {
+public:
+  explicit RMSpropSolver(const SolverParameter& param)
+        : SGDSolver<Dtype>(param) {  }
+  explicit RMSpropSolver(const string& param_file)
+        : SGDSolver<Dtype>(param_file) { }
+
+protected:
+  virtual void ComputeUpdateValue();
+
+  DISABLE_COPY_AND_ASSIGN(RMSpropSolver);
+};
+
+template <typename Dtype>
 Solver<Dtype>* GetSolver(const SolverParameter& param) {
   SolverParameter_SolverType type = param.solver_type();
 
