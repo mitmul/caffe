@@ -329,6 +329,7 @@ message LayerParameter {
   optional AugmentParameter augment_param = 202;
   optional PoseDataAugmentParameter regression_augment_param = 203;
   optional ReshapeParameter reshape_param = 204;
+  optional BNParameter bn_param = 205;
 }
 
 message PrecisionRecallLossParameter {
@@ -383,6 +384,12 @@ message ReshapeParameter {
   optional int32 channels = 2 [default = 0];
   optional int32 height = 3 [default = 0];
   optional int32 width = 4 [default = 0];
+}
+
+// Message that stores parameters used by BNLayer
+message BNParameter {
+  optional FillerParameter scale_filler = 1; // The filler for the scale
+  optional FillerParameter shift_filler = 2; // The filler for the shift
 }
 
 // Message that stores parameters used to apply transformation
