@@ -120,12 +120,12 @@ def main(argv):
         print "Loading file: %s" % args.input_file
         inputs = [caffe.io.load_image(args.input_file)]
 
-    print "Classifying %d inputs." % len(inputs)
+    print("Classifying %d inputs." % len(inputs))
 
     # Classify.
     start = time.time()
     predictions = classifier.predict(inputs, not args.center_only)
-    print "Done in %.2f s." % (time.time() - start)
+    print("Done in %.2f s." % (time.time() - start))
 
     # Save
     print "Saving results into %s" % args.output_file
