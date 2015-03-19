@@ -63,7 +63,8 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       if (this->layer_param_.augment_param().rotate()) {
         cv::Point2f pt(width / 2.0, height / 2.0);
         cv::Mat rot = cv::getRotationMatrix2D(pt, angle, 1.0);
-        cv::warpAffine(img, img, rot, cv::Size(width, height));
+        cv::warpAffine(img, img, rot, cv::Size(width, height),
+          cv::INTER_NEAREST);
       }
 
       // crop center
