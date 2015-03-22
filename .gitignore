@@ -1,5 +1,6 @@
 ## General
-
+src/caffe/test/test_data/sample_data.lmdb/lock.mdb
+src/caffe/test/test_data/sample_label.lmdb/lock.mdb
 sftp-config.json
 
 # Compiled Object files
