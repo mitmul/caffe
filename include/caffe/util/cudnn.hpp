@@ -56,7 +56,7 @@ template<> class dataType<float>  {
 template<> class dataType<double> {
  public:
   static const cudnnDataType_t type = CUDNN_DATA_DOUBLE;
-  static double oneval, zerobal;
+  static double oneval, zeroval;
   static const void *one, *zero;
 };
 
@@ -70,7 +70,7 @@ inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc,
     int n, int c, int h, int w,
     int stride_n, int stride_c, int stride_h, int stride_w) {
   CUDNN_CHECK(cudnnSetTensor4dDescriptorEx(*desc, dataType<Dtype>::type,
-      n, c, h, w, stride_n, stride_c, stride_h, stride_w));
+        n, c, h, w, stride_n, stride_c, stride_h, stride_w));
 }
 
 template <typename Dtype>
@@ -81,7 +81,7 @@ inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc,
   const int stride_c = h * stride_h;
   const int stride_n = c * stride_c;
   setTensor4dDesc<Dtype>(desc, n, c, h, w,
-      stride_n, stride_c, stride_h, stride_w);
+                         stride_n, stride_c, stride_h, stride_w);
 }
 
 template <typename Dtype>
@@ -101,7 +101,7 @@ template <typename Dtype>
 inline void setConvolutionDesc(cudnnConvolutionDescriptor_t* conv,
     cudnnTensorDescriptor_t bottom, cudnnFilterDescriptor_t filter,
     int pad_h, int pad_w, int stride_h, int stride_w) {
-  CUDNN_CHECK(cudnnSetConvolution2dDescriptor(*conv, bottom, filter,
+  CUDNN_CHECK(cudnnSetConvolution2dDescriptor(*conv,
       pad_h, pad_w, stride_h, stride_w, 1, 1, CUDNN_CROSS_CORRELATION));
 }
 
@@ -114,14 +114,14 @@ inline void createPoolingDesc(cudnnPoolingDescriptor_t* pool_desc,
     *mode = CUDNN_POOLING_MAX;
     break;
   case PoolingParameter_PoolMethod_AVE:
-    *mode = CUDNN_POOLING_AVERAGE;
+    *mode = CUDNN_POOLING_AVERAGE_COUNT_INCLUDE_PADDING;
     break;
   default:
     LOG(FATAL) << "Unknown pooling method.";
   }
-  CUDNN_CHECK(cudnnCreatePoolingDescriptor(conv));
-  CUDNN_CHECK(cudnnSetPoolingDescriptor(*conv, *mode, h, w,
-        stride_h, stride_w));
+  CUDNN_CHECK(cudnnCreatePoolingDescriptor(pool_desc));
+  CUDNN_CHECK(cudnnSetPooling2dDescriptor(*pool_desc, *mode, h, w,
+        pad_h, pad_w, stride_h, stride_w));
 }
 
 }  // namespace cudnn
