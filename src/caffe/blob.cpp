@@ -37,10 +37,6 @@ void Blob<Dtype>::Reshape(const vector<int>& shape) {
 }
 
 template <typename Dtype>
-<<<<<<< HEAD
-void Blob<Dtype>::ReshapeLike(const Blob<Dtype> &other) {
-  Reshape(other.num(), other.channels(), other.height(), other.width());
-=======
 void Blob<Dtype>::Reshape(const BlobShape& shape) {
   CHECK_LE(shape.dim_size(), kMaxBlobAxes);
   vector<int> shape_vec(shape.dim_size());
@@ -53,7 +49,6 @@ void Blob<Dtype>::Reshape(const BlobShape& shape) {
 template <typename Dtype>
 void Blob<Dtype>::ReshapeLike(const Blob<Dtype>& other) {
   Reshape(other.shape());
->>>>>>> shelhamer/cudnn-r2
 }
 
 template <typename Dtype>
@@ -65,9 +60,6 @@ Blob<Dtype>::Blob(const int num, const int channels, const int height,
 }
 
 template <typename Dtype>
-<<<<<<< HEAD
-const Dtype *Blob<Dtype>::cpu_data() const {
-=======
 Blob<Dtype>::Blob(const vector<int>& shape)
   // capacity_ must be initialized before calling Reshape
   : capacity_(0) {
@@ -76,7 +68,6 @@ Blob<Dtype>::Blob(const vector<int>& shape)
 
 template <typename Dtype>
 const Dtype* Blob<Dtype>::cpu_data() const {
->>>>>>> shelhamer/cudnn-r2
   CHECK(data_);
   return (const Dtype *)data_->cpu_data();
 }
@@ -384,11 +375,6 @@ void Blob<Dtype>::scale_diff(Dtype scale_factor) {
 }
 
 template <typename Dtype>
-<<<<<<< HEAD
-void Blob<Dtype>::CopyFrom(const Blob &source, bool copy_diff, bool reshape) {
-  if (num_ != source.num() || channels_ != source.channels() ||
-      height_ != source.height() || width_ != source.width()) {
-=======
 bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
   if (other.has_num() || other.has_channels() ||
       other.has_height() || other.has_width()) {
@@ -414,7 +400,6 @@ bool Blob<Dtype>::ShapeEquals(const BlobProto& other) {
 template <typename Dtype>
 void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
   if (source.count() != count_ || source.shape() != shape_) {
->>>>>>> shelhamer/cudnn-r2
     if (reshape) {
       ReshapeLike(source);
     } else {
@@ -446,10 +431,6 @@ void Blob<Dtype>::CopyFrom(const Blob& source, bool copy_diff, bool reshape) {
 }
 
 template <typename Dtype>
-<<<<<<< HEAD
-void Blob<Dtype>::FromProto(const BlobProto &proto) {
-  Reshape(proto.num(), proto.channels(), proto.height(), proto.width());
-=======
 void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
   if (reshape) {
     vector<int> shape;
@@ -472,7 +453,6 @@ void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
   } else {
     CHECK(ShapeEquals(proto)) << "shape mismatch (reshape not set)";
   }
->>>>>>> shelhamer/cudnn-r2
   // copy data
   Dtype *data_vec = mutable_cpu_data();
   for (int i = 0; i < count_; ++i) {
@@ -487,19 +467,11 @@ void Blob<Dtype>::FromProto(const BlobProto& proto, bool reshape) {
 }
 
 template <typename Dtype>
-<<<<<<< HEAD
-void Blob<Dtype>::ToProto(BlobProto *proto, bool write_diff) const {
-  proto->set_num(num_);
-  proto->set_channels(channels_);
-  proto->set_height(height_);
-  proto->set_width(width_);
-=======
 void Blob<Dtype>::ToProto(BlobProto* proto, bool write_diff) const {
   proto->clear_shape();
   for (int i = 0; i < shape_.size(); ++i) {
     proto->mutable_shape()->add_dim(shape_[i]);
   }
->>>>>>> shelhamer/cudnn-r2
   proto->clear_data();
   proto->clear_diff();
   const Dtype *data_vec = cpu_data();

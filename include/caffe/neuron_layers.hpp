@@ -416,27 +416,6 @@ class ReLULayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNReLULayer : public ReLULayer<Dtype> {
-<<<<<<< HEAD
-  public:
-    explicit CuDNNReLULayer(const LayerParameter &param)
-        : ReLULayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNReLULayer();
-
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensorDescriptor_t bottom_desc_;
-    cudnnTensorDescriptor_t top_desc_;
-=======
  public:
   explicit CuDNNReLULayer(const LayerParameter& param)
       : ReLULayer<Dtype>(param), handles_setup_(false) {}
@@ -456,7 +435,6 @@ class CuDNNReLULayer : public ReLULayer<Dtype> {
   cudnnHandle_t             handle_;
   cudnnTensorDescriptor_t bottom_desc_;
   cudnnTensorDescriptor_t top_desc_;
->>>>>>> shelhamer/cudnn-r2
 };
 #endif
 
@@ -521,27 +499,6 @@ class SigmoidLayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNSigmoidLayer : public SigmoidLayer<Dtype> {
-<<<<<<< HEAD
-  public:
-    explicit CuDNNSigmoidLayer(const LayerParameter &param)
-        : SigmoidLayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNSigmoidLayer();
-
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensorDescriptor_t bottom_desc_;
-    cudnnTensorDescriptor_t top_desc_;
-=======
  public:
   explicit CuDNNSigmoidLayer(const LayerParameter& param)
       : SigmoidLayer<Dtype>(param), handles_setup_(false) {}
@@ -561,7 +518,6 @@ class CuDNNSigmoidLayer : public SigmoidLayer<Dtype> {
   cudnnHandle_t             handle_;
   cudnnTensorDescriptor_t bottom_desc_;
   cudnnTensorDescriptor_t top_desc_;
->>>>>>> shelhamer/cudnn-r2
 };
 #endif
 
@@ -628,27 +584,6 @@ class TanHLayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNTanHLayer : public TanHLayer<Dtype> {
-<<<<<<< HEAD
-  public:
-    explicit CuDNNTanHLayer(const LayerParameter &param)
-        : TanHLayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNTanHLayer();
-
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
-
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensorDescriptor_t bottom_desc_;
-    cudnnTensorDescriptor_t top_desc_;
-=======
  public:
   explicit CuDNNTanHLayer(const LayerParameter& param)
       : TanHLayer<Dtype>(param), handles_setup_(false) {}
@@ -668,7 +603,6 @@ class CuDNNTanHLayer : public TanHLayer<Dtype> {
   cudnnHandle_t             handle_;
   cudnnTensorDescriptor_t bottom_desc_;
   cudnnTensorDescriptor_t top_desc_;
->>>>>>> shelhamer/cudnn-r2
 };
 #endif
 
