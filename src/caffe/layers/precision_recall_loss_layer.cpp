@@ -45,7 +45,8 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
   const int dim = bottom[0]->count() / num;
   const int channels = bottom[0]->channels();
   const int spatial_dim = bottom[0]->height() * bottom[0]->width();
-  const int pnum = this->layer_param_.precision_recall_loss_param().point_num();
+  const int pnum =
+    this->layer_param_.precision_recall_loss_param().point_num();
   top[0]->mutable_cpu_data()[0] = 0;
   for (int c = 0; c < channels; ++c) {
     Dtype breakeven = 0.0;
@@ -99,6 +100,7 @@ void PrecisionRecallLossLayer<Dtype>::Forward_cpu(
   }
   top[0]->mutable_cpu_data()[0] /= channels;
 }
+
 template <typename Dtype>
 void PrecisionRecallLossLayer<Dtype>::Backward_cpu(
   const vector<Blob<Dtype>*> &top,

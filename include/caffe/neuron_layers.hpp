@@ -416,25 +416,25 @@ class ReLULayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNReLULayer : public ReLULayer<Dtype> {
-  public:
-    explicit CuDNNReLULayer(const LayerParameter &param)
-        : ReLULayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNReLULayer();
+ public:
+  explicit CuDNNReLULayer(const LayerParameter& param)
+      : ReLULayer<Dtype>(param), handles_setup_(false) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual ~CuDNNReLULayer();
 
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+ protected:
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensor4dDescriptor_t bottom_desc_;
-    cudnnTensor4dDescriptor_t top_desc_;
+  bool handles_setup_;
+  cudnnHandle_t             handle_;
+  cudnnTensorDescriptor_t bottom_desc_;
+  cudnnTensorDescriptor_t top_desc_;
 };
 #endif
 
@@ -499,25 +499,25 @@ class SigmoidLayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNSigmoidLayer : public SigmoidLayer<Dtype> {
-  public:
-    explicit CuDNNSigmoidLayer(const LayerParameter &param)
-        : SigmoidLayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNSigmoidLayer();
+ public:
+  explicit CuDNNSigmoidLayer(const LayerParameter& param)
+      : SigmoidLayer<Dtype>(param), handles_setup_(false) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual ~CuDNNSigmoidLayer();
 
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+ protected:
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensor4dDescriptor_t bottom_desc_;
-    cudnnTensor4dDescriptor_t top_desc_;
+  bool handles_setup_;
+  cudnnHandle_t             handle_;
+  cudnnTensorDescriptor_t bottom_desc_;
+  cudnnTensorDescriptor_t top_desc_;
 };
 #endif
 
@@ -584,25 +584,25 @@ class TanHLayer : public NeuronLayer<Dtype> {
  */
 template <typename Dtype>
 class CuDNNTanHLayer : public TanHLayer<Dtype> {
-  public:
-    explicit CuDNNTanHLayer(const LayerParameter &param)
-        : TanHLayer<Dtype>(param), handles_setup_(false) {}
-    virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
-                            const vector<Blob<Dtype>*> &top);
-    virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
-                         const vector<Blob<Dtype>*> &top);
-    virtual ~CuDNNTanHLayer();
+ public:
+  explicit CuDNNTanHLayer(const LayerParameter& param)
+      : TanHLayer<Dtype>(param), handles_setup_(false) {}
+  virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Reshape(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual ~CuDNNTanHLayer();
 
-  protected:
-    virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
-                             const vector<Blob<Dtype>*> &top);
-    virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
-                              const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom);
+ protected:
+  virtual void Forward_gpu(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+  virtual void Backward_gpu(const vector<Blob<Dtype>*>& top,
+      const vector<bool>& propagate_down, const vector<Blob<Dtype>*>& bottom);
 
-    bool handles_setup_;
-    cudnnHandle_t             handle_;
-    cudnnTensor4dDescriptor_t bottom_desc_;
-    cudnnTensor4dDescriptor_t top_desc_;
+  bool handles_setup_;
+  cudnnHandle_t             handle_;
+  cudnnTensorDescriptor_t bottom_desc_;
+  cudnnTensorDescriptor_t top_desc_;
 };
 #endif
 
