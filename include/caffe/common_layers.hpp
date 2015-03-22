@@ -65,7 +65,8 @@ class ArgMaxLayer : public Layer<Dtype> {
                            const vector<Blob<Dtype>*> &top);
   /// @brief Not implemented (non-differentiable function)
   virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
-                            const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {
+                            const vector<bool> &propagate_down,
+                            const vector<Blob<Dtype>*> &bottom) {
     NOT_IMPLEMENTED;
   }
   bool out_max_val_;
@@ -95,7 +96,9 @@ class AugmentLayer : public Layer<Dtype> {
                            const vector<Blob<Dtype>*> &top);
   virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
                             const vector<bool> &propagate_down,
-                            const vector<Blob<Dtype>*> &bottom);
+                            const vector<Blob<Dtype>*> &bottom) {
+    NOT_IMPLEMENTED;
+  }
 
  private:
   cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
@@ -589,8 +592,8 @@ class CuDNNSoftmaxLayer : public SoftmaxLayer<Dtype> {
 
   bool handles_setup_;
   cudnnHandle_t             handle_;
-  cudnnTensor4dDescriptor_t bottom_desc_;
-  cudnnTensor4dDescriptor_t top_desc_;
+  cudnnTensorDescriptor_t bottom_desc_;
+  cudnnTensorDescriptor_t top_desc_;
 };
 #endif
 

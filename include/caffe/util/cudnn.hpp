@@ -50,19 +50,23 @@ template <typename Dtype> class dataType;
 template<> class dataType<float>  {
  public:
   static const cudnnDataType_t type = CUDNN_DATA_FLOAT;
+  static float oneval, zeroval;
+  static const void *one, *zero;
 };
 template<> class dataType<double> {
  public:
   static const cudnnDataType_t type = CUDNN_DATA_DOUBLE;
+  static double oneval, zerobal;
+  static const void *one, *zero;
 };
 
 template <typename Dtype>
-inline void createTensor4dDesc(cudnnTensor4dDescriptor_t* desc) {
-  CUDNN_CHECK(cudnnCreateTensor4dDescriptor(desc));
+inline void createTensor4dDesc(cudnnTensorDescriptor_t* desc) {
+  CUDNN_CHECK(cudnnCreateTensorDescriptor(desc));
 }
 
 template <typename Dtype>
-inline void setTensor4dDesc(cudnnTensor4dDescriptor_t* desc,
+inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc,
     int n, int c, int h, int w,
     int stride_n, int stride_c, int stride_h, int stride_w) {
   CUDNN_CHECK(cudnnSetTensor4dDescriptorEx(*desc, dataType<Dtype>::type,
@@ -70,7 +74,7 @@ inline void setTensor4dDesc(cudnnTensor4dDescriptor_t* desc,
 }
 
 template <typename Dtype>
-inline void setTensor4dDesc(cudnnTensor4dDescriptor_t* desc,
+inline void setTensor4dDesc(cudnnTensorDescriptor_t* desc,
     int n, int c, int h, int w) {
   const int stride_w = 1;
   const int stride_h = w * stride_w;
@@ -84,7 +88,7 @@ template <typename Dtype>
 inline void createFilterDesc(cudnnFilterDescriptor_t* desc,
     int n, int c, int h, int w) {
   CUDNN_CHECK(cudnnCreateFilterDescriptor(desc));
-  CUDNN_CHECK(cudnnSetFilterDescriptor(*desc, dataType<Dtype>::type,
+  CUDNN_CHECK(cudnnSetFilter4dDescriptor(*desc, dataType<Dtype>::type,
       n, c, h, w));
 }
 
@@ -95,16 +99,16 @@ inline void createConvolutionDesc(cudnnConvolutionDescriptor_t* conv) {
 
 template <typename Dtype>
 inline void setConvolutionDesc(cudnnConvolutionDescriptor_t* conv,
-    cudnnTensor4dDescriptor_t bottom, cudnnFilterDescriptor_t filter,
+    cudnnTensorDescriptor_t bottom, cudnnFilterDescriptor_t filter,
     int pad_h, int pad_w, int stride_h, int stride_w) {
-  CUDNN_CHECK(cudnnSetConvolutionDescriptor(*conv, bottom, filter,
+  CUDNN_CHECK(cudnnSetConvolution2dDescriptor(*conv, bottom, filter,
       pad_h, pad_w, stride_h, stride_w, 1, 1, CUDNN_CROSS_CORRELATION));
 }
 
 template <typename Dtype>
-inline void createPoolingDesc(cudnnPoolingDescriptor_t* conv,
+inline void createPoolingDesc(cudnnPoolingDescriptor_t* pool_desc,
     PoolingParameter_PoolMethod poolmethod, cudnnPoolingMode_t* mode,
-    int h, int w, int stride_h, int stride_w) {
+    int h, int w, int pad_h, int pad_w, int stride_h, int stride_w) {
   switch (poolmethod) {
   case PoolingParameter_PoolMethod_MAX:
     *mode = CUDNN_POOLING_MAX;

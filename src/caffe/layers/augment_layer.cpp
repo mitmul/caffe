@@ -87,25 +87,38 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       imgs.push_back(patch);
     }
 
-    // patch-wise mean subtraction
+    // patch-wise stddev division
     cv::Scalar mean, stddev;
     cv::meanStdDev(imgs[0], mean, stddev);
-    if (this->layer_param_.augment_param().mean_normalize()) {
-      cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
-      cv::split(imgs[0], slice);
-      for (int c = 0; c < bottom[0]->channels(); ++c) {
-        cv::subtract(slice[c], mean[c], slice[c]);
-      }
-      cv::merge(slice, bottom[0]->channels(), imgs[0]);
-      delete [] slice;
-    }
-
-    // patch-wise stddev division
     if (this->layer_param_.augment_param().stddev_normalize()) {
       cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
       cv::split(imgs[0], slice);
       for (int c = 0; c < bottom[0]->channels(); ++c) {
         slice[c] /= stddev[c];
+      }
+      cv::merge(slice, bottom[0]->channels(), imgs[0]);
+      delete [] slice;
+    }
+
+    // stddev division
+    const google::protobuf::RepeatedField<float> divs =
+      this->layer_param_.augment_param().divide();
+    if (divs.size() > 0) {
+      CHECK_EQ(divs.size(), bottom[0]->channels());
+      vector<cv::Mat> splitted;
+      cv::split(imgs[0], splitted);
+      for (int j = 0; j < splitted.size(); ++j) {
+        splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0 / divs.Get(j));
+      }
+      cv::merge(splitted, imgs[0]);
+    }
+
+    // patch-wise mean subtraction
+    if (this->layer_param_.augment_param().mean_normalize()) {
+      cv::Mat *slice = new cv::Mat[bottom[0]->channels()];
+      cv::split(imgs[0], slice);
+      for (int c = 0; c < bottom[0]->channels(); ++c) {
+        cv::subtract(slice[c], mean[c], slice[c]);
       }
       cv::merge(slice, bottom[0]->channels(), imgs[0]);
       delete [] slice;
@@ -124,36 +137,12 @@ void AugmentLayer<Dtype>::Forward_cpu(const vector<Blob<Dtype>*> &bottom,
       cv::merge(splitted, imgs[0]);
     }
 
-    // stddev division
-    const google::protobuf::RepeatedField<float> divs =
-      this->layer_param_.augment_param().divide();
-    if (divs.size() > 0) {
-      CHECK_EQ(divs.size(), bottom[0]->channels());
-      vector<cv::Mat> splitted;
-      cv::split(imgs[0], splitted);
-      for (int j = 0; j < splitted.size(); ++j) {
-        splitted.at(j).convertTo(splitted.at(j), CV_32F, 1.0 / divs.Get(j));
-      }
-      cv::merge(splitted, imgs[0]);
-    }
-
     // revert into blob
     for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
       ConvertFromCVMat(imgs[blob_id], top[blob_id]->mutable_cpu_data()
                        + top[blob_id]->offset(i));
     }
   }
-}
-
-template <typename Dtype>
-void AugmentLayer<Dtype>::Backward_cpu(
-  const vector<Blob<Dtype>*> &top,
-  const vector<bool> &propagate_down,
-  const vector<Blob<Dtype>*> &bottom)
-{
-  // for (int blob_id = 0; blob_id < bottom.size(); ++blob_id) {
-  //   bottom[blob_id]->ShareDiff(*top[blob_id]);
-  // }
 }
 
 template <typename Dtype>
