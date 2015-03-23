@@ -343,6 +343,7 @@ message LayerParameter {
   optional PoseDataAugmentParameter regression_augment_param = 203;
   optional ReshapeParameter reshape_param = 204;
   optional BNParameter bn_param = 205;
+  optional PoseDataParameter pose_data_param = 206;
 }
 
 message PrecisionRecallLossParameter {
@@ -403,6 +404,27 @@ message ReshapeParameter {
 message BNParameter {
   optional FillerParameter scale_filler = 1; // The filler for the scale
   optional FillerParameter shift_filler = 2; // The filler for the shift
+}
+
+message PoseDataParameter {
+  optional string source = 1;
+  optional int32 batch_size = 2;
+  optional uint32 rand_skip = 3 [default = 0];
+  // dataset details
+  optional uint32 channels = 4 [default = 3];
+  optional uint32 height = 5 [default = 220];
+  optional uint32 width = 6 [default = 220];
+  optional uint32 n_joints = 7 [default = 14];
+  // crop width*padding_scale x height*padding_scale
+  optional float padding_scale_h = 8 [default = 1.5];
+  optional float padding_scale_w = 9 [default = 1.5];
+  // crop region left-top point randomness
+  optional uint32 translation_size = 10 [default = 10];
+  // stddev division -> mean subtraction
+  optional bool normalization = 11 [default = true];
+  optional bool horizontal_flip = 12 [default = true];
+  optional uint32 rotation_angle = 13 [default = 0];
+  optional bool monochromate = 14 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
