@@ -145,10 +145,12 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
                                  _y : data.rows - data_height * sqrt(2);
         const int rot_region_w = data_width * sqrt(2);
         const int rot_region_h = data_height * sqrt(2);
-        cv::Mat rot_data = data(cv::Rect(rot_region_x, rot_region_y,
-                                         rot_region_w, rot_region_h));
-        cv::Mat rot_label = label(cv::Rect(rot_region_x, rot_region_y,
-                                           rot_region_w, rot_region_h));
+        cv::Mat rot_data = data(
+                             cv::Rect(rot_region_x, rot_region_y,
+                                      rot_region_w, rot_region_h)).clone();
+        cv::Mat rot_label = label(
+                              cv::Rect(rot_region_x, rot_region_y,
+                                       rot_region_w, rot_region_h)).clone();
 
         const double angle = caffe_rng_rand() % 360 - 180;
         const cv::Point2f center(rot_region_w / 2, rot_region_h / 2);
@@ -171,11 +173,11 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
 
       } else {
         // create patch
-        crop_data = data(cv::Rect(x, y, data_width, data_height));
+        crop_data = data(cv::Rect(x, y, data_width, data_height)).clone();
         crop_data.convertTo(crop_data, CV_32F);
         crop_label = label(cv::Rect(x + data_width / 2 - label_width / 2,
                                     y + data_height / 2 - label_height / 2,
-                                    label_width, label_height));
+                                    label_width, label_height)).clone();
         crop_label.convertTo(crop_label, CV_32F);
       }
 
