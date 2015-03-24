@@ -348,11 +348,11 @@ private:
 };
 
 template <typename Dtype>
-class SegmentationDataLayer : public BasePrefetchingDataLayer<Dtype> {
+class PatchBasedSegmentationDataLayer : public BasePrefetchingDataLayer<Dtype> {
 public:
-  explicit SegmentationDataLayer(const LayerParameter &param)
+  explicit PatchBasedSegmentationDataLayer(const LayerParameter &param)
     : BasePrefetchingDataLayer<Dtype>(param) {}
-  virtual ~SegmentationDataLayer();
+  virtual ~PatchBasedSegmentationDataLayer();
   virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
                               const vector<Blob<Dtype>*> &top);
   // Data layers have no bottoms, so reshaping is trivial.

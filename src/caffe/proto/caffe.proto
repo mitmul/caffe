@@ -342,7 +342,7 @@ message LayerParameter {
   optional ReshapeParameter reshape_param = 202;
   optional BNParameter bn_param = 203;
   optional PoseDataParameter pose_data_param = 204;
-  optional SegmentationDataParameter segmentation_data_param = 205;
+  optional PatchBasedSegmentationDataParameter patch_based_segmentation_data_param = 205;
 }
 
 message PrecisionRecallLossParameter {
@@ -392,16 +392,21 @@ message PoseDataParameter {
   optional bool monochromate = 14 [default = false];
 }
 
-message SegmentationDataParameter {
+message PatchBasedSegmentationDataParameter {
   optional string source =1;
   optional int32 batch_size = 2;
   optional uint32 rand_skip = 3 [default = 0];
+  // data patch details
   optional int32 data_channels = 4;
   optional int32 data_height = 5;
   optional int32 data_width = 6;
+  // label patch details
   optional int32 label_channels = 7;
   optional int32 label_height = 8;
   optional int32 label_width = 9;
+  // augmentation params
+  optional bool rotation = 10 [default = false];
+  optional bool flip = 11 [default = false];
 }
 
 // Message that stores parameters used to apply transformation

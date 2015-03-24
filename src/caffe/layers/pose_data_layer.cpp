@@ -33,7 +33,7 @@ void PoseDataLayer<Dtype>::DataLayerSetUp(
   cursor_.reset(db_->NewCursor());
 
   // Check if we should randomly skip a few data points
-  if (this->layer_param_.pose_data_param().rand_skip()) {
+  if (this->layer_param_.pose_data_param().rand_skip() > 0) {
     unsigned int skip = caffe_rng_rand() %
                         this->layer_param_.pose_data_param().rand_skip();
     LOG(INFO) << "Skipping first " << skip << " data points.";
@@ -142,13 +142,11 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     joint_center.y /= float(n_joints);
 
     // randomly rotate
-    double angle = 0.0;
     if (rotation_angle > 0) {
-      angle = caffe_rng_rand() % rotation_angle;
-
+      double angle = caffe_rng_rand() % rotation_angle;
       cv::Mat rot = cv::getRotationMatrix2D(joint_center, angle, 1.0);
       cv::Scalar constant;
-      if(monochromate) {
+      if (monochromate) {
         constant = cv::Scalar(127);
       } else {
         constant = cv::Scalar(127, 127, 127);
