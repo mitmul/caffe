@@ -101,6 +101,8 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
     this->layer_param_.patch_based_segmentation_data_param().flip();
   const bool has_value =
     this->layer_param_.patch_based_segmentation_data_param().has_value();
+  const bool skip_blank =
+    this->layer_param_.patch_based_segmentation_data_param().skip_blank();
 
   // output of this data layer
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
@@ -155,11 +157,13 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
       crop_label.convertTo(crop_label, CV_32F);
 
       // skip too white patch
-      cv::Scalar data_sum = cv::sum(crop_data);
-      if (data_sum[0] > data_width * data_height * 255 * 0.6 &&
-          data_sum[1] > data_width * data_height * 255 * 0.6 &&
-          data_sum[2] > data_width * data_height * 255 * 0.6)
-        continue;
+      if (skip_blank) {
+        cv::Scalar data_sum = cv::sum(crop_data);
+        if (data_sum[0] > data_width * data_height * 255 * 0.6 &&
+            data_sum[1] > data_width * data_height * 255 * 0.6 &&
+            data_sum[2] > data_width * data_height * 255 * 0.6)
+          continue;
+      }
 
       // must have at least 1 building or road label
       if (cv::sum(crop_label)[0] == 0 && has_value)

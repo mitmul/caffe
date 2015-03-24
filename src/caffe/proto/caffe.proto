@@ -408,6 +408,7 @@ message PatchBasedSegmentationDataParameter {
   optional bool rotation = 10 [default = false];
   optional bool flip = 11 [default = false];
   optional bool has_value = 12 [default = false];
+  optional bool skip_blank = 13 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
