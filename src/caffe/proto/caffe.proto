@@ -407,6 +407,7 @@ message PatchBasedSegmentationDataParameter {
   // augmentation params
   optional bool rotation = 10 [default = false];
   optional bool flip = 11 [default = false];
+  optional bool has_value = 12 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
