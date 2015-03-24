@@ -347,6 +347,33 @@ private:
   void ConvertFromCVMat(const cv::Mat img, Dtype *data);
 };
 
+template <typename Dtype>
+class SegmentationDataLayer : public BasePrefetchingDataLayer<Dtype> {
+public:
+  explicit SegmentationDataLayer(const LayerParameter &param)
+    : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~SegmentationDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                              const vector<Blob<Dtype>*> &top);
+  // Data layers have no bottoms, so reshaping is trivial.
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top) {}
+
+  virtual inline const char* type() const { return "PoseData"; }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+protected:
+  virtual void InternalThreadEntry();
+
+  shared_ptr<db::DB> db_;
+  shared_ptr<db::Cursor> cursor_;
+
+private:
+  cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
+                         const int &height, const int &width);
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
+};
 
 }  // namespace caffe
 

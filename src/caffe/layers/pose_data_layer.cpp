@@ -144,69 +144,79 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     // randomly rotate
     double angle = 0.0;
     if (rotation_angle > 0) {
-      angle = (double)caffe_rng_rand() / (double)RAND_MAX * rotation_angle;
-      angle = angle / 180.0 * M_PI;
+      angle = caffe_rng_rand() % rotation_angle;
 
       cv::Mat rot = cv::getRotationMatrix2D(joint_center, angle, 1.0);
+      cv::Scalar constant;
+      if(monochromate) {
+        constant = cv::Scalar(127);
+      } else {
+        constant = cv::Scalar(127, 127, 127);
+      }
       cv::warpAffine(img, img, rot, cv::Size(img.cols, img.rows),
-                     cv::INTER_NEAREST);
+                     cv::INTER_NEAREST, cv::BORDER_CONSTANT, constant);
 
       for (int j = 0; j < n_joints; ++j) {
-        cv::Point2f p = joints[j] - joint_center;
-        joints[j].x = p.x * cos(angle) - p.y * sin(angle);
-        joints[j].y = p.x * sin(angle) + p.y * cos(angle);
-        joints[j] += joint_center;
+        vector<cv::Point2f> pt;
+        pt.push_back(joints[j]);
+        cv::Mat pm = cv::Mat(pt);
+        cv::transform(pm, pm, rot);
+        joints[j] = pm.at<cv::Point2f>(0, 0);
       }
     }
 
     // crop image
     cv::Rect bounding = cv::boundingRect(joints);
-    const int crop_w = int(bounding.width * padding_scale_w);
-    const int crop_h = int(bounding.height * padding_scale_h);
+    int aug_w = int(bounding.width * padding_scale_w);
+    aug_w = aug_w < img.cols ? aug_w : img.cols;
+    int aug_h = int(bounding.height * padding_scale_h);
+    aug_h = aug_h < img.rows ? aug_h : img.rows;
+    const int side = aug_w > aug_h ? aug_w : aug_h;
+    const int crop_w = side < img.cols ? side : img.cols;
+    const int crop_h = side < img.rows ? side : img.rows;
+
     const int trans_x =
       caffe_rng_rand() % (translation_size * 2) - translation_size;
     const int trans_y =
       caffe_rng_rand() % (translation_size * 2) - translation_size;
+
+    // adjust bounding box
     bounding.x = bounding.x - (crop_w - bounding.width) / 2 + trans_x;
     bounding.x = bounding.x >= 0 ? bounding.x : 0;
+    bounding.x = (bounding.x + crop_w) < img.cols ?
+                 bounding.x : img.cols - crop_w;
+    bounding.width = crop_w;
     bounding.y = bounding.y - (crop_h - bounding.height) / 2 + trans_y;
     bounding.y = bounding.y >= 0 ? bounding.y : 0;
-    bounding.width = (bounding.x + crop_w) < img.cols ?
-                     crop_w : img.cols - bounding.x;
-    bounding.height = (bounding.y + crop_h) < img.rows ?
-                      crop_h : img.rows - bounding.y;
+    bounding.y = (bounding.y + crop_h) < img.rows ?
+                 bounding.y : img.rows - crop_h;
+    bounding.height = crop_h;
+
+    // crop image
     cv::Mat crop_img = img(bounding);
 
     // create augmented image
     cv::Scalar mean, stddev;
     cv::meanStdDev(crop_img, mean, stddev);
-    cv::Mat aug_img(crop_h, crop_w, CV_8UC(channels),
-                    cv::Scalar(mean[0], mean[1], mean[2]));
-    const int put_x = crop_w > bounding.width ?
-                      caffe_rng_rand() % (crop_w - bounding.width) : 0;
-    const int put_y = crop_h > bounding.height ?
-                      caffe_rng_rand() % (crop_h - bounding.height) : 0;
-    crop_img.copyTo(
-      aug_img(cv::Rect(put_x, put_y, crop_img.cols, crop_img.rows)));
 
     // convert to float mat
-    aug_img.convertTo(aug_img, CV_32F);
-    cv::resize(aug_img, aug_img, cv::Size(width, height),
+    crop_img.convertTo(crop_img, CV_32F);
+    cv::resize(crop_img, crop_img, cv::Size(width, height),
                0, 0, cv::INTER_NEAREST);
 
     // normalization
     if (normalization) {
       if (!monochromate) {
         cv::Mat *slice = new cv::Mat[channels];
-        cv::split(aug_img, slice);
+        cv::split(crop_img, slice);
         for (int c = 0; c < channels; ++c) {
           cv::subtract(slice[c], mean[c], slice[c]);
           slice[c] /= stddev[c];
         }
-        cv::merge(slice, channels, aug_img);
+        cv::merge(slice, channels, crop_img);
       } else {
-        cv::subtract(aug_img, mean[0], aug_img);
-        aug_img /= stddev[0];
+        cv::subtract(crop_img, mean[0], crop_img);
+        crop_img /= stddev[0];
       }
     }
 
@@ -215,18 +225,18 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     if (horizontal_flip) {
       flip_code = caffe_rng_rand() % 2;
       if (flip_code == 1)
-        cv::flip(aug_img, aug_img, flip_code);
+        cv::flip(crop_img, crop_img, flip_code);
     }
 
     // augmented data reverting
-    ConvertFromCVMat(aug_img, top_data + this->prefetch_data_.offset(item_id));
+    ConvertFromCVMat(crop_img, top_data + this->prefetch_data_.offset(item_id));
 
     // translated joints
     for (int j = 0; j < n_joints; ++j) {
       const int index = item_id * n_joints * 2 + j * 2;
 
       // x
-      top_label[index + 0] = joints[j].x - bounding.x + put_x;
+      top_label[index + 0] = joints[j].x - bounding.x;
       top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
       if (flip_code == 1)
         top_label[index + 0] = width - top_label[index + 0];
@@ -234,7 +244,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       top_label[index + 0] /= width / 2;
 
       // y
-      top_label[index + 1] = joints[j].y - bounding.y + put_y;
+      top_label[index + 1] = joints[j].y - bounding.y;
       top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
       top_label[index + 1] -= height / 2;
       top_label[index + 1] /= height / 2;
