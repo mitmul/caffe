@@ -108,53 +108,76 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = this->prefetch_label_.mutable_cpu_data();
 
+  // Read a line
+  const string line = cursor_->value();
+  picojson::value v;
+  string err = picojson::parse(v, line);
+  if (!err.empty()) {
+    LOG(FATAL) << err;
+  }
+
+  // load image
+  const picojson::array img_fnames = v.get<picojson::array>();
+  const string data_fname = img_fnames[0].get<string>();
+  const string label_fname = img_fnames[1].get<string>();
+
+  cv::Mat data = cv::imread(data_fname);
+  cv::Mat label = cv::imread(label_fname, CV_LOAD_IMAGE_GRAYSCALE);
+
   for (int item_id = 0; item_id < batch_size; ++item_id) {
-    // Read a line
-    const string line = cursor_->value();
-    picojson::value v;
-    string err = picojson::parse(v, line);
-    if (!err.empty()) {
-      LOG(FATAL) << err;
-    }
-
-    // load image
-    const picojson::array img_fnames = v.get<picojson::array>();
-    const string data_fname = img_fnames[0].get<string>();
-    const string label_fname = img_fnames[1].get<string>();
-
-    cv::Mat _data = cv::imread(data_fname);
-    cv::Mat _label = cv::imread(label_fname, CV_LOAD_IMAGE_GRAYSCALE);
-
     while (1) {
-      cv::Mat data = _data.clone();
-      cv::Mat label = _label.clone();
-
       // cropping left-top point
-      int _x = caffe_rng_rand() % data.cols;
-      const int x = _x + data_width < data.cols ? _x : data.cols - data_width;
-      int _y = caffe_rng_rand() % data.rows;
-      const int y = _y + data_height < data.rows ? _y : data.rows - data_height;
+      const int _x = caffe_rng_rand() % data.cols;
+      const int x = _x + data_width < data.cols ?
+                    _x : data.cols - data_width;
+      const int _y = caffe_rng_rand() % data.rows;
+      const int y = _y + data_height < data.rows ?
+                    _y : data.rows - data_height;
+
+      // actual patch
+      cv::Mat crop_data, crop_label;
 
       // rotation
       if (rotation) {
+        const int rot_region_x = _x + data_width * sqrt(2) < data.cols ?
+                                 _x : data.cols - data_width * sqrt(2);
+        const int rot_region_y = _y + data_height * sqrt(2) < data.rows ?
+                                 _y : data.rows - data_height * sqrt(2);
+        const int rot_region_w = data_width * sqrt(2);
+        const int rot_region_h = data_height * sqrt(2);
+        cv::Mat rot_data = data(cv::Rect(rot_region_x, rot_region_y,
+                                         rot_region_w, rot_region_h));
+        cv::Mat rot_label = label(cv::Rect(rot_region_x, rot_region_y,
+                                           rot_region_w, rot_region_h));
+
         const double angle = caffe_rng_rand() % 360 - 180;
-        const cv::Point2f center(x + data_width / 2, y + data_height / 2);
+        const cv::Point2f center(rot_region_w / 2, rot_region_h / 2);
         const cv::Mat rot = cv::getRotationMatrix2D(center, angle, 1.0);
         const cv::Scalar constant(127, 127, 127);
-        cv::warpAffine(data, data, rot, cv::Size(data.cols, data.rows),
+        cv::warpAffine(rot_data, rot_data, rot, rot_data.size(),
                        cv::INTER_NEAREST, cv::BORDER_CONSTANT, constant);
-        cv::warpAffine(label, label, rot, cv::Size(label.cols, label.rows),
+        cv::warpAffine(rot_label, rot_label, rot, rot_label.size(),
                        cv::INTER_NEAREST, cv::BORDER_CONSTANT, cv::Scalar(0));
-      }
 
-      // create patch
-      cv::Mat crop_data = data(cv::Rect(x, y, data_width, data_height));
-      crop_data.convertTo(crop_data, CV_32F);
-      cv::Mat crop_label =
-        label(cv::Rect(x + data_width / 2 - label_width / 2,
-                       y + data_height / 2 - label_height / 2,
-                       label_width, label_height));
-      crop_label.convertTo(crop_label, CV_32F);
+        // create patch
+        crop_data = rot_data(cv::Rect(rot_region_w / 2 - data_width / 2,
+                                      rot_region_h / 2 - data_height / 2,
+                                      data_width, data_height));
+        crop_data.convertTo(crop_data, CV_32F);
+        crop_label = rot_label(cv::Rect(rot_region_w / 2 - label_width / 2,
+                                        rot_region_h / 2 - label_height / 2,
+                                        label_width, label_height));
+        crop_label.convertTo(crop_label, CV_32F);
+
+      } else {
+        // create patch
+        crop_data = data(cv::Rect(x, y, data_width, data_height));
+        crop_data.convertTo(crop_data, CV_32F);
+        crop_label = label(cv::Rect(x + data_width / 2 - label_width / 2,
+                                    y + data_height / 2 - label_height / 2,
+                                    label_width, label_height));
+        crop_label.convertTo(crop_label, CV_32F);
+      }
 
       // skip too white patch
       if (skip_blank) {
@@ -200,16 +223,18 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
                        top_label + this->prefetch_label_.offset(item_id));
       break;
     }
-
-    // go to the next iter
-    cursor_->Next();
-    if (!cursor_->valid()) {
-      DLOG(INFO) << "Restarting data prefetching from start.";
-      cursor_->SeekToFirst();
-    }
   }
+
+  // go to the next iter
+  cursor_->Next();
+  if (!cursor_->valid()) {
+    DLOG(INFO) << "Restarting data prefetching from start.";
+    cursor_->SeekToFirst();
+  }
+
+  // elapsed time
   batch_timer.Stop();
-  DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  LOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
 }
 
 template <typename Dtype>
