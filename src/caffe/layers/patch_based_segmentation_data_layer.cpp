@@ -234,7 +234,7 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
 
   // elapsed time
   batch_timer.Stop();
-  LOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
+  DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
 }
 
 template <typename Dtype>
