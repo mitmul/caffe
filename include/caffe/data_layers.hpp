@@ -27,7 +27,7 @@ namespace caffe {
  */
 template <typename Dtype>
 class BaseDataLayer : public Layer<Dtype> {
- public:
+public:
   explicit BaseDataLayer(const LayerParameter &param);
   virtual ~BaseDataLayer() {}
   // LayerSetUp: implements common data layer setup functionality, and calls
@@ -46,7 +46,7 @@ class BaseDataLayer : public Layer<Dtype> {
   virtual void Backward_gpu(const vector<Blob<Dtype>*> &top,
                             const vector<bool> &propagate_down, const vector<Blob<Dtype>*> &bottom) {}
 
- protected:
+protected:
   TransformationParameter transform_param_;
   shared_ptr<DataTransformer<Dtype> > data_transformer_;
   bool output_labels_;
@@ -55,7 +55,7 @@ class BaseDataLayer : public Layer<Dtype> {
 template <typename Dtype>
 class BasePrefetchingDataLayer :
   public BaseDataLayer<Dtype>, public InternalThread {
- public:
+public:
   explicit BasePrefetchingDataLayer(const LayerParameter &param)
     : BaseDataLayer<Dtype>(param) {}
   virtual ~BasePrefetchingDataLayer() {}
@@ -75,7 +75,7 @@ class BasePrefetchingDataLayer :
   // The thread's function
   virtual void InternalThreadEntry() {}
 
- protected:
+protected:
   Blob<Dtype> prefetch_data_;
   Blob<Dtype> prefetch_label_;
   Blob<Dtype> transformed_data_;
@@ -83,7 +83,7 @@ class BasePrefetchingDataLayer :
 
 template <typename Dtype>
 class DataLayer : public BasePrefetchingDataLayer<Dtype> {
- public:
+public:
   explicit DataLayer(const LayerParameter &param)
     : BasePrefetchingDataLayer<Dtype>(param) {}
   virtual ~DataLayer();
@@ -95,7 +95,7 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual inline int MinTopBlobs() const { return 1; }
   virtual inline int MaxTopBlobs() const { return 2; }
 
- protected:
+protected:
   virtual void InternalThreadEntry();
 
   shared_ptr<db::DB> db_;
@@ -109,7 +109,7 @@ class DataLayer : public BasePrefetchingDataLayer<Dtype> {
  */
 template <typename Dtype>
 class DummyDataLayer : public Layer<Dtype> {
- public:
+public:
   explicit DummyDataLayer(const LayerParameter &param)
     : Layer<Dtype>(param) {}
   virtual void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
@@ -122,7 +122,7 @@ class DummyDataLayer : public Layer<Dtype> {
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
 
- protected:
+protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
   virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
@@ -141,7 +141,7 @@ class DummyDataLayer : public Layer<Dtype> {
  */
 template <typename Dtype>
 class HDF5DataLayer : public Layer<Dtype> {
- public:
+public:
   explicit HDF5DataLayer(const LayerParameter &param)
     : Layer<Dtype>(param) {}
   virtual ~HDF5DataLayer();
@@ -155,7 +155,7 @@ class HDF5DataLayer : public Layer<Dtype> {
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int MinTopBlobs() const { return 1; }
 
- protected:
+protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
@@ -180,12 +180,12 @@ class HDF5DataLayer : public Layer<Dtype> {
  */
 template <typename Dtype>
 class HDF5OutputLayer : public Layer<Dtype> {
- public:
+public:
   explicit HDF5OutputLayer(const LayerParameter& param)
-      : Layer<Dtype>(param), file_opened_(false) {}
+    : Layer<Dtype>(param), file_opened_(false) {}
   virtual ~HDF5OutputLayer();
   virtual void LayerSetUp(const vector<Blob<Dtype>*>& bottom,
-      const vector<Blob<Dtype>*>& top);
+                          const vector<Blob<Dtype>*>& top);
   // Data layers have no bottoms, so reshaping is trivial.
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top) {}
@@ -197,7 +197,7 @@ class HDF5OutputLayer : public Layer<Dtype> {
 
   inline std::string file_name() const { return file_name_; }
 
- protected:
+protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
   virtual void Forward_gpu(const vector<Blob<Dtype>*> &bottom,
@@ -222,7 +222,7 @@ class HDF5OutputLayer : public Layer<Dtype> {
  */
 template <typename Dtype>
 class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
- public:
+public:
   explicit ImageDataLayer(const LayerParameter &param)
     : BasePrefetchingDataLayer<Dtype>(param) {}
   virtual ~ImageDataLayer();
@@ -233,7 +233,7 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int ExactNumTopBlobs() const { return 2; }
 
- protected:
+protected:
   shared_ptr<Caffe::RNG> prefetch_rng_;
   virtual void ShuffleImages();
   virtual void InternalThreadEntry();
@@ -249,7 +249,7 @@ class ImageDataLayer : public BasePrefetchingDataLayer<Dtype> {
  */
 template <typename Dtype>
 class MemoryDataLayer : public BaseDataLayer<Dtype> {
- public:
+public:
   explicit MemoryDataLayer(const LayerParameter &param)
     : BaseDataLayer<Dtype>(param), has_new_data_(false) {}
   virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
@@ -260,7 +260,7 @@ class MemoryDataLayer : public BaseDataLayer<Dtype> {
   virtual inline int ExactNumTopBlobs() const { return 2; }
   virtual void AddDatumVector(const vector<Datum>& datum_vector);
   virtual void AddMatVector(const vector<cv::Mat>& mat_vector,
-      const vector<int>& labels);
+                            const vector<int>& labels);
 
   // Reset should accept const pointers, but can't, because the memory
   //  will be given to Blob, which is mutable
@@ -271,7 +271,7 @@ class MemoryDataLayer : public BaseDataLayer<Dtype> {
   int height() { return height_; }
   int width() { return width_; }
 
- protected:
+protected:
   virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
                            const vector<Blob<Dtype>*> &top);
 
@@ -293,7 +293,7 @@ class MemoryDataLayer : public BaseDataLayer<Dtype> {
  */
 template <typename Dtype>
 class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
- public:
+public:
   explicit WindowDataLayer(const LayerParameter &param)
     : BasePrefetchingDataLayer<Dtype>(param) {}
   virtual ~WindowDataLayer();
@@ -304,7 +304,7 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int ExactNumTopBlobs() const { return 2; }
 
- protected:
+protected:
   virtual unsigned int PrefetchRand();
   virtual void InternalThreadEntry();
 
@@ -319,6 +319,60 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   bool has_mean_values_;
   bool cache_images_;
   vector<std::pair<std::string, Datum > > image_database_cache_;
+};
+
+template <typename Dtype>
+class PoseDataLayer : public BasePrefetchingDataLayer<Dtype> {
+public:
+  explicit PoseDataLayer(const LayerParameter &param)
+    : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~PoseDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                              const vector<Blob<Dtype>*> &top);
+  // Data layers have no bottoms, so reshaping is trivial.
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top) {}
+
+  virtual inline const char* type() const { return "PoseData"; }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+protected:
+  virtual void InternalThreadEntry();
+
+  shared_ptr<db::DB> db_;
+  shared_ptr<db::Cursor> cursor_;
+
+private:
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
+};
+
+template <typename Dtype>
+class PatchBasedSegmentationDataLayer : public BasePrefetchingDataLayer<Dtype> {
+public:
+  explicit PatchBasedSegmentationDataLayer(const LayerParameter &param)
+    : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~PatchBasedSegmentationDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                              const vector<Blob<Dtype>*> &top);
+  // Data layers have no bottoms, so reshaping is trivial.
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top) {}
+
+  virtual inline const char* type() const { return "PoseData"; }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+protected:
+  virtual void InternalThreadEntry();
+
+  shared_ptr<db::DB> db_;
+  shared_ptr<db::Cursor> cursor_;
+
+private:
+  cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
+                         const int &height, const int &width);
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
 };
 
 }  // namespace caffe

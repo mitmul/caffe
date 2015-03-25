@@ -339,10 +339,10 @@ message LayerParameter {
 
   optional PrecisionRecallLossParameter precision_recall_loss_param = 200;
   optional SoftmaxCrossEntropyParameter softmax_cross_entropy_loss_param = 201;
-  optional AugmentParameter augment_param = 202;
-  optional PoseDataAugmentParameter regression_augment_param = 203;
-  optional ReshapeParameter reshape_param = 204;
-  optional BNParameter bn_param = 205;
+  optional ReshapeParameter reshape_param = 202;
+  optional BNParameter bn_param = 203;
+  optional PoseDataParameter pose_data_param = 204;
+  optional PatchBasedSegmentationDataParameter patch_based_segmentation_data_param = 205;
 }
 
 message PrecisionRecallLossParameter {
@@ -351,40 +351,6 @@ message PrecisionRecallLossParameter {
 
 message SoftmaxCrossEntropyParameter {
   repeated float weights = 1;
-}
-
-message AugmentParameter {
-  // crop a certain region around the center of input data
-  repeated uint32 crop_size = 1;
-  // binarization
-  repeated bool binarize = 2;
-  // randomly flipping
-  optional bool flip = 3 [default = false];
-  // randomly rotate arount the center
-  optional bool rotate = 4 [default = false];
-  // subtract constant value from data
-  repeated float subtract = 5;
-  // divide data with constant value
-  repeated float divide = 6;
-  // data-wise mean subtraction
-  optional bool mean_normalize = 7 [default = false];
-  // data-wise stddev division
-  optional bool stddev_normalize = 8 [default = false];
-}
-
-message PoseDataAugmentParameter {
-  // crop a certain region around the center of input data
-  optional uint32 crop_size = 1 [default = 220];
-  // randomly flipping
-  optional bool flip = 2 [default = false];
-  // subtract constant value from data
-  repeated float subtract = 3;
-  // divide data with constant value
-  repeated float divide = 4;
-  // data-wise mean subtraction
-  optional bool mean_normalize = 5 [default = false];
-  // data-wise stddev division
-  optional bool stddev_normalize = 6 [default = false];
 }
 
 message ReshapeParameter {
@@ -403,6 +369,46 @@ message ReshapeParameter {
 message BNParameter {
   optional FillerParameter scale_filler = 1; // The filler for the scale
   optional FillerParameter shift_filler = 2; // The filler for the shift
+}
+
+message PoseDataParameter {
+  optional string source = 1;
+  optional int32 batch_size = 2;
+  optional uint32 rand_skip = 3 [default = 0];
+  // dataset details
+  optional uint32 channels = 4 [default = 3];
+  optional uint32 height = 5 [default = 220];
+  optional uint32 width = 6 [default = 220];
+  optional uint32 n_joints = 7 [default = 14];
+  // crop width*padding_scale x height*padding_scale
+  optional float padding_scale_h = 8 [default = 1.5];
+  optional float padding_scale_w = 9 [default = 1.5];
+  // crop region left-top point randomness
+  optional uint32 translation_size = 10 [default = 10];
+  // stddev division -> mean subtraction
+  optional bool normalization = 11 [default = true];
+  optional bool horizontal_flip = 12 [default = true];
+  optional uint32 rotation_angle = 13 [default = 0];
+  optional bool monochromate = 14 [default = false];
+}
+
+message PatchBasedSegmentationDataParameter {
+  optional string source =1;
+  optional int32 batch_size = 2;
+  optional uint32 rand_skip = 3 [default = 0];
+  // data patch details
+  optional int32 data_channels = 4;
+  optional int32 data_height = 5;
+  optional int32 data_width = 6;
+  // label patch details
+  optional int32 label_channels = 7;
+  optional int32 label_height = 8;
+  optional int32 label_width = 9;
+  // augmentation params
+  optional bool rotation = 10 [default = false];
+  optional bool flip = 11 [default = false];
+  optional bool has_value = 12 [default = false];
+  optional bool skip_blank = 13 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
