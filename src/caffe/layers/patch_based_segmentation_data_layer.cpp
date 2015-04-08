@@ -83,8 +83,6 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
 
   const int batch_size =
     this->layer_param_.patch_based_segmentation_data_param().batch_size();
-  // const int data_channels =
-  //   this->layer_param_.patch_based_segmentation_data_param().data_channels();
   const int data_height =
     this->layer_param_.patch_based_segmentation_data_param().data_height();
   const int data_width =
