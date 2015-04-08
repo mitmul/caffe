@@ -359,7 +359,9 @@ public:
   virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
                        const vector<Blob<Dtype>*> &top) {}
 
-  virtual inline const char* type() const { return "PoseData"; }
+  virtual inline const char* type() const {
+    return "PatchBasedSegmentationData";
+  }
   virtual inline int ExactNumBottomBlobs() const { return 0; }
   virtual inline int ExactNumTopBlobs() const { return 2; }
 

@@ -276,6 +276,10 @@ void PoseDataLayer<Dtype>::ConvertFromCVMat(const cv::Mat img, Dtype *data) {
   }
 }
 
+#ifdef CPU_ONLY
+STUB_GPU(PoseDataLayer);
+#endif
+
 INSTANTIATE_CLASS(PoseDataLayer);
 REGISTER_LAYER_CLASS(PoseData);
 

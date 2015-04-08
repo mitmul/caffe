@@ -41,8 +41,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
     }
   } else {
     for (int i = 0; i < count; ++i) {
-      loss -= data[i] * (label[i] - (data[i] >= 0)) -
-              log(1 + exp(data[i] - 2 * data[i] * (data[i] >= 0)));
+      loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
     }
   }
   top[0]->mutable_cpu_data()[0] = loss / num / dim;

@@ -274,6 +274,10 @@ void PatchBasedSegmentationDataLayer<Dtype>::ConvertFromCVMat(
   }
 }
 
+#ifdef CPU_ONLY
+STUB_GPU(PatchBasedSegmentationDataLayer);
+#endif
+
 INSTANTIATE_CLASS(PatchBasedSegmentationDataLayer);
 REGISTER_LAYER_CLASS(PatchBasedSegmentationData);
 
