@@ -13,19 +13,36 @@ namespace caffe {
 template <typename Dtype>
 void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
   const vector<Blob<Dtype>*> &bottom, const vector<Blob<Dtype>*> &top) {
-  // The forward pass computes the softmax prob values.
-  softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
-  // Compute the loss (negative log likelihood)
+
+  // input details
   const int count = bottom[0]->count();
   const int num = bottom[0]->num();
   const int dim = bottom[0]->count() / num;
   const int spatial_dim = bottom[0]->width() * bottom[0]->height();
   const int channels = bottom[0]->channels();
+
+  // all units in this channel goes to zero
+  const int zero_channel =
+    this->layer_param_.softmax_cross_entropy_loss_param().zero_channel();
+  if (zero_channel >= 0) {
+    Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
+    for (int i = 0; i < num; ++i) {
+      for (int j = 0; j < spatial_dim; ++j) {
+        const int index = i * dim + zero_channel * spatial_dim + j;
+        data[index] = 0.0;
+      }
+    }
+  }
+
+  // The forward pass computes the softmax prob values.
+  softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
+
   // Stable version of loss computation from input data
   const Dtype *data = prob_.cpu_data();
   const Dtype *label = bottom[1]->cpu_data();
   Dtype loss = 0;
 
+  // Compute the loss (negative log likelihood)
   const google::protobuf::RepeatedField<float> weights =
     this->layer_param_.softmax_cross_entropy_loss_param().weights();
   if (weights.size() > 0) {
