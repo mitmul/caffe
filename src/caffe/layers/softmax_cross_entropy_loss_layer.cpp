@@ -65,6 +65,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   }
 
   // The forward pass computes the softmax prob values.
+  softmax_bottom_vec_[0] = bottom[0];
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
   // Stable version of loss computation from input data

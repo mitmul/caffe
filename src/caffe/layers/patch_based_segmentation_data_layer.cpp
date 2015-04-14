@@ -106,23 +106,22 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
   Dtype* top_label = this->prefetch_label_.mutable_cpu_data();
 
-  // Read a line
-  const string line = cursor_->value();
-  picojson::value v;
-  string err = picojson::parse(v, line);
-  if (!err.empty()) {
-    LOG(FATAL) << err;
-  }
-
-  // load image
-  const picojson::array img_fnames = v.get<picojson::array>();
-  const string data_fname = img_fnames[0].get<string>();
-  const string label_fname = img_fnames[1].get<string>();
-
-  cv::Mat data = cv::imread(data_fname);
-  cv::Mat label = cv::imread(label_fname, CV_LOAD_IMAGE_GRAYSCALE);
-
   for (int item_id = 0; item_id < batch_size; ++item_id) {
+    // Read a line
+    const string line = cursor_->value();
+    picojson::value v;
+    string err = picojson::parse(v, line);
+    if (!err.empty()) {
+      LOG(FATAL) << err;
+    }
+
+    // load image
+    const picojson::array img_fnames = v.get<picojson::array>();
+    const string data_fname = img_fnames[0].get<string>();
+    const string label_fname = img_fnames[1].get<string>();
+    cv::Mat data = cv::imread(data_fname);
+    cv::Mat label = cv::imread(label_fname, CV_LOAD_IMAGE_GRAYSCALE);
+
     while (1) {
       // cropping left-top point
       const int _x = caffe_rng_rand() % data.cols;
@@ -223,15 +222,14 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
                        top_label + this->prefetch_label_.offset(item_id));
       break;
     }
-  }
 
-  // go to the next iter
-  cursor_->Next();
-  if (!cursor_->valid()) {
-    DLOG(INFO) << "Restarting data prefetching from start.";
-    cursor_->SeekToFirst();
+    // go to the next iter
+    cursor_->Next();
+    if (!cursor_->valid()) {
+      DLOG(INFO) << "Restarting data prefetching from start.";
+      cursor_->SeekToFirst();
+    }
   }
-
   // elapsed time
   batch_timer.Stop();
   DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";
