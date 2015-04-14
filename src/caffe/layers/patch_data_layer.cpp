@@ -18,29 +18,29 @@
 namespace caffe {
 
 template <typename Dtype>
-PatchBasedSegmentationDataLayer<Dtype>::
-~PatchBasedSegmentationDataLayer<Dtype>() {
+PatchDataLayer<Dtype>::
+~PatchDataLayer<Dtype>() {
   this->JoinPrefetchThread();
 }
 
 template <typename Dtype>
-void PatchBasedSegmentationDataLayer<Dtype>::DataLayerSetUp(
+void PatchDataLayer<Dtype>::DataLayerSetUp(
   const vector<Blob<Dtype>*>& bottom,
   const vector<Blob<Dtype>*>& top) {
 
   // Initialize DB
   db_.reset(db::GetDB("lmdb"));
   db_->Open(
-    this->layer_param_.patch_based_segmentation_data_param().source(),
+    this->layer_param_.patch_data_param().source(),
     db::READ);
   cursor_.reset(db_->NewCursor());
 
   // Check if we should randomly skip a few data points
   if (
-    this->layer_param_.patch_based_segmentation_data_param().rand_skip() > 0) {
+    this->layer_param_.patch_data_param().rand_skip() > 0) {
     unsigned int skip =
       caffe_rng_rand() %
-      this->layer_param_.patch_based_segmentation_data_param().rand_skip();
+      this->layer_param_.patch_data_param().rand_skip();
     LOG(INFO) << "Skipping first " << skip << " data points.";
     while (skip-- > 0) {
       cursor_->Next();
@@ -48,59 +48,59 @@ void PatchBasedSegmentationDataLayer<Dtype>::DataLayerSetUp(
   }
 
   top[0]->Reshape(
-    this->layer_param_.patch_based_segmentation_data_param().batch_size(),
-    this->layer_param_.patch_based_segmentation_data_param().data_channels(),
-    this->layer_param_.patch_based_segmentation_data_param().data_height(),
-    this->layer_param_.patch_based_segmentation_data_param().data_width());
+    this->layer_param_.patch_data_param().batch_size(),
+    this->layer_param_.patch_data_param().data_channels(),
+    this->layer_param_.patch_data_param().data_height(),
+    this->layer_param_.patch_data_param().data_width());
   this->prefetch_data_.Reshape(
-    this->layer_param_.patch_based_segmentation_data_param().batch_size(),
-    this->layer_param_.patch_based_segmentation_data_param().data_channels(),
-    this->layer_param_.patch_based_segmentation_data_param().data_height(),
-    this->layer_param_.patch_based_segmentation_data_param().data_width());
+    this->layer_param_.patch_data_param().batch_size(),
+    this->layer_param_.patch_data_param().data_channels(),
+    this->layer_param_.patch_data_param().data_height(),
+    this->layer_param_.patch_data_param().data_width());
   top[1]->Reshape(
-    this->layer_param_.patch_based_segmentation_data_param().batch_size(),
-    this->layer_param_.patch_based_segmentation_data_param().label_channels(),
-    this->layer_param_.patch_based_segmentation_data_param().label_height(),
-    this->layer_param_.patch_based_segmentation_data_param().label_width());
+    this->layer_param_.patch_data_param().batch_size(),
+    this->layer_param_.patch_data_param().label_channels(),
+    this->layer_param_.patch_data_param().label_height(),
+    this->layer_param_.patch_data_param().label_width());
   this->transformed_data_.Reshape(
     1,
-    this->layer_param_.patch_based_segmentation_data_param().data_channels(),
-    this->layer_param_.patch_based_segmentation_data_param().data_height(),
-    this->layer_param_.patch_based_segmentation_data_param().data_width());
+    this->layer_param_.patch_data_param().data_channels(),
+    this->layer_param_.patch_data_param().data_height(),
+    this->layer_param_.patch_data_param().data_width());
   this->prefetch_label_.Reshape(
-    this->layer_param_.patch_based_segmentation_data_param().batch_size(),
-    this->layer_param_.patch_based_segmentation_data_param().label_channels(),
-    this->layer_param_.patch_based_segmentation_data_param().label_height(),
-    this->layer_param_.patch_based_segmentation_data_param().label_width());
+    this->layer_param_.patch_data_param().batch_size(),
+    this->layer_param_.patch_data_param().label_channels(),
+    this->layer_param_.patch_data_param().label_height(),
+    this->layer_param_.patch_data_param().label_width());
 }
 
 template <typename Dtype>
-void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
+void PatchDataLayer<Dtype>::InternalThreadEntry() {
   CPUTimer batch_timer;
   batch_timer.Start();
   CHECK(this->prefetch_data_.count());
   CHECK(this->transformed_data_.count());
 
   const int batch_size =
-    this->layer_param_.patch_based_segmentation_data_param().batch_size();
+    this->layer_param_.patch_data_param().batch_size();
   const int data_height =
-    this->layer_param_.patch_based_segmentation_data_param().data_height();
+    this->layer_param_.patch_data_param().data_height();
   const int data_width =
-    this->layer_param_.patch_based_segmentation_data_param().data_width();
+    this->layer_param_.patch_data_param().data_width();
   const int label_channels =
-    this->layer_param_.patch_based_segmentation_data_param().label_channels();
+    this->layer_param_.patch_data_param().label_channels();
   const int label_height =
-    this->layer_param_.patch_based_segmentation_data_param().label_height();
+    this->layer_param_.patch_data_param().label_height();
   const int label_width =
-    this->layer_param_.patch_based_segmentation_data_param().label_width();
+    this->layer_param_.patch_data_param().label_width();
   const bool rotation =
-    this->layer_param_.patch_based_segmentation_data_param().rotation();
+    this->layer_param_.patch_data_param().rotation();
   const bool flip =
-    this->layer_param_.patch_based_segmentation_data_param().flip();
+    this->layer_param_.patch_data_param().flip();
   const bool has_value =
-    this->layer_param_.patch_based_segmentation_data_param().has_value();
+    this->layer_param_.patch_data_param().has_value();
   const bool skip_blank =
-    this->layer_param_.patch_based_segmentation_data_param().skip_blank();
+    this->layer_param_.patch_data_param().skip_blank();
 
   // output of this data layer
   Dtype* top_data = this->prefetch_data_.mutable_cpu_data();
@@ -236,7 +236,7 @@ void PatchBasedSegmentationDataLayer<Dtype>::InternalThreadEntry() {
 }
 
 template <typename Dtype>
-cv::Mat PatchBasedSegmentationDataLayer<Dtype>::ConvertToCVMat(
+cv::Mat PatchDataLayer<Dtype>::ConvertToCVMat(
   const Dtype *data, const int &channels,
   const int &height, const int &width) {
   cv::Mat img(height, width, CV_32FC(channels));
@@ -255,7 +255,7 @@ cv::Mat PatchBasedSegmentationDataLayer<Dtype>::ConvertToCVMat(
 }
 
 template <typename Dtype>
-void PatchBasedSegmentationDataLayer<Dtype>::ConvertFromCVMat(
+void PatchDataLayer<Dtype>::ConvertFromCVMat(
   const cv::Mat img, Dtype *data) {
   const int channels = img.channels();
   const int height = img.rows;
@@ -273,10 +273,10 @@ void PatchBasedSegmentationDataLayer<Dtype>::ConvertFromCVMat(
 }
 
 #ifdef CPU_ONLY
-STUB_GPU(PatchBasedSegmentationDataLayer);
+STUB_GPU(PatchDataLayer);
 #endif
 
-INSTANTIATE_CLASS(PatchBasedSegmentationDataLayer);
-REGISTER_LAYER_CLASS(PatchBasedSegmentationData);
+INSTANTIATE_CLASS(PatchDataLayer);
+REGISTER_LAYER_CLASS(PatchData);
 
 }  // namespace caffe
