@@ -1,5 +1,4 @@
 #include <opencv2/opencv.hpp>
-
 #include <stdint.h>
 
 #include <string>
@@ -183,8 +182,9 @@ void PatchDataLayer<Dtype>::InternalThreadEntry() {
         cv::Scalar data_sum = cv::sum(crop_data);
         if (data_sum[0] > data_width * data_height * 255 * 0.6 &&
             data_sum[1] > data_width * data_height * 255 * 0.6 &&
-            data_sum[2] > data_width * data_height * 255 * 0.6)
+            data_sum[2] > data_width * data_height * 255 * 0.6) {
           continue;
+        }
       }
 
       // must have at least 1 building or road label

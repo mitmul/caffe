@@ -5,6 +5,7 @@
 
 #include "caffe/blob.hpp"
 #include "caffe/common.hpp"
+#include "caffe/layer.hpp"
 #include "caffe/proto/caffe.pb.h"
 
 namespace caffe {
@@ -15,7 +16,7 @@ namespace caffe {
  */
 template <typename Dtype>
 class DataTransformer {
- public:
+public:
   explicit DataTransformer(const TransformationParameter& param, Phase phase);
   virtual ~DataTransformer() {}
 
@@ -48,7 +49,7 @@ class DataTransformer {
    *    set_cpu_data() is used. See memory_layer.cpp for an example.
    */
   void Transform(const vector<Datum> & datum_vector,
-                Blob<Dtype>* transformed_blob);
+                 Blob<Dtype>* transformed_blob);
 
   /**
    * @brief Applies the transformation defined in the data layer's
@@ -61,7 +62,7 @@ class DataTransformer {
    *    set_cpu_data() is used. See memory_layer.cpp for an example.
    */
   void Transform(const vector<cv::Mat> & mat_vector,
-                Blob<Dtype>* transformed_blob);
+                 Blob<Dtype>* transformed_blob);
   /**
    * @brief Applies the transformation defined in the data layer's
    * transform_param block to a cv::Mat
@@ -87,15 +88,15 @@ class DataTransformer {
    */
   void Transform(Blob<Dtype>* input_blob, Blob<Dtype>* transformed_blob);
 
- protected:
-   /**
-   * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).
-   *
-   * @param n
-   *    The upperbound (exclusive) value of the random number.
-   * @return
-   *    A uniformly random integer value from ({0, 1, ..., n-1}).
-   */
+protected:
+  /**
+  * @brief Generates a random integer from Uniform({0, 1, ..., n-1}).
+  *
+  * @param n
+  *    The upperbound (exclusive) value of the random number.
+  * @return
+  *    A uniformly random integer value from ({0, 1, ..., n-1}).
+  */
   virtual int Rand(int n);
 
   void Transform(const Datum& datum, Dtype* transformed_data);
@@ -107,6 +108,39 @@ class DataTransformer {
   Phase phase_;
   Blob<Dtype> data_mean_;
   vector<Dtype> mean_values_;
+};
+
+/**
+ * @brief Perform some transformation to input data and label.
+ */
+template <typename Dtype>
+class PatchTransformerLayer : public Layer<Dtype> {
+public:
+  explicit PatchTransformerLayer(const LayerParameter &param)
+    : Layer<Dtype>(param) {}
+  void LayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                  const vector<Blob<Dtype>*> &top);
+  virtual void Reshape(const vector<Blob<Dtype>*> &bottom,
+                       const vector<Blob<Dtype>*> &top);
+  virtual inline const char* type() const { return "PatchTransformer"; }
+  virtual inline int MinBottomBlobs() const { return 1; }
+  virtual inline int MaxBottomBlobs() const { return 2; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+protected:
+  virtual void Forward_cpu(const vector<Blob<Dtype>*> &bottom,
+                           const vector<Blob<Dtype>*> &top);
+  virtual void Backward_cpu(const vector<Blob<Dtype>*> &top,
+                            const vector<bool> &propagate_down,
+                            const vector<Blob<Dtype>*> &bottom) {
+    NOT_IMPLEMENTED;
+  }
+
+private:
+  cv::Mat ConvertToCVMat(const Dtype *data, const int &channels,
+                         const int &height, const int &width);
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
 };
 
 }  // namespace caffe
