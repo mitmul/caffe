@@ -343,7 +343,7 @@ message LayerParameter {
   optional BNParameter bn_param = 203;
   optional PoseDataParameter pose_data_param = 204;
   optional PatchDataParameter patch_data_param = 205;
-  optional PatchTransformerParameter patcH_transformer_param = 206;
+  optional PatchTransformerParameter patch_transformer_param = 206;
 }
 
 message PrecisionRecallLossParameter {
