@@ -333,6 +333,38 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+
+  optional PrecisionRecallLossParameter precision_recall_loss_param = 200;
+  optional SoftmaxCrossEntropyParameter softmax_cross_entropy_loss_param = 201;
+  optional PatchTransformerParameter patch_transformer_param = 202;
+}
+
+message PrecisionRecallLossParameter {
+  optional uint32 point_num = 1 [default = 256];
+}
+
+message SoftmaxCrossEntropyParameter {
+  repeated float weights = 1;
+  optional int32 zero_channel = 2 [default = -1];
+}
+
+message PatchTransformerParameter {
+  // crop a certain region around the center of input data
+  repeated uint32 crop_size = 1;
+  // binarization
+  repeated bool binarize = 2;
+  // randomly flipping
+  optional bool flip = 3 [default = false];
+  // randomly rotate arount the center
+  optional bool rotate = 4 [default = false];
+  // subtract constant value from data
+  repeated float subtract = 5;
+  // divide data with constant value
+  repeated float divide = 6;
+  // data-wise mean subtraction
+  optional bool mean_normalize = 7 [default = false];
+  // data-wise stddev division
+  optional bool stddev_normalize = 8 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
