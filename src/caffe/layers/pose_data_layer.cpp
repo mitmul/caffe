@@ -169,9 +169,6 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     aug_w = aug_w < img.cols ? aug_w : img.cols;
     int aug_h = int(bounding.height * padding_scale_h);
     aug_h = aug_h < img.rows ? aug_h : img.rows;
-    const int side = aug_w > aug_h ? aug_w : aug_h;
-    const int crop_w = side < img.cols ? side : img.cols;
-    const int crop_h = side < img.rows ? side : img.rows;
 
     const int trans_x =
       caffe_rng_rand() % (translation_size * 2) - translation_size;
@@ -179,16 +176,16 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       caffe_rng_rand() % (translation_size * 2) - translation_size;
 
     // adjust bounding box
-    bounding.x = bounding.x - (crop_w - bounding.width) / 2 + trans_x;
+    bounding.x = bounding.x - (aug_w - bounding.width) / 2 + trans_x;
     bounding.x = bounding.x >= 0 ? bounding.x : 0;
-    bounding.x = (bounding.x + crop_w) < img.cols ?
-                 bounding.x : img.cols - crop_w;
-    bounding.width = crop_w;
-    bounding.y = bounding.y - (crop_h - bounding.height) / 2 + trans_y;
+    bounding.x = (bounding.x + aug_w) < img.cols ?
+                 bounding.x : img.cols - aug_w;
+    bounding.width = aug_w;
+    bounding.y = bounding.y - (aug_h - bounding.height) / 2 + trans_y;
     bounding.y = bounding.y >= 0 ? bounding.y : 0;
-    bounding.y = (bounding.y + crop_h) < img.rows ?
-                 bounding.y : img.rows - crop_h;
-    bounding.height = crop_h;
+    bounding.y = (bounding.y + aug_h) < img.rows ?
+                 bounding.y : img.rows - aug_h;
+    bounding.height = aug_h;
 
     // crop image
     cv::Mat crop_img = img(bounding);
@@ -235,7 +232,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // x
       top_label[index + 0] = joints[j].x - bounding.x;
-      top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
+      top_label[index + 0] = float(top_label[index + 0]) / aug_w * width;
       if (flip_code == 1)
         top_label[index + 0] = width - top_label[index + 0];
       top_label[index + 0] -= width / 2;
@@ -243,7 +240,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // y
       top_label[index + 1] = joints[j].y - bounding.y;
-      top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
+      top_label[index + 1] = float(top_label[index + 1]) / aug_h * height;
       top_label[index + 1] -= height / 2;
       top_label[index + 1] /= height / 2;
     }
