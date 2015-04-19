@@ -325,6 +325,29 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   vector<std::pair<std::string, Datum > > image_database_cache_;
 };
 
+template <typename Dtype>
+class PoseDataLayer : public BasePrefetchingDataLayer<Dtype> {
+public:
+  explicit PoseDataLayer(const LayerParameter &param)
+    : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~PoseDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*> &bottom,
+                              const vector<Blob<Dtype>*> &top);
+
+  virtual inline const char* type() const { return "PoseData"; }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int ExactNumTopBlobs() const { return 2; }
+
+protected:
+  virtual void InternalThreadEntry();
+
+  shared_ptr<db::DB> db_;
+  shared_ptr<db::Cursor> cursor_;
+
+private:
+  void ConvertFromCVMat(const cv::Mat img, Dtype *data);
+};
+
 }  // namespace caffe
 
 #endif  // CAFFE_DATA_LAYERS_HPP_

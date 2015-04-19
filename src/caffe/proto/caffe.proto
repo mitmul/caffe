@@ -332,6 +332,29 @@ message LayerParameter {
   optional TanHParameter tanh_param = 127;
   optional ThresholdParameter threshold_param = 128;
   optional WindowDataParameter window_data_param = 129;
+
+  optional PoseDataParameter pose_data_param = 200;
+}
+
+message PoseDataParameter {
+  optional string source = 1;
+  optional int32 batch_size = 2;
+  optional uint32 rand_skip = 3 [default = 0];
+  // dataset details
+  optional uint32 channels = 4 [default = 3];
+  optional uint32 height = 5 [default = 220];
+  optional uint32 width = 6 [default = 220];
+  optional uint32 n_joints = 7 [default = 14];
+  // crop width*padding_scale x height*padding_scale
+  optional float padding_scale_h = 8 [default = 1.5];
+  optional float padding_scale_w = 9 [default = 1.5];
+  // crop region left-top point randomness
+  optional uint32 translation_size = 10 [default = 10];
+  // stddev division -> mean subtraction
+  optional bool normalization = 11 [default = true];
+  optional bool horizontal_flip = 12 [default = true];
+  optional uint32 rotation_angle = 13 [default = 0];
+  optional bool monochromate = 14 [default = false];
 }
 
 // Message that stores parameters used to apply transformation
