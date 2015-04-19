@@ -119,10 +119,11 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     const string img_fname =
       v.get<picojson::object>()["filename"].get<string>();
     cv::Mat img;
-    if (monochromate)
+    if (monochromate) {
       img = cv::imread(img_fname, CV_LOAD_IMAGE_GRAYSCALE);
-    else
+    } else {
       img = cv::imread(img_fname);
+    }
 
     // joints
     cv::Point2f joint_center(0, 0);
@@ -165,10 +166,10 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
     // crop image
     cv::Rect bounding = cv::boundingRect(joints);
-    int aug_w = int(bounding.width * padding_scale_w);
-    aug_w = aug_w < img.cols ? aug_w : img.cols;
-    int aug_h = int(bounding.height * padding_scale_h);
-    aug_h = aug_h < img.rows ? aug_h : img.rows;
+    int crop_w = int(bounding.width * padding_scale_w);
+    crop_w = crop_w < img.cols ? crop_w : img.cols;
+    int crop_h = int(bounding.height * padding_scale_h);
+    crop_h = crop_h < img.rows ? crop_h : img.rows;
 
     const int trans_x =
       caffe_rng_rand() % (translation_size * 2) - translation_size;
@@ -176,28 +177,30 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       caffe_rng_rand() % (translation_size * 2) - translation_size;
 
     // adjust bounding box
-    bounding.x = bounding.x - (aug_w - bounding.width) / 2 + trans_x;
+    bounding.x = bounding.x - (crop_w - bounding.width) / 2 + trans_x;
     bounding.x = bounding.x >= 0 ? bounding.x : 0;
-    bounding.x = (bounding.x + aug_w) < img.cols ?
-                 bounding.x : img.cols - aug_w;
-    bounding.width = aug_w;
-    bounding.y = bounding.y - (aug_h - bounding.height) / 2 + trans_y;
+    bounding.x = (bounding.x + crop_w) < img.cols ?
+                 bounding.x : img.cols - crop_w;
+    bounding.width = crop_w;
+    bounding.y = bounding.y - (crop_h - bounding.height) / 2 + trans_y;
     bounding.y = bounding.y >= 0 ? bounding.y : 0;
-    bounding.y = (bounding.y + aug_h) < img.rows ?
-                 bounding.y : img.rows - aug_h;
-    bounding.height = aug_h;
+    bounding.y = (bounding.y + crop_h) < img.rows ?
+                 bounding.y : img.rows - crop_h;
+    bounding.height = crop_h;
 
     // crop image
     cv::Mat crop_img = img(bounding);
+    // convert to float mat
+    crop_img.convertTo(crop_img, CV_32F);
+    // resize
+    cv::resize(crop_img, crop_img, cv::Size(width, height),
+               0, 0, cv::INTER_NEAREST);
+    // change the value range
+    crop_img /= 255.0;
 
     // create augmented image
     cv::Scalar mean, stddev;
     cv::meanStdDev(crop_img, mean, stddev);
-
-    // convert to float mat
-    crop_img.convertTo(crop_img, CV_32F);
-    cv::resize(crop_img, crop_img, cv::Size(width, height),
-               0, 0, cv::INTER_NEAREST);
 
     // normalization
     if (normalization) {
@@ -224,7 +227,8 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     }
 
     // augmented data reverting
-    ConvertFromCVMat(crop_img, top_data + this->prefetch_data_.offset(item_id));
+    ConvertFromCVMat(
+      crop_img, top_data + this->prefetch_data_.offset(item_id));
 
     // translated joints
     for (int j = 0; j < n_joints; ++j) {
