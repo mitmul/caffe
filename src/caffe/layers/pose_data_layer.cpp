@@ -26,7 +26,6 @@ template <typename Dtype>
 void PoseDataLayer<Dtype>::DataLayerSetUp(
   const vector<Blob<Dtype>*>& bottom,
   const vector<Blob<Dtype>*>& top) {
-
   // Initialize DB
   db_.reset(db::GetDB("lmdb"));
   db_->Open(this->layer_param_.pose_data_param().source(), db::READ);
@@ -49,28 +48,23 @@ void PoseDataLayer<Dtype>::DataLayerSetUp(
     channels = 1;
 
   top[0]->Reshape(
-    this->layer_param_.pose_data_param().batch_size(),
-    channels,
+    this->layer_param_.pose_data_param().batch_size(), channels,
     this->layer_param_.pose_data_param().height(),
     this->layer_param_.pose_data_param().width());
   this->prefetch_data_.Reshape(
-    this->layer_param_.pose_data_param().batch_size(),
-    channels,
+    this->layer_param_.pose_data_param().batch_size(), channels,
+    this->layer_param_.pose_data_param().height(),
+    this->layer_param_.pose_data_param().width());
+  this->transformed_data_.Reshape(
+    1, channels,
     this->layer_param_.pose_data_param().height(),
     this->layer_param_.pose_data_param().width());
   top[1]->Reshape(
     this->layer_param_.pose_data_param().batch_size(),
-    this->layer_param_.pose_data_param().n_joints() * 2,
-    1, 1);
-  this->transformed_data_.Reshape(
-    1,
-    channels,
-    this->layer_param_.pose_data_param().height(),
-    this->layer_param_.pose_data_param().width());
+    this->layer_param_.pose_data_param().n_joints() * 2, 1, 1);
   this->prefetch_label_.Reshape(
     this->layer_param_.pose_data_param().batch_size(),
-    this->layer_param_.pose_data_param().n_joints() * 2,
-    1, 1);
+    this->layer_param_.pose_data_param().n_joints() * 2, 1, 1);
 }
 
 template <typename Dtype>
@@ -227,8 +221,9 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     }
 
     // augmented data reverting
-    ConvertFromCVMat(
-      crop_img, top_data + this->prefetch_data_.offset(item_id));
+    int offset = this->prefetch_data_.offset(item_id);
+    ConvertFromCVMat(crop_img, top_data + offset);
+    this->transformed_data_.set_cpu_data(top_data + offset);
 
     // translated joints
     for (int j = 0; j < n_joints; ++j) {
@@ -236,7 +231,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // x
       top_label[index + 0] = joints[j].x - bounding.x;
-      top_label[index + 0] = float(top_label[index + 0]) / aug_w * width;
+      top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
       if (flip_code == 1)
         top_label[index + 0] = width - top_label[index + 0];
       top_label[index + 0] -= width / 2;
@@ -244,7 +239,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // y
       top_label[index + 1] = joints[j].y - bounding.y;
-      top_label[index + 1] = float(top_label[index + 1]) / aug_h * height;
+      top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
       top_label[index + 1] -= height / 2;
       top_label[index + 1] /= height / 2;
     }
@@ -276,10 +271,6 @@ void PoseDataLayer<Dtype>::ConvertFromCVMat(const cv::Mat img, Dtype *data) {
     }
   }
 }
-
-#ifdef CPU_ONLY
-STUB_GPU(PoseDataLayer);
-#endif
 
 INSTANTIATE_CLASS(PoseDataLayer);
 REGISTER_LAYER_CLASS(PoseData);
