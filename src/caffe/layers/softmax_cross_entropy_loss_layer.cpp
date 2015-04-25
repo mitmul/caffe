@@ -82,6 +82,10 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
       for (int j = 0; j < spatial_dim; ++j) {
         for (int c = 0; c < channels; ++c) {
           const int index = i * dim + c * spatial_dim + j;
+          CHECK_GE(label[index], 0);
+          CHECK_LE(label[index], 1);
+          CHECK_GE(data[index], 0);
+          CHECK_LE(data[index], 1);
           loss -= weights.Get(c) * label[index] *
                   log(std::max(data[index], Dtype(kLOG_THRESHOLD)));
         }
@@ -89,10 +93,14 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     }
   } else {
     for (int i = 0; i < count; ++i) {
+      CHECK_GE(label[i], 0);
+      CHECK_LE(label[i], 1);
+      CHECK_GE(data[i], 0);
+      CHECK_LE(data[i], 1);
       loss -= label[i] * log(std::max(data[i], Dtype(kLOG_THRESHOLD)));
     }
   }
-  top[0]->mutable_cpu_data()[0] = loss / num / dim;
+  top[0]->mutable_cpu_data()[0] = loss / num;
 }
 
 template <typename Dtype>
@@ -131,7 +139,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     }
     // Scale down gradient
     const Dtype loss_weight = top[0]->cpu_diff()[0];
-    caffe_scal(count, loss_weight / num / dim, diff);
+    caffe_scal(count, loss_weight / num, diff);
   }
 }
 
