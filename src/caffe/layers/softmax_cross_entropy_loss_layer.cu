@@ -33,7 +33,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
         data[index] = 0.0;
       }
     }
-    LOG(INFO) << "Channel " << zero_channel << " has been 0";
   }
 
   // The forward pass computes the softmax prob values.
