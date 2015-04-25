@@ -234,14 +234,12 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
       if (flip_code == 1)
         top_label[index + 0] = width - top_label[index + 0];
-      top_label[index + 0] -= width / 2;
-      top_label[index + 0] /= width / 2;
+      top_label[index + 0] /= width;
 
       // y
       top_label[index + 1] = joints[j].y - bounding.y;
       top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
-      top_label[index + 1] -= height / 2;
-      top_label[index + 1] /= height / 2;
+      top_label[index + 1] /= height;
     }
 
     // go to the next iter
