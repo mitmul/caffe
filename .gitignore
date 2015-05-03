@@ -1,5 +1,6 @@
 ## General
 sftp-config.json
+deployment-config.json
 
 # Compiled Object files
 *.slo
