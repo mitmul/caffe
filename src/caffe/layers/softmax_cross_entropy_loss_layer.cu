@@ -37,15 +37,22 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
   }
 
   // suppression of overparameterization
-  const int redundancy_reduction =
+  // subtract minimum value over channels at one pixel
+  const bool redundancy_reduction =
     this->layer_param_.softmax_cross_entropy_loss_param().redundancy_reduction();
 
-  if (redundancy_reduction >= 0) {
+  if (redundancy_reduction && (channels > 1)) {
     Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
 
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
-        const Dtype phi = data[i * dim + redundancy_reduction * spatial_dim + j];
+        const Dtype phi = data[i * dim];
+
+        for (int c = 0; c < channels; ++c) {
+          const int index = i * dim + c * spatial_dim + j;
+
+          if (data[index] < phi) phi = data[index];
+        }
 
         for (int c = 0; c < channels; ++c) {
           const int index = i * dim + c * spatial_dim + j;
