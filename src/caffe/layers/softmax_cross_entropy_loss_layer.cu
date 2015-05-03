@@ -36,32 +36,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_gpu(
     }
   }
 
-  // suppression of overparameterization
-  // subtract minimum value over channels at one pixel
-  const bool redundancy_reduction =
-    this->layer_param_.softmax_cross_entropy_loss_param().redundancy_reduction();
-
-  if (redundancy_reduction && (channels > 1)) {
-    Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
-
-    for (int i = 0; i < num; ++i) {
-      for (int j = 0; j < spatial_dim; ++j) {
-        const Dtype phi = data[i * dim];
-
-        for (int c = 0; c < channels; ++c) {
-          const int index = i * dim + c * spatial_dim + j;
-
-          if (data[index] < phi) phi = data[index];
-        }
-
-        for (int c = 0; c < channels; ++c) {
-          const int index = i * dim + c * spatial_dim + j;
-          data[index] -= phi;
-        }
-      }
-    }
-  }
-
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
@@ -114,10 +88,9 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_gpu(
 
   if (propagate_down[0]) {
     // First, compute the diff
-    const int count = bottom[0]->count();
-    const int num   = bottom[0]->num();
-    const int dim   = bottom[0]->count() /
-                      num;
+    const int count       = bottom[0]->count();
+    const int num         = bottom[0]->num();
+    const int dim         = bottom[0]->count() / num;
     const int spatial_dim = bottom[0]->width() *
                             bottom[0]->height();
     const int channels = bottom[0]->channels();
@@ -125,6 +98,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_gpu(
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff        =
       bottom[0]->mutable_cpu_diff();
+
     const google::protobuf::RepeatedField<float> weights =
       this->layer_param_.softmax_cross_entropy_loss_param().weights();
 
