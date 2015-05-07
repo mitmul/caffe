@@ -1,6 +1,7 @@
 ## General
 .DS_Store
 sftp-config.json
+deployment-config.json
 
 # Compiled Object files
 *.slo
