@@ -86,10 +86,13 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
   const int  n_joints      = this->layer_param_.pose_data_param().n_joints();
   const bool bounding_crop =
     this->layer_param_.pose_data_param().bounding_crop();
-  const bool joint_normalize =
+    << << << < HEAD
+    const bool joint_normalize =
     this->layer_param_.pose_data_param().joint_normalize();
-  const float padding_scale_h =
-    this->layer_param_.pose_data_param().padding_scale_h();
+  == == == =
+    >> >> >> > b210d3156da7bb366e93ef6fb87e0428a84a6e6f
+    const float padding_scale_h =
+      this->layer_param_.pose_data_param().padding_scale_h();
   const float padding_scale_w =
     this->layer_param_.pose_data_param().padding_scale_w();
   const int translation_size =
