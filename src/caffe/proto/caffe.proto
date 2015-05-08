@@ -345,14 +345,18 @@ message PoseDataParameter {
   optional uint32 height = 5 [default = 220];
   optional uint32 width = 6 [default = 220];
   optional uint32 n_joints = 7 [default = 14];
+  // crop
+  optional bool bounding_crop = 15 [default = false];
+  // normalize
+  optional bool joint_normalize = 16 [default = true];
   // crop width*padding_scale x height*padding_scale
-  optional float padding_scale_h = 8 [default = 1.5];
-  optional float padding_scale_w = 9 [default = 1.5];
+  optional float padding_scale_h = 8 [default = 1.0];
+  optional float padding_scale_w = 9 [default = 1.0];
   // crop region left-top point randomness
-  optional uint32 translation_size = 10 [default = 10];
+  optional uint32 translation_size = 10 [default = 0];
   // stddev division -> mean subtraction
-  optional bool normalization = 11 [default = true];
-  optional bool horizontal_flip = 12 [default = true];
+  optional bool normalization = 11 [default = false];
+  optional bool horizontal_flip = 12 [default = false];
   optional uint32 rotation_angle = 13 [default = 0];
   optional bool monochromate = 14 [default = false];
 }
