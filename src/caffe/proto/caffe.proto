@@ -348,7 +348,8 @@ message PoseDataParameter {
   // crop
   optional bool bounding_crop = 15 [default = false];
   // normalize
-  optional bool joint_normalize = 16 [default = true];
+  optional bool joint_centering = 16 [default =false];
+  optional bool joint_normalize = 17 [default = true];
   // crop width*padding_scale x height*padding_scale
   optional float padding_scale_h = 8 [default = 1.0];
   optional float padding_scale_w = 9 [default = 1.0];

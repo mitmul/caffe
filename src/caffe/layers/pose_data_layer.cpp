@@ -86,13 +86,12 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
   const int  n_joints      = this->layer_param_.pose_data_param().n_joints();
   const bool bounding_crop =
     this->layer_param_.pose_data_param().bounding_crop();
-    << << << < HEAD
-    const bool joint_normalize =
+  const bool joint_normalize =
     this->layer_param_.pose_data_param().joint_normalize();
-  == == == =
-    >> >> >> > b210d3156da7bb366e93ef6fb87e0428a84a6e6f
-    const float padding_scale_h =
-      this->layer_param_.pose_data_param().padding_scale_h();
+  const bool joint_centering =
+    this->layer_param_.pose_data_param().joint_centering();
+  const float padding_scale_h =
+    this->layer_param_.pose_data_param().padding_scale_h();
   const float padding_scale_w =
     this->layer_param_.pose_data_param().padding_scale_w();
   const int translation_size =
@@ -136,6 +135,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       v.get<picojson::object>()["joint_pos"].get<picojson::array>();
     picojson::array::const_iterator it = joint_pos.begin();
 
+    // calc joint center location
     while (it != joint_pos.end()) {
       const picojson::array pos = it->get<picojson::array>();
       double x                  = pos[0].get<double>();
@@ -161,6 +161,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       cv::warpAffine(img, img, rot, cv::Size(img.cols, img.rows),
                      cv::INTER_NEAREST, cv::BORDER_CONSTANT, constant);
 
+      // rotate joints
       for (int j = 0; j < n_joints; ++j) {
         vector<cv::Point2f> pt;
         pt.push_back(joints[j]);
@@ -172,13 +173,16 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
     // crop image
     cv::Rect bounding(0, 0, width, height);
-    int crop_w       = int(bounding.width * padding_scale_w);
-    int crop_h       = int(bounding.height * padding_scale_h);
+    int crop_w       = img.cols;
+    int crop_h       = img.rows;
     cv::Mat crop_img = img;
 
     if (bounding_crop) {
-      crop_w = crop_w < img.cols ? crop_w : img.cols;
-      crop_h = crop_h < img.rows ? crop_h : img.rows;
+      bounding = cv::boundingRect(joints);
+      crop_w   = bounding.width * padding_scale_w;
+      crop_h   = bounding.height * padding_scale_h;
+      crop_w   = crop_w < img.cols ? crop_w : img.cols;
+      crop_h   = crop_h < img.rows ? crop_h : img.rows;
 
       const int trans_x =
         caffe_rng_rand() % (translation_size * 2) - translation_size;
@@ -192,6 +196,7 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
                    img.cols ? bounding.x : img.cols - crop_w;
       bounding.width = crop_w;
 
+      // adjust bounding box
       bounding.y = bounding.y - (crop_h - bounding.height) / 2 + trans_y;
       bounding.y = bounding.y >= 0 ? bounding.y : 0;
       bounding.y = (bounding.y + crop_h) < img.rows ?
@@ -200,6 +205,13 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // crop image
       crop_img = img(bounding);
+
+      // shift joints
+      for (int j = 0; j < n_joints; ++j) {
+        const int index = item_id * n_joints * 2 + j * 2;
+        top_label[index + 0] = joints[j].x - bounding.x;
+        top_label[index + 1] = joints[j].y - bounding.y;
+      }
     }
 
     // convert to float mat
@@ -209,10 +221,17 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     cv::resize(crop_img, crop_img, cv::Size(width, height),
                0, 0, cv::INTER_NEAREST);
 
-    // change the value range
+    // scaling joint coordinates
+    for (int j = 0; j < n_joints; ++j) {
+      const int index = item_id * n_joints * 2 + j * 2;
+      top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
+      top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
+    }
+
+    // change pixel value range
     crop_img /= 255.0;
 
-    // normalization
+    // global contrast normalization (image)
     if (normalization) {
       cv::Scalar mean, stddev;
       cv::meanStdDev(crop_img, mean, stddev);
@@ -238,35 +257,36 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     if (horizontal_flip) {
       flip_code = caffe_rng_rand() % 2;
 
-      if (flip_code == 1) cv::flip(crop_img, crop_img, flip_code);
+      if (flip_code == 1) {
+        cv::flip(crop_img, crop_img, flip_code);
+
+        // translated joints
+        for (int j = 0; j < n_joints; ++j) {
+          const int index = item_id * n_joints * 2 + j * 2;
+          top_label[index + 0] = width - top_label[index + 0];
+        }
+      }
     }
 
     // augmented data reverting
     int offset = this->prefetch_data_.offset(item_id);
     ConvertFromCVMat(crop_img, top_data + offset);
-    this->transformed_data_.set_cpu_data(top_data + offset);
 
-    // translated joints
+    // joint coordinate centering
+    if (joint_centering) {
+      for (int j = 0; j < n_joints; ++j) {
+        const int index = item_id * n_joints * 2 + j * 2;
+        top_label[index + 0] -= width / 2;
+        top_label[index + 1] -= height / 2;
+      }
+    }
+
+    // joint coordinate normalization
     for (int j = 0; j < n_joints; ++j) {
       const int index = item_id * n_joints * 2 + j * 2;
 
-      // x
-      top_label[index + 0] = joints[j].x - bounding.x;
-      top_label[index + 0] = float(top_label[index + 0]) / crop_w * width;
-
-      if (flip_code == 1) {
-        top_label[index + 0] = width - top_label[index + 0];
-      }
-
       if (joint_normalize) {
         top_label[index + 0] /= width;
-      }
-
-      // y
-      top_label[index + 1] = joints[j].y - bounding.y;
-      top_label[index + 1] = float(top_label[index + 1]) / crop_h * height;
-
-      if (joint_normalize) {
         top_label[index + 1] /= height;
       }
     }
