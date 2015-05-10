@@ -196,10 +196,12 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       crop_w   = crop_w < img.cols ? crop_w : img.cols;
       crop_h   = crop_h < img.rows ? crop_h : img.rows;
 
-      const int trans_x =
-        caffe_rng_rand() % (translation_size * 2) - translation_size;
-      const int trans_y =
-        caffe_rng_rand() % (translation_size * 2) - translation_size;
+      int trans_x = 0, trans_y = 0;
+
+      if (translation_size > 0) {
+        trans_x = caffe_rng_rand() % (translation_size * 2) - translation_size;
+        trans_y = caffe_rng_rand() % (translation_size * 2) - translation_size;
+      }
 
       // adjust bounding box
       bounding.x = bounding.x - (crop_w - bounding.width) / 2 + trans_x;
