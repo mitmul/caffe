@@ -80,7 +80,10 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
   const int batch_size = this->layer_param_.pose_data_param().batch_size();
   int channels         = this->layer_param_.pose_data_param().channels();
 
-  if (monochromate) channels = 1;
+  if (monochromate) {
+    channels = 1;
+  }
+
   const int  height        = this->layer_param_.pose_data_param().height();
   const int  width         = this->layer_param_.pose_data_param().width();
   const int  n_joints      = this->layer_param_.pose_data_param().n_joints();
@@ -102,6 +105,15 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
     this->layer_param_.pose_data_param().horizontal_flip();
   const int rotation_angle =
     this->layer_param_.pose_data_param().rotation_angle();
+  vector<int> symmetric_joint_ids;
+  std::copy(
+    this->layer_param_.pose_data_param().symmetric_joint_ids().begin(),
+    this->layer_param_.pose_data_param().symmetric_joint_ids().end(),
+    std::back_inserter(symmetric_joint_ids));
+  const int left_joint_id =
+    this->layer_param_.pose_data_param().left_joint_id();
+  const int right_joint_id =
+    this->layer_param_.pose_data_param().right_joint_id();
 
   // output of this data layer
   Dtype *top_data  = this->prefetch_data_.mutable_cpu_data();
@@ -288,6 +300,25 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       if (joint_normalize) {
         top_label[index + 0] /= width;
         top_label[index + 1] /= height;
+      }
+    }
+
+    // receiver centric
+    if ((symmetric_joint_ids.size() > 0)
+        && (left_joint_id != right_joint_id)
+        && (symmetric_joint_ids.size() % 2 == 0)) {
+      const int l = item_id * n_joints * 2 + left_joint_id * 2;
+      const int r = item_id * n_joints * 2 + right_joint_id * 2;
+
+      if (top_label[l + 0] > top_label[r + 0]) {
+        for (size_t t = 0; t < symmetric_joint_ids.size(); t = t + 2) {
+          const int j       = symmetric_joint_ids.at(t);
+          const int k       = symmetric_joint_ids.at(t + 1);
+          const int index_j = item_id * n_joints * 2 + j * 2;
+          const int index_k = item_id * n_joints * 2 + k * 2;
+          std::swap(top_label[index_j + 0], top_label[index_k + 0]);
+          std::swap(top_label[index_j + 1], top_label[index_k + 1]);
+        }
       }
     }
 

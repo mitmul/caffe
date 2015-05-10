@@ -360,6 +360,10 @@ message PoseDataParameter {
   optional bool horizontal_flip = 12 [default = false];
   optional uint32 rotation_angle = 13 [default = 0];
   optional bool monochromate = 14 [default = false];
+  // convert joint coordinates to receiver centric
+  repeated uint32 symmetric_joint_ids = 18;
+  optional uint32 left_joint_id = 19;
+  optional uint32 right_joint_id = 20;
 }
 
 // Message that stores parameters used to apply transformation
