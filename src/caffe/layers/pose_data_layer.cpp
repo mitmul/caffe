@@ -272,10 +272,19 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
       if (flip_code == 1) {
         cv::flip(crop_img, crop_img, flip_code);
 
-        // translated joints
+        // flipping joints
         for (int j = 0; j < n_joints; ++j) {
           const int index = item_id * n_joints * 2 + j * 2;
           top_label[index + 0] = width - top_label[index + 0];
+        }
+
+        for (size_t t = 0; t < symmetric_joint_ids.size(); t = t + 2) {
+          const int j       = symmetric_joint_ids.at(t);
+          const int k       = symmetric_joint_ids.at(t + 1);
+          const int index_j = item_id * n_joints * 2 + j * 2;
+          const int index_k = item_id * n_joints * 2 + k * 2;
+          std::swap(top_label[index_j + 0], top_label[index_k + 0]);
+          std::swap(top_label[index_j + 1], top_label[index_k + 1]);
         }
       }
     }
