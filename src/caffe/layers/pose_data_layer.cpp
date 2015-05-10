@@ -219,13 +219,13 @@ void PoseDataLayer<Dtype>::InternalThreadEntry() {
 
       // crop image
       crop_img = img(bounding);
+    }
 
-      // shift joints
-      for (int j = 0; j < n_joints; ++j) {
-        const int index = item_id * n_joints * 2 + j * 2;
-        top_label[index + 0] = joints[j].x - bounding.x;
-        top_label[index + 1] = joints[j].y - bounding.y;
-      }
+    // shift joints
+    for (int j = 0; j < n_joints; ++j) {
+      const int index = item_id * n_joints * 2 + j * 2;
+      top_label[index + 0] = joints[j].x - bounding.x;
+      top_label[index + 1] = joints[j].y - bounding.y;
     }
 
     // convert to float mat
