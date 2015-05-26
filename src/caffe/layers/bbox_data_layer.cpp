@@ -26,18 +26,17 @@ void BBoxDataLayer<Dtype>::DataLayerSetUp(
   const vector<Blob<Dtype> *>& bottom,
   const vector<Blob<Dtype> *>& top) {
   batch_size_ = this->layer_param_.data_param().batch_size();
-  source_     = this->layer_param_.bbox_data_param().source();
-  n_category_ = this->layer_param_.bbox_data_param().n_category();
+  hist_dim_   = this->layer_param_.bbox_data_param().hist_dim();
   rand_skip_  = this->layer_param_.bbox_data_param().rand_skip();
-  dim_        = this->layer_param_.bbox_data_param().dim();
+  const int channel = hist_dim_ + 4;
 
   // image
-  top[0]->Reshape(batch_size_, dim_, 1, 1);
-  this->prefetch_data_.Reshape(batch_size_, dim_, 1, 1);
+  top[0]->Reshape(batch_size_, channel, 1, 1);
+  this->prefetch_data_.Reshape(batch_size_, channel, 1, 1);
 
   // label
-  top[1]->Reshape(batch_size_, dim_, 1, 1);
-  this->prefetch_label_.Reshape(batch_size_, dim_, 1, 1);
+  top[1]->Reshape(batch_size_, channel, 1, 1);
+  this->prefetch_label_.Reshape(batch_size_, channel, 1, 1);
 
   LOG(INFO) << "output data size: "
             << top[0]->num() << ","
@@ -50,12 +49,13 @@ void BBoxDataLayer<Dtype>::DataLayerSetUp(
             << top[1]->height() << ","
             << top[1]->width();
 
-  json_file_ = new ifstream(source_);
+  json_file_ = new std::ifstream(
+    this->layer_param_.data_param().source().c_str());
 }
 
 // This function is used to create a thread that prefetches the data.
 template<typename Dtype>
-void DataLayer<Dtype>::InternalThreadEntry() {
+void BBoxDataLayer<Dtype>::InternalThreadEntry() {
   CPUTimer batch_timer;
 
   batch_timer.Start();
@@ -69,17 +69,20 @@ void DataLayer<Dtype>::InternalThreadEntry() {
   Dtype *top_label = this->prefetch_label_.mutable_cpu_data();
 
   // per batch
-  for (int item_id = 0; item_id < batch_size; ++item_id) {
+  for (int item_id = 0; item_id < batch_size_; ++item_id) {
     timer.Start();
 
     // Read a line
-    const string line = cursor_->value();
+    string line;
+    std::getline(*json_file_, line);
     picojson::value v;
     string err = picojson::parse(v, line);
 
     if (!err.empty()) {
       LOG(FATAL) << err;
     }
+
+    LOG(INFO) << line;
   }
   batch_timer.Stop();
   DLOG(INFO) << "Prefetch batch: " << batch_timer.MilliSeconds() << " ms.";

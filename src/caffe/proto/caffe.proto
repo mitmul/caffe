@@ -343,10 +343,8 @@ message LayerParameter {
 }
 
 message BBoxDataParameter {
-  optional string source = 1;
-  optional uint32 n_category = 2;
-  optional bool rand_skip = 3 [default = false];
-  optional uint32 dim = 4;
+  optional uint32 hist_dim = 1;
+  optional bool rand_skip = 2 [default = false];
 }
 
 // Message that stores parameters used to apply transformation

@@ -340,10 +340,8 @@ class BBoxDataLayer : public BasePrefetchingDataLayer<Dtype> {
   virtual void InternalThreadEntry();
 
   int batch_size_;
-  int n_category_;
-  std::string source_;
+  int hist_dim_;
   bool rand_skip_;
-  int dim_;
   std::ifstream *json_file_;
 };
 
