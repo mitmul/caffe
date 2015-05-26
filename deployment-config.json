@@ -1,0 +1,10 @@
+{
+  "type": "sftp",
+  "host": "25.4.30.147",
+  "username": "crest",
+  "sshKeyFile": "~/.ssh/crest-supermicro-01",
+  "passphrase": "printeps",
+  "port": 22,
+  "remotePath": "/home/crest/Libraries/caffe",
+  "uploadOnSave": true
+}

@@ -322,6 +322,31 @@ class WindowDataLayer : public BasePrefetchingDataLayer<Dtype> {
   vector<std::pair<std::string, Datum > > image_database_cache_;
 };
 
+template <typename Dtype>
+class BBoxDataLayer : public BasePrefetchingDataLayer<Dtype> {
+ public:
+  explicit BBoxDataLayer(const LayerParameter& param)
+      : BasePrefetchingDataLayer<Dtype>(param) {}
+  virtual ~BBoxDataLayer();
+  virtual void DataLayerSetUp(const vector<Blob<Dtype>*>& bottom,
+      const vector<Blob<Dtype>*>& top);
+
+  virtual inline const char* type() const { return "BBoxData"; }
+  virtual inline int ExactNumBottomBlobs() const { return 0; }
+  virtual inline int MinTopBlobs() const { return 1; }
+  virtual inline int MaxTopBlobs() const { return 2; }
+
+ protected:
+  virtual void InternalThreadEntry();
+
+  int batch_size_;
+  int n_category_;
+  std::string source_;
+  bool rand_skip_;
+  int dim_;
+  std::ifstream *json_file_;
+};
+
 }  // namespace caffe
 
 #endif  // CAFFE_DATA_LAYERS_HPP_
