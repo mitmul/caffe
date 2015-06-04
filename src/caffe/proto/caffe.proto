@@ -364,6 +364,7 @@ message PrecisionRecallLossParameter {
 message SoftmaxCrossEntropyParameter {
   repeated float weights = 1;
   optional int32 zero_channel = 2 [default = -1];
+  optional bool random_zero = 3 [default = false];
 }
 
 message PatchTransformerParameter {
