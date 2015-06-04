@@ -143,8 +143,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const int channels = bottom[0]->channels();
     const Dtype *data  = prob_.cpu_data();
     const Dtype *label = bottom[1]->cpu_data();
-    Dtype *diff        =
-      bottom[0]->mutable_cpu_diff();
+    Dtype *diff        = bottom[0]->mutable_cpu_diff();
 
     const google::protobuf::RepeatedField<float> weights =
       this->layer_param_.softmax_cross_entropy_loss_param().weights();
