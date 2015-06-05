@@ -1,6 +1,7 @@
 ## General
 sftp-config.json
 deployment-config.json
+.python-version
 
 # Compiled Object files
 *.slo
