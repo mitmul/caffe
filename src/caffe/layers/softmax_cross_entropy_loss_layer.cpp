@@ -42,7 +42,8 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Reshape(
 
 template<typename Dtype>
 void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
-  const vector<Blob<Dtype> *>& bottom, const vector<Blob<Dtype> *>& top) {
+  const vector<Blob<Dtype> *>& bottom,
+  const vector<Blob<Dtype> *>& top) {
   softmax_bottom_vec_[0] = bottom[0];
 
   // input details
@@ -155,7 +156,13 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
         for (int j = 0; j < spatial_dim; ++j) {
           for (int c = 0; c < channels; ++c) {
             const int index = i * dim + c * spatial_dim + j;
-            diff[index] = weights.Get(c) * (data[index] - label[index]);
+
+            diff[index] = 0;
+            for (int k = 0; k < channels; k++) {
+              const int delta_ck = c == k ? 1 : 0;
+              diff[index] += \
+                  weights.Get(k) * label[index] * (data[index] -　delta_ck);
+            }
           }
         }
       }
