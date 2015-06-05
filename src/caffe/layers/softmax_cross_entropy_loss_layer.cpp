@@ -30,14 +30,14 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Reshape(
                 bottom[0]->height(), bottom[0]->width());
 
   // Check the shapes of data and label
-  CHECK_EQ(bottom[0]->num(),      bottom[1]->num())
-    << "The number of num of data and label should be same.";
-  CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
-    << "The number of channels of data and label should be same.";
-  CHECK_EQ(bottom[0]->height(),   bottom[1]->height())
-    << "The heights of data and label should be same.";
-  CHECK_EQ(bottom[0]->width(),    bottom[1]->width())
-    << "The width of data and label should be same.";
+    CHECK_EQ(bottom[0]->num(),      bottom[1]->num())
+  << "The number of num of data and label should be same.";
+    CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
+  << "The number of channels of data and label should be same.";
+    CHECK_EQ(bottom[0]->height(),   bottom[1]->height())
+  << "The heights of data and label should be same.";
+    CHECK_EQ(bottom[0]->width(),    bottom[1]->width())
+  << "The width of data and label should be same.";
 }
 
 template<typename Dtype>
@@ -158,10 +158,11 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
             const int index = i * dim + c * spatial_dim + j;
 
             diff[index] = 0;
+
             for (int k = 0; k < channels; k++) {
               const int delta_ck = c == k ? 1 : 0;
-              diff[index] += \
-                  weights.Get(k) * label[index] * (data[index] -　delta_ck);
+              diff[index] += weights.Get(k) * label[index] *
+                             (data[index] - delta_ck);
             }
           }
         }
