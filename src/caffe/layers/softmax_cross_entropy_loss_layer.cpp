@@ -68,22 +68,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     }
   }
 
-  // // set zero to randomly chosen channel
-  // const bool random_zero =
-  //   this->layer_param_.softmax_cross_entropy_loss_param().random_zero();
-  //
-  // if (random_zero) {
-  //   Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
-  //
-  //   for (size_t i = 0; i < num; i++) {
-  //     for (size_t j = 0; j < spatial_dim; j++) {
-  //       const int rand_c = caffe_rng_rand() % channels;
-  //       const int index  = i * dim + rand_c * spatial_dim + j;
-  //       data[index] = 0.0;
-  //     }
-  //   }
-  // }
-
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
@@ -158,10 +142,11 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
             const int index = i * dim + c * spatial_dim + j;
 
             diff[index] = 0;
+
             for (int k = 0; k < channels; k++) {
               const int delta_ck = c == k ? 1 : 0;
-              diff[index] += \
-                  weights.Get(k) * label[index] * (data[index] -　delta_ck);
+              diff[index] += weights.Get(k) * label[index] *
+                             (data[index] - delta_ck);
             }
           }
         }
@@ -183,22 +168,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
         }
       }
     }
-
-    // const bool random_zero =
-    //   this->layer_param_.softmax_cross_entropy_loss_param().random_zero();
-    //
-    // if (random_zero) {
-    //   Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
-    //
-    //   for (size_t i = 0; i < num; i++) {
-    //     for (size_t j = 0; j < spatial_dim; j++) {
-    //       const int rand_c = caffe_rng_rand() % channels;
-    //       const int index  = i * dim + rand_c * spatial_dim + j;
-    //       data[index] = 0.0;
-    //     }
-    //   }
-    // }
-
 
     if ((weights.size() == 0) && (zero_channel < 0)) {
       caffe_sub(count, data, label, diff);
