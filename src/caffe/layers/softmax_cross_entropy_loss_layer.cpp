@@ -30,14 +30,14 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Reshape(
                 bottom[0]->height(), bottom[0]->width());
 
   // Check the shapes of data and label
-    CHECK_EQ(bottom[0]->num(),      bottom[1]->num())
-  << "The number of num of data and label should be same.";
-    CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
-  << "The number of channels of data and label should be same.";
-    CHECK_EQ(bottom[0]->height(),   bottom[1]->height())
-  << "The heights of data and label should be same.";
-    CHECK_EQ(bottom[0]->width(),    bottom[1]->width())
-  << "The width of data and label should be same.";
+  CHECK_EQ(bottom[0]->num(),      bottom[1]->num())
+    << "The number of num of data and label should be same.";
+  CHECK_EQ(bottom[0]->channels(), bottom[1]->channels())
+    << "The number of channels of data and label should be same.";
+  CHECK_EQ(bottom[0]->height(),   bottom[1]->height())
+    << "The heights of data and label should be same.";
+  CHECK_EQ(bottom[0]->width(),    bottom[1]->width())
+    << "The width of data and label should be same.";
 }
 
 template<typename Dtype>
@@ -68,22 +68,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
     }
   }
 
-  // // set zero to randomly chosen channel
-  // const bool random_zero =
-  //   this->layer_param_.softmax_cross_entropy_loss_param().random_zero();
-  //
-  // if (random_zero) {
-  //   Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
-  //
-  //   for (size_t i = 0; i < num; i++) {
-  //     for (size_t j = 0; j < spatial_dim; j++) {
-  //       const int rand_c = caffe_rng_rand() % channels;
-  //       const int index  = i * dim + rand_c * spatial_dim + j;
-  //       data[index] = 0.0;
-  //     }
-  //   }
-  // }
-
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
@@ -96,6 +80,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const google::protobuf::RepeatedField<float> weights =
     this->layer_param_.softmax_cross_entropy_loss_param().weights();
 
+  // If weights.Get(0) == 0 Ignoring the Loss of no interest (IL)
   if (weights.size() > 0) {
     CHECK_EQ(weights.size(), bottom[0]->channels());
 
@@ -112,7 +97,10 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
         }
       }
     }
-  } else {
+  }
+
+  // Normal negative log likelihood as the loss
+  else {
     for (int i = 0; i < count; ++i) {
       CHECK_GE(label[i], 0);
       CHECK_LE(label[i], 1);
@@ -146,6 +134,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff        = bottom[0]->mutable_cpu_diff();
 
+    // If weights.Get(0) == 0 Ignoring the Loss of no interest (IL)
     const google::protobuf::RepeatedField<float> weights =
       this->layer_param_.softmax_cross_entropy_loss_param().weights();
 
@@ -156,19 +145,13 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
         for (int j = 0; j < spatial_dim; ++j) {
           for (int c = 0; c < channels; ++c) {
             const int index = i * dim + c * spatial_dim + j;
-
-            diff[index] = 0;
-
-            for (int k = 0; k < channels; k++) {
-              const int delta_ck = c == k ? 1 : 0;
-              diff[index] += weights.Get(k) * label[index] *
-                             (data[index] - delta_ck);
-            }
+            diff[index] = weights.Get(c) * (data[index] - label[index]);
           }
         }
       }
     }
 
+    // // Grounding Units of no interest (GU)
     const int zero_channel =
       this->layer_param_.softmax_cross_entropy_loss_param().zero_channel();
 
@@ -184,22 +167,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
         }
       }
     }
-
-    // const bool random_zero =
-    //   this->layer_param_.softmax_cross_entropy_loss_param().random_zero();
-    //
-    // if (random_zero) {
-    //   Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
-    //
-    //   for (size_t i = 0; i < num; i++) {
-    //     for (size_t j = 0; j < spatial_dim; j++) {
-    //       const int rand_c = caffe_rng_rand() % channels;
-    //       const int index  = i * dim + rand_c * spatial_dim + j;
-    //       data[index] = 0.0;
-    //     }
-    //   }
-    // }
-
 
     if ((weights.size() == 0) && (zero_channel < 0)) {
       caffe_sub(count, data, label, diff);
