@@ -2,6 +2,8 @@
 sftp-config.json
 deployment-config.json
 .python-version
+.ftpconfig
+.remote-sync.json
 
 # Compiled Object files
 *.slo

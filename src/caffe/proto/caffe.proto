@@ -353,18 +353,23 @@ message LayerParameter {
   optional WindowDataParameter window_data_param = 129;
 
   optional PrecisionRecallLossParameter precision_recall_loss_param = 200;
-  optional SoftmaxCrossEntropyParameter softmax_cross_entropy_loss_param = 201;
-  optional PatchTransformerParameter patch_transformer_param = 202;
+  optional SoftmaxCrossEntropyLossParameter softmax_cross_entropy_loss_param = 201;
+  optional SoftmaxLossWithDropUnitsLayerParameter softmax_loss_with_drop_units_param = 202;
+  optional PatchTransformerParameter patch_transformer_param = 203;
 }
 
 message PrecisionRecallLossParameter {
   optional uint32 point_num = 1 [default = 256];
 }
 
-message SoftmaxCrossEntropyParameter {
-  repeated float weights = 1;
-  optional int32 zero_channel = 2 [default = -1];
-  optional bool random_zero = 3 [default = false];
+message SoftmaxCrossEntropyLossParameter {
+    repeated float weights = 1;
+}
+
+message SoftmaxLossWithDropUnitsLayerParameter {
+    optional int32 drop_channel = 1 [default = -1];
+    optional bool random_drop = 2 [default = false];
+    optional float drop_ratio = 3 [default = 0.5];
 }
 
 message PatchTransformerParameter {
