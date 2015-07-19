@@ -18,14 +18,6 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::LayerSetUp(
   softmax_top_vec_.clear();
   softmax_top_vec_.push_back(&prob_);
   softmax_layer_->SetUp(softmax_bottom_vec_, softmax_top_vec_);
-
-  // If weights.Get(0) == 0 Ignoring the Loss of no interest (IL)
-  const google::protobuf::RepeatedField<float> weights =
-    this->layer_param_.softmax_cross_entropy_loss_param().weights();
-
-  for (size_t i = 0; i < weights.size(); i++) {
-    weights_.push_back(weights.Get(i));
-  }
 }
 
 template<typename Dtype>
@@ -61,6 +53,21 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const int spatial_dim = bottom[0]->width() * bottom[0]->height();
   const int channels    = bottom[0]->channels();
 
+  // all units in this channel goes to zero (GU)
+  const int zero_channel =
+    this->layer_param_.softmax_cross_entropy_loss_param().zero_channel();
+
+  if (zero_channel >= 0) {
+    Dtype *data = softmax_bottom_vec_[0]->mutable_cpu_data();
+
+    for (int i = 0; i < num; ++i) {
+      for (int j = 0; j < spatial_dim; ++j) {
+        const int index = i * dim + zero_channel * spatial_dim + j;
+        data[index] = 0.0;
+      }
+    }
+  }
+
   // The forward pass computes the softmax prob values.
   softmax_layer_->Forward(softmax_bottom_vec_, softmax_top_vec_);
 
@@ -69,9 +76,13 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
   const Dtype *label = bottom[1]->cpu_data();
   Dtype loss         = 0;
 
-  // weight cross entropy
-  if (weights_.size() > 0) {
-    CHECK_EQ(weights_.size(), bottom[0]->channels());
+  // Compute the loss (negative log likelihood)
+  const google::protobuf::RepeatedField<float> weights =
+    this->layer_param_.softmax_cross_entropy_loss_param().weights();
+
+  // If weights.Get(0) == 0 Ignoring the Loss of no interest (IL)
+  if (weights.size() > 0) {
+    CHECK_EQ(weights.size(), bottom[0]->channels());
 
     for (int i = 0; i < num; ++i) {
       for (int j = 0; j < spatial_dim; ++j) {
@@ -81,7 +92,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Forward_cpu(
           CHECK_LE(label[index], 1);
           CHECK_GE(data[index], 0);
           CHECK_LE(data[index], 1);
-          loss -= weights_.at(c) * label[index] *
+          loss -= weights.Get(c) * label[index] *
                   log(std::max(data[index], Dtype(kLOG_THRESHOLD)));
         }
       }
@@ -123,18 +134,30 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
     const Dtype *label = bottom[1]->cpu_data();
     Dtype *diff        = bottom[0]->mutable_cpu_diff();
 
-    if (weights_.size() > 0) {
-      CHECK_EQ(weights_.size(), bottom[0]->channels());
+    // Grounding Units of no interest (GU)
+    const int zero_channel =
+      this->layer_param_.softmax_cross_entropy_loss_param().zero_channel();
+
+    // If weights.Get(0) == 0 Ignoring the Loss of no interest (IL)
+    const google::protobuf::RepeatedField<float> weights =
+      this->layer_param_.softmax_cross_entropy_loss_param().weights();
+
+    if (weights.size() > 0) {
+      CHECK_EQ(weights.size(), bottom[0]->channels());
 
       for (int i = 0; i < num; ++i) {
         for (int j = 0; j < spatial_dim; ++j) {
           for (int c = 0; c < channels; ++c) {
             const int index = i * dim + c * spatial_dim + j;
-            diff[index] = weights_.at(c) * (data[index] - label[index]);
+
+            if ((zero_channel > 0) && (c == zero_channel)) diff[index] = 0;
+            else diff[index] = weights.Get(c) * (data[index] - label[index]);
           }
         }
       }
-    } else {
+    }
+
+    if ((weights.size() == 0) && (zero_channel < 0)) {
       caffe_sub(count, data, label, diff);
     }
 

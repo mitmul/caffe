@@ -354,7 +354,6 @@ message LayerParameter {
 
   optional PrecisionRecallLossParameter precision_recall_loss_param = 200;
   optional SoftmaxCrossEntropyLossParameter softmax_cross_entropy_loss_param = 201;
-  optional SoftmaxLossWithDropUnitsLayerParameter softmax_loss_with_drop_units_param = 202;
   optional PatchTransformerParameter patch_transformer_param = 203;
 }
 
@@ -364,12 +363,8 @@ message PrecisionRecallLossParameter {
 
 message SoftmaxCrossEntropyLossParameter {
     repeated float weights = 1;
-}
-
-message SoftmaxLossWithDropUnitsLayerParameter {
-    optional int32 drop_channel = 1 [default = -1];
-    optional bool random_drop = 2 [default = false];
-    optional float drop_ratio = 3 [default = 0.5];
+    optional int32 zero_channel = 2 [default = -1];
+    optional bool random_zero = 3 [default = false];
 }
 
 message PatchTransformerParameter {
