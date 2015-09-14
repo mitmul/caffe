@@ -161,9 +161,7 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
               }
               diff[index] = data[index] * c_sum - weights.Get(c) * label[index];
             }
-            else {
-              diff[index] = data[index] - label[index];
-            }
+            else diff[index] = data[index] - label[index];
           }
         }
       }
