@@ -150,15 +150,18 @@ void SoftmaxCrossEntropyLossLayer<Dtype>::Backward_cpu(
           for (int c = 0; c < channels; ++c) {
             const int index = i * dim + c * spatial_dim + j;
 
-            if ((zero_channel > 0) && (c == zero_channel)) diff[index] = 0;
-            else diff[index] = weights.Get(c) * (data[index] - label[index]);
+            if ((zero_channel >= 0) && (c == zero_channel)) {
+              diff[index] = 0;
+            }
+            else if ((weights.Get(c) == 0) && (label[index] == 1)) {
+              diff[index] = 0;
+            }
+            else {
+              diff[index] = weights.Get(c) * (data[index] - label[index]);
+            }
           }
         }
       }
-    }
-
-    if ((weights.size() == 0) && (zero_channel < 0)) {
-      caffe_sub(count, data, label, diff);
     }
 
     // Scale down gradient
